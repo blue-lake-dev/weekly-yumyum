@@ -1,12 +1,27 @@
+// Data source identifier
+export type DataSource =
+  | "binance"
+  | "coingecko"
+  | "alternative"
+  | "yahoo"
+  | "defillama"
+  | "manual";
+
+// Metric value - current value only, no change tracking
 export interface MetricValue {
-  current: number;
-  previous?: number;
-  change_pct?: number;
+  current: number | null;
+  error?: string;
+  source?: DataSource;
+  isManual?: boolean;
+  sourceUrl?: string; // URL to view source data (for manual fields)
 }
 
 export interface StringMetricValue {
-  current: string;
-  previous?: string;
+  current: string | null;
+  error?: string;
+  source?: DataSource;
+  isManual?: boolean;
+  sourceUrl?: string;
 }
 
 export interface CryptoMarket {
@@ -24,6 +39,11 @@ export interface CryptoMarket {
   cme_gap: MetricValue;
 }
 
+export interface LendingProtocol {
+  name: string;
+  borrow: MetricValue;
+}
+
 export interface FundFlow {
   btc_etf_flow: MetricValue;
   eth_etf_flow: MetricValue;
@@ -32,7 +52,8 @@ export interface FundFlow {
   cex_flow_btc: MetricValue;
   cex_flow_eth: MetricValue;
   miner_breakeven: MetricValue;
-  aave_borrow: MetricValue;
+  defi_total_borrow: MetricValue;
+  defi_top_protocols: LendingProtocol[];
   btc_oi: MetricValue;
   long_short_ratio: MetricValue;
   funding_rate: MetricValue;
@@ -51,4 +72,24 @@ export interface DashboardData {
   crypto_market: CryptoMarket;
   fund_flow: FundFlow;
   macro: Macro;
+}
+
+// Manual fields that can be edited in the dashboard
+export const MANUAL_FIELDS = [
+  "fund_flow.miner_breakeven",
+  "macro.fedwatch_rate",
+] as const;
+
+export type ManualFieldPath = (typeof MANUAL_FIELDS)[number];
+
+// API response types
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+export interface FetchResult {
+  updated_at: string;
+  errors: string[];
 }

@@ -9,7 +9,8 @@
 ## 기술 스택
 
 - **Frontend:** Next.js 15 + TypeScript + Tailwind CSS
-- **Data Fetching:** Python 스크립트 → JSON 파일 → Next.js 읽기
+- **Data Fetching:** TypeScript API Routes → 외부 API 호출
+- **Storage:** Vercel KV (Redis 기반 key-value 스토리지)
 - **Hosting:** Vercel (무료 tier)
 
 ## 디자인 가이드
@@ -90,6 +91,13 @@
 2. 폴더 구조 설정
    ```
    /app
+     /api
+       /fetch-data
+         route.ts      (데이터 새로고침 API)
+       /data
+         route.ts      (데이터 조회 API)
+       /update-manual
+         route.ts      (수동 필드 업데이트 API)
      /dashboard
        page.tsx
      layout.tsx
@@ -99,19 +107,19 @@
        DataTable.tsx
        SectionHeader.tsx
        ActionButtons.tsx
-       UpdateTime.tsx
      Header.tsx
    /lib
      types.ts
      utils.ts
-   /data
-     latest.json (샘플 데이터)
+     fetchers/         (데이터 소스별 fetcher 함수)
+       binance.ts
+       coingecko.ts
+       defillama.ts
+       yahoo-finance.ts
+       ...
    /public
      yumyumcoin_single_banner.webp
      yumyumcoin_full_banner.webp
-   /scripts (Python)
-     fetch_data.py
-     requirements.txt
    ```
 3. Tailwind 설정 (tabular-nums, 컬러 등)
 4. 샘플 JSON 데이터 생성
@@ -207,63 +215,74 @@ interface SectionHeaderProps {
 
 ---
 
-### Phase 5: Python 데이터 수집 스크립트
-**목표:** 실제 API에서 데이터 수집하는 Python 스크립트
+### Phase 5: 데이터 수집 API (TypeScript)
+**목표:** 대시보드에서 버튼 클릭으로 실시간 데이터 수집
 
-**작업 내용:**
-1. `requirements.txt` 작성
-   ```
-   yfinance
-   requests
-   pandas
-   numpy
-   python-dotenv
-   ```
-2. `fetch_data.py` 구현
-   - 섹션별 함수 분리
-   - 에러 핸들링 (API 실패 시 이전 값 유지)
-   - JSON 출력
-3. 수동 입력 필드 처리 (Miner Breakeven, FedWatch 등)
-
-**API 호출 순서:**
-```python
-def main():
-    data = {
-        "updated_at": datetime.now().isoformat(),
-        "crypto_market": fetch_crypto_market(),
-        "fund_flow": fetch_fund_flow(),
-        "macro": fetch_macro()
-    }
-    save_json(data)
+**아키텍처:**
+```
+Dashboard → 🔄 클릭 → /api/fetch-data → 외부 API 호출 → Vercel KV 저장
+Dashboard → 페이지 로드 → /api/data → Vercel KV 조회 → 표시
+Dashboard → ✏️ 수동 입력 → /api/update-manual → Vercel KV 업데이트
 ```
 
+**작업 내용:**
+1. Vercel KV 설정
+   - `@vercel/kv` 패키지 설치
+   - Vercel 프로젝트에서 KV 스토리지 생성
+   - 환경변수 설정 (KV_REST_API_URL, KV_REST_API_TOKEN)
+
+2. API Routes 구현
+   - `/api/data` (GET): KV에서 데이터 조회
+   - `/api/fetch-data` (POST): 외부 API 호출 → KV 저장
+   - `/api/update-manual` (PATCH): 수동 필드 업데이트
+
+3. Fetcher 함수 구현 (`/lib/fetchers/`)
+   - `binance.ts`: BTC/ETH 가격, Long/Short, Funding Rate
+   - `coingecko.ts`: BTC Dominance
+   - `alternative.ts`: Fear & Greed Index
+   - `yahoo-finance.ts`: 주식/지수 (NASDAQ, MSTR, DXY, Gold 등)
+   - `defillama.ts`: ETF Flow, Stablecoin Supply, Aave
+   - `coinglass.ts`: BTC OI, CEX Flow
+
+4. 에러 처리
+   - API 실패 시 `null` 반환 + 에러 상태 저장
+   - 대시보드에서 `⚠️ 조회실패` 표시
+   - Excel 내보내기 시 에러 필드는 빈 셀
+
+5. 수동 입력 필드
+   - Miner Breakeven, FedWatch Rate
+   - 대시보드에서 직접 편집 가능 (✏️ 아이콘)
+   - `/api/update-manual`로 KV 업데이트
+
 **완료 기준:**
-- [ ] `python fetch_data.py` 실행 시 `latest.json` 생성
-- [ ] 모든 자동화 가능 지표 정상 수집
-- [ ] 에러 발생 시 graceful 처리
+- [ ] 🔄 버튼 클릭 시 모든 API 데이터 새로고침
+- [ ] 에러 발생 시 ⚠️ 표시, 다른 필드는 정상 표시
+- [ ] 수동 필드 편집 및 저장 동작
+- [ ] Vercel KV에 데이터 정상 저장/조회
 
 ---
 
 ### Phase 6: 배포
-**목표:** Vercel 배포
+**목표:** Vercel 배포 + KV 스토리지 연결
 
 **작업 내용:**
 1. Vercel 프로젝트 연결
-2. 환경변수 설정 (필요 시)
-3. 배포 확인
+2. Vercel KV 스토리지 생성 및 연결
+3. 환경변수 설정 (KV_REST_API_URL, KV_REST_API_TOKEN)
+4. 배포 확인
 
 **운영 흐름:**
 ```
-1. 로컬에서 python scripts/fetch_data.py 실행
-2. data/latest.json 업데이트 확인
-3. git commit & push
-4. Vercel 자동 배포
-5. 대시보드에서 Excel 다운로드 → GDrive 아카이빙
+1. 대시보드 접속
+2. 🔄 새로고침 버튼 클릭 → 최신 데이터 fetch
+3. 수동 필드 편집 (필요시)
+4. 📥 Excel 다운로드 → GDrive 아카이빙
 ```
 
 **완료 기준:**
 - [ ] Vercel 배포 후 대시보드 접근 가능
-- [ ] 로컬 스크립트 실행 → push → 반영 확인
+- [ ] Vercel KV 연결 및 데이터 저장/조회 동작
+- [ ] 🔄 버튼으로 실시간 데이터 새로고침 동작
 
 ---
 
@@ -282,14 +301,14 @@ def main():
 1. **TypeScript:** strict 모드, any 사용 금지
 2. **컴포넌트:** 함수형 컴포넌트, Props 인터페이스 명시
 3. **스타일:** Tailwind만 사용, inline style 금지
-4. **네이밍:** 
+4. **네이밍:**
    - 컴포넌트: PascalCase
    - 함수/변수: camelCase
    - 파일: kebab-case (컴포넌트 제외)
-5. **Python:** 
-   - Type hints 사용
-   - 함수별 docstring
-   - Black formatter
+5. **API Routes:**
+   - 에러 핸들링 필수 (try-catch)
+   - 적절한 HTTP 상태 코드 반환
+   - 타입 안전한 응답
 
 ## 참고 자료
 
@@ -303,6 +322,6 @@ def main():
 - [x] Phase 2: UI 컴포넌트 개발
 - [x] Phase 3: 대시보드 페이지 조립
 - [ ] Phase 4: Export 기능 구현
-- [ ] Phase 5: Python 데이터 수집 스크립트
+- [x] Phase 5: 데이터 수집 API (TypeScript)
 - [ ] Phase 6: 자동화 및 배포
 - [ ] Phase 7: 인증 및 추가 기능 (나중에)

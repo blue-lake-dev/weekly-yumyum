@@ -1,41 +1,164 @@
 {
-  "updated_at": "2026-01-12T09:30:00+09:00",
+  "updated_at": "2026-01-13T11:54:48.823Z",
   "crypto_market": {
-    "btc_price": { "current": 94567, "previous": 91234, "change_pct": 3.65 },
-    "eth_price": { "current": 3456, "previous": 3234, "change_pct": 6.86 },
-    "btc_dominance": { "current": 52.3, "previous": 51.8, "change_pct": 0.96 },
-    "btc_gold_ratio": { "current": 35.2, "previous": 34.8, "change_pct": 1.15 },
-    "eth_btc_ratio": { "current": 0.0365, "previous": 0.0354, "change_pct": 3.11 },
-    "fear_greed": { "current": 72, "previous": 65, "change_pct": 10.77 },
-    "vol_7d": { "current": 42.5, "previous": 38.2, "change_pct": 11.26 },
-    "vol_30d": { "current": 55.3, "previous": 52.1, "change_pct": 6.14 },
-    "nasdaq": { "current": 19234, "previous": 18876, "change_pct": 1.90 },
-    "mstr": { "current": 412.5, "previous": 398.2, "change_pct": 3.59 },
-    "bmnr": { "current": 28.45, "previous": 27.12, "change_pct": 4.90 },
-    "cme_gap": { "current": 93500, "previous": 91000, "change_pct": 2.75 }
+    "btc_price": {
+      "current": 92003.61,
+      "source": "binance"
+    },
+    "eth_price": {
+      "current": 3134.52,
+      "source": "binance"
+    },
+    "btc_dominance": {
+      "current": 57.05628522615419,
+      "source": "coingecko"
+    },
+    "btc_gold_ratio": {
+      "current": 20.010354952368523,
+      "source": "yahoo"
+    },
+    "eth_btc_ratio": {
+      "current": 0.03406953270637968,
+      "source": "binance"
+    },
+    "fear_greed": {
+      "current": 26,
+      "source": "alternative"
+    },
+    "vol_7d": {
+      "current": 21.67971098569232,
+      "source": "yahoo"
+    },
+    "vol_30d": {
+      "current": 24.1982294151344,
+      "source": "yahoo"
+    },
+    "nasdaq": {
+      "current": 23733.904,
+      "source": "yahoo"
+    },
+    "mstr": {
+      "current": 162.23,
+      "source": "yahoo"
+    },
+    "bmnr": {
+      "current": 31.13,
+      "source": "yahoo"
+    },
+    "cme_gap": {
+      "current": 92390,
+      "source": "yahoo"
+    }
   },
   "fund_flow": {
-    "btc_etf_flow": { "current": 523.4, "previous": 412.1, "change_pct": 27.01 },
-    "eth_etf_flow": { "current": 87.2, "previous": 65.3, "change_pct": 33.54 },
-    "stablecoin_supply": { "current": 178.5, "previous": 175.2, "change_pct": 1.88 },
-    "stablecoin_by_chain": {
-      "ethereum": { "current": 98.2, "previous": 96.5, "change_pct": 1.76 },
-      "tron": { "current": 52.1, "previous": 51.8, "change_pct": 0.58 },
-      "bsc": { "current": 12.3, "previous": 12.1, "change_pct": 1.65 }
+    "btc_etf_flow": {
+      "current": null,
+      "error": "ETF flow requires manual input",
+      "source": "manual",
+      "isManual": true
     },
-    "cex_flow_btc": { "current": -12500, "previous": -8200, "change_pct": 52.44 },
-    "cex_flow_eth": { "current": -45000, "previous": -32000, "change_pct": 40.63 },
-    "miner_breakeven": { "current": 38500, "previous": 38500, "change_pct": 0 },
-    "aave_borrow": { "current": 8.45, "previous": 7.89, "change_pct": 7.10 },
-    "btc_oi": { "current": 42.3, "previous": 39.8, "change_pct": 6.28 },
-    "long_short_ratio": { "current": 1.25, "previous": 1.18, "change_pct": 5.93 },
-    "funding_rate": { "current": 0.012, "previous": 0.008, "change_pct": 50.00 }
+    "eth_etf_flow": {
+      "current": null,
+      "error": "ETF flow requires manual input",
+      "source": "manual",
+      "isManual": true
+    },
+    "stablecoin_supply": {
+      "current": 307.06031718094,
+      "source": "defillama"
+    },
+    "stablecoin_by_chain": {
+      "ethereum": {
+        "current": 164.29457351773453,
+        "source": "defillama"
+      },
+      "tron": {
+        "current": 82.24789374651603,
+        "source": "defillama"
+      },
+      "bsc": {
+        "current": 15.234582770877614,
+        "source": "defillama"
+      }
+    },
+    "cex_flow_btc": {
+      "current": null,
+      "isManual": true,
+      "source": "manual"
+    },
+    "cex_flow_eth": {
+      "current": null,
+      "isManual": true,
+      "source": "manual"
+    },
+    "miner_breakeven": {
+      "current": null,
+      "isManual": true,
+      "source": "manual"
+    },
+    "defi_total_borrow": {
+      "current": 29.02624715348348,
+      "source": "defillama"
+    },
+    "defi_top_protocols": [
+      {
+        "name": "Aave",
+        "borrow": {
+          "current": 22.69041029505334,
+          "source": "defillama"
+        }
+      },
+      {
+        "name": "Morpho",
+        "borrow": {
+          "current": 3.7082535402074503,
+          "source": "defillama"
+        }
+      },
+      {
+        "name": "Spark",
+        "borrow": {
+          "current": 1.558652163,
+          "source": "defillama"
+        }
+      }
+    ],
+    "btc_oi": {
+      "current": null,
+      "isManual": true,
+      "source": "manual"
+    },
+    "long_short_ratio": {
+      "current": null,
+      "isManual": true,
+      "source": "manual"
+    },
+    "funding_rate": {
+      "current": 0.009838,
+      "source": "binance"
+    }
   },
   "macro": {
-    "dxy": { "current": 103.45, "previous": 104.12, "change_pct": -0.64 },
-    "us_10y": { "current": 4.52, "previous": 4.48, "change_pct": 0.89 },
-    "gold": { "current": 2685, "previous": 2623, "change_pct": 2.36 },
-    "sp500": { "current": 5892, "previous": 5834, "change_pct": 0.99 },
-    "fedwatch_rate": { "current": "4.25-4.50%", "previous": "4.50-4.75%" }
+    "dxy": {
+      "current": 98.955,
+      "source": "yahoo"
+    },
+    "us_10y": {
+      "current": 4.187,
+      "source": "yahoo"
+    },
+    "gold": {
+      "current": 4597.9,
+      "source": "yahoo"
+    },
+    "sp500": {
+      "current": 6977.27,
+      "source": "yahoo"
+    },
+    "fedwatch_rate": {
+      "current": null,
+      "isManual": true,
+      "source": "manual"
+    }
   }
 }
