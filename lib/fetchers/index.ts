@@ -1,5 +1,5 @@
 import type { DashboardData, CryptoMarket, FundFlow, Macro, MetricValue } from "../types";
-import { fetchBtcDominance, fetchBtcPrice, fetchEthPrice } from "./coingecko";
+import { fetchAllCoinGeckoData } from "./coingecko";
 import { fetchFearGreed } from "./alternative";
 import {
   fetchNasdaq,
@@ -23,10 +23,12 @@ import {
 
 // Fetch all crypto market data
 async function fetchCryptoMarket(): Promise<CryptoMarket> {
+  // Fetch CoinGecko data first (combined to avoid rate limiting)
+  const coinGeckoData = await fetchAllCoinGeckoData();
+  const { btcPrice, ethPrice, btcDominance } = coinGeckoData;
+
+  // Fetch other data in parallel
   const [
-    btcPrice,
-    ethPrice,
-    btcDominance,
     fearGreed,
     vol7d,
     vol30d,
@@ -35,9 +37,6 @@ async function fetchCryptoMarket(): Promise<CryptoMarket> {
     gold,
     cmeGap,
   ] = await Promise.all([
-    fetchBtcPrice(),
-    fetchEthPrice(),
-    fetchBtcDominance(),
     fetchFearGreed(),
     fetchVol7d(),
     fetchVol30d(),
@@ -55,7 +54,7 @@ async function fetchCryptoMarket(): Promise<CryptoMarket> {
 
   const ethBtcRatio: MetricValue =
     typeof ethPrice.current === "number" && typeof btcPrice.current === "number"
-      ? { current: ethPrice.current / btcPrice.current, source: "binance" }
+      ? { current: ethPrice.current / btcPrice.current, source: "coingecko" }
       : { current: null, error: "Missing ETH or BTC price" };
 
   return {
