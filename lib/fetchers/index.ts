@@ -31,7 +31,6 @@ async function fetchCryptoMarket(): Promise<CryptoMarket> {
     fearGreed,
     vol7d,
     vol30d,
-    nasdaq,
     mstr,
     bmnr,
     gold,
@@ -43,7 +42,6 @@ async function fetchCryptoMarket(): Promise<CryptoMarket> {
     fetchFearGreed(),
     fetchVol7d(),
     fetchVol30d(),
-    fetchNasdaq(),
     fetchMstr(),
     fetchBmnr(),
     fetchGold(),
@@ -70,7 +68,6 @@ async function fetchCryptoMarket(): Promise<CryptoMarket> {
     fear_greed: fearGreed,
     vol_7d: vol7d,
     vol_30d: vol30d,
-    nasdaq,
     mstr,
     bmnr,
     cme_gap: cmeGap,
@@ -122,18 +119,34 @@ async function fetchFundFlow(previousData?: FundFlow): Promise<FundFlow> {
 
 // Fetch all macro data
 async function fetchMacro(previousData?: Macro): Promise<Macro> {
-  const [dxy, us10y, gold, sp500] = await Promise.all([
+  const [dxy, us10y, gold, sp500, nasdaq] = await Promise.all([
     fetchDxy(),
     fetchUs10y(),
     fetchGold(),
     fetchSp500(),
+    fetchNasdaq(),
   ]);
 
+  // Calculate S&P 500 / NASDAQ ratio
+  const sp500NasdaqRatio: MetricValue =
+    sp500.current && nasdaq.current
+      ? { current: sp500.current / nasdaq.current, source: "yahoo" }
+      : { current: null, error: "Missing S&P 500 or NASDAQ price" };
+
   return {
+    // Auto-fetched
     dxy,
     us_10y: us10y,
     gold,
     sp500,
+    nasdaq,
+    sp500_nasdaq_ratio: sp500NasdaqRatio,
+    // Manual inputs (monthly releases)
+    cpi: previousData?.cpi ?? { current: null, isManual: true, source: "manual" },
+    ppi: previousData?.ppi ?? { current: null, isManual: true, source: "manual" },
+    nfp: previousData?.nfp ?? { current: null, isManual: true, source: "manual" },
+    unemployment: previousData?.unemployment ?? { current: null, isManual: true, source: "manual" },
+    sofr: previousData?.sofr ?? { current: null, isManual: true, source: "manual" },
     fedwatch_rate: previousData?.fedwatch_rate ?? { current: null, isManual: true, source: "manual" },
   };
 }

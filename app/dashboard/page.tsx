@@ -13,8 +13,13 @@ const SOURCE_URLS = {
   miner_breakeven: "https://en.macromicro.me/macro",
   btc_oi: "https://www.coinglass.com/open-interest/BTC",
   long_short_ratio: "https://www.coinglass.com/LongShortRatio",
-  fedwatch:
-    "https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html",
+  // Macro manual fields
+  cpi: "https://www.investing.com/economic-calendar/cpi-733",
+  ppi: "https://www.investing.com/economic-calendar/ppi-734",
+  nfp: "https://www.investing.com/economic-calendar/nonfarm-payrolls-227",
+  unemployment: "https://www.investing.com/economic-calendar/unemployment-rate-300",
+  sofr: "https://www.newyorkfed.org/markets/reference-rates/sofr",
+  fedwatch: "https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html",
 };
 
 function buildRows(data: DashboardData) {
@@ -58,11 +63,6 @@ function buildRows(data: DashboardData) {
       label: "Realized Vol 30D",
       ...data.crypto_market.vol_30d,
       format: "percent" as const,
-    },
-    {
-      label: "NASDAQ",
-      ...data.crypto_market.nasdaq,
-      format: "number" as const,
     },
     { label: "MSTR", ...data.crypto_market.mstr, format: "currency" as const },
     { label: "BMNR", ...data.crypto_market.bmnr, format: "currency" as const },
@@ -157,15 +157,18 @@ function buildRows(data: DashboardData) {
   ];
 
   const macroRows = [
+    { label: "CPI", ...data.macro.cpi, format: "percent" as const, sourceUrl: SOURCE_URLS.cpi },
+    { label: "PPI", ...data.macro.ppi, format: "percent" as const, sourceUrl: SOURCE_URLS.ppi },
+    { label: "Non-farm Payrolls", ...data.macro.nfp, format: "number" as const, sourceUrl: SOURCE_URLS.nfp },
+    { label: "Unemployment Rate", ...data.macro.unemployment, format: "percent" as const, sourceUrl: SOURCE_URLS.unemployment },
+    { label: "FedWatch Rate", ...data.macro.fedwatch_rate, sourceUrl: SOURCE_URLS.fedwatch },
+    { label: "SOFR", ...data.macro.sofr, format: "percent" as const, sourceUrl: SOURCE_URLS.sofr },
     { label: "DXY", ...data.macro.dxy, format: "number" as const },
     { label: "US 10Y Yield", ...data.macro.us_10y, format: "percent" as const },
     { label: "Gold", ...data.macro.gold, format: "currency" as const },
     { label: "S&P 500", ...data.macro.sp500, format: "number" as const },
-    {
-      label: "FedWatch Rate",
-      ...data.macro.fedwatch_rate,
-      sourceUrl: SOURCE_URLS.fedwatch,
-    },
+    { label: "NASDAQ", ...data.macro.nasdaq, format: "number" as const },
+    { label: "S&P 500 / NASDAQ", ...data.macro.sp500_nasdaq_ratio, format: "ratio" as const },
   ];
 
   return { cryptoMarketRows, fundFlowRows, macroRows };

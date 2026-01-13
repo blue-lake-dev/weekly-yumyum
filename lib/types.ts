@@ -33,7 +33,6 @@ export interface CryptoMarket {
   fear_greed: MetricValue;
   vol_7d: MetricValue;
   vol_30d: MetricValue;
-  nasdaq: MetricValue;
   mstr: MetricValue;
   bmnr: MetricValue;
   cme_gap: MetricValue;
@@ -60,10 +59,19 @@ export interface FundFlow {
 }
 
 export interface Macro {
+  // Auto-fetched
   dxy: MetricValue;
   us_10y: MetricValue;
   gold: MetricValue;
   sp500: MetricValue;
+  nasdaq: MetricValue;
+  sp500_nasdaq_ratio: MetricValue;
+  // Manual inputs (monthly releases)
+  cpi: MetricValue;
+  ppi: MetricValue;
+  nfp: MetricValue;
+  unemployment: MetricValue;
+  sofr: MetricValue;
   fedwatch_rate: StringMetricValue;
 }
 
@@ -77,6 +85,11 @@ export interface DashboardData {
 // Manual fields that can be edited in the dashboard
 export const MANUAL_FIELDS = [
   "fund_flow.miner_breakeven",
+  "macro.cpi",
+  "macro.ppi",
+  "macro.nfp",
+  "macro.unemployment",
+  "macro.sofr",
   "macro.fedwatch_rate",
 ] as const;
 

@@ -1,24 +1,24 @@
 {
-  "updated_at": "2026-01-13T11:54:48.823Z",
+  "updated_at": "2026-01-13T12:13:55.538Z",
   "crypto_market": {
     "btc_price": {
-      "current": 92003.61,
+      "current": 91969.28,
       "source": "binance"
     },
     "eth_price": {
-      "current": 3134.52,
+      "current": 3133.24,
       "source": "binance"
     },
     "btc_dominance": {
-      "current": 57.05628522615419,
+      "current": 57.061444948751316,
       "source": "coingecko"
     },
     "btc_gold_ratio": {
-      "current": 20.010354952368523,
+      "current": 20.007675071246766,
       "source": "yahoo"
     },
     "eth_btc_ratio": {
-      "current": 0.03406953270637968,
+      "current": 0.03406833238229113,
       "source": "binance"
     },
     "fear_greed": {
@@ -26,15 +26,11 @@
       "source": "alternative"
     },
     "vol_7d": {
-      "current": 21.67971098569232,
+      "current": 21.70254698381183,
       "source": "yahoo"
     },
     "vol_30d": {
-      "current": 24.1982294151344,
-      "source": "yahoo"
-    },
-    "nasdaq": {
-      "current": 23733.904,
+      "current": 24.200788443562658,
       "source": "yahoo"
     },
     "mstr": {
@@ -46,7 +42,7 @@
       "source": "yahoo"
     },
     "cme_gap": {
-      "current": 92390,
+      "current": 92175,
       "source": "yahoo"
     }
   },
@@ -140,7 +136,7 @@
   },
   "macro": {
     "dxy": {
-      "current": 98.955,
+      "current": 98.952,
       "source": "yahoo"
     },
     "us_10y": {
@@ -148,12 +144,45 @@
       "source": "yahoo"
     },
     "gold": {
-      "current": 4597.9,
+      "current": 4596.5,
       "source": "yahoo"
     },
     "sp500": {
       "current": 6977.27,
       "source": "yahoo"
+    },
+    "nasdaq": {
+      "current": 23733.904,
+      "source": "yahoo"
+    },
+    "sp500_nasdaq_ratio": {
+      "current": 0.2939790267964344,
+      "source": "yahoo"
+    },
+    "cpi": {
+      "current": null,
+      "isManual": true,
+      "source": "manual"
+    },
+    "ppi": {
+      "current": null,
+      "isManual": true,
+      "source": "manual"
+    },
+    "nfp": {
+      "current": null,
+      "isManual": true,
+      "source": "manual"
+    },
+    "unemployment": {
+      "current": null,
+      "isManual": true,
+      "source": "manual"
+    },
+    "sofr": {
+      "current": null,
+      "isManual": true,
+      "source": "manual"
     },
     "fedwatch_rate": {
       "current": null,

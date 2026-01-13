@@ -34,36 +34,45 @@
 | BTC/Gold | btc_gold_ratio | 계산 | BTC ÷ Gold |
 | ETH/BTC | eth_btc_ratio | 계산 | ETH ÷ BTC |
 | Fear & Greed | fear_greed | Alternative.me | API |
-| Realized Vol 7D | vol_7d | yfinance | 계산 |
-| Realized Vol 30D | vol_30d | yfinance | 계산 |
-| NASDAQ | nasdaq | yfinance | ^IXIC |
-| MSTR | mstr | yfinance | MSTR |
-| BMNR | bmnr | yfinance | BMNR |
-| CME Gap | cme_gap | yfinance | BTC=F 계산 |
+| Realized Vol 7D | vol_7d | Yahoo Finance | 계산 |
+| Realized Vol 30D | vol_30d | Yahoo Finance | 계산 |
+| MSTR | mstr | Yahoo Finance | MSTR |
+| BMNR | bmnr | Yahoo Finance | BMNR |
+| CME Gap | cme_gap | Yahoo Finance | BTC=F 계산 |
 
 ### Section 2: 자금흐름 (fund_flow)
 | 지표 | 키 | 소스 | 메서드 |
 |------|-----|------|--------|
-| BTC ETF Net Inflow | btc_etf_flow | DeFiLlama | API |
-| ETH ETF Net Inflow | eth_etf_flow | DeFiLlama | API |
+| BTC ETF Net Inflow | btc_etf_flow | Manual | DeFiLlama URL |
+| ETH ETF Net Inflow | eth_etf_flow | Manual | DeFiLlama URL |
 | Stablecoin Supply | stablecoin_supply | DeFiLlama | API |
-| Stablecoin by Chain | stablecoin_by_chain | DeFiLlama | API |
-| CEX Net Flow BTC | cex_flow_btc | Coinglass | Scrape/Manual |
-| CEX Net Flow ETH | cex_flow_eth | Coinglass | Scrape/Manual |
-| Miner Breakeven | miner_breakeven | MacroMicro | Manual |
-| Aave Total Borrow | aave_borrow | DeFiLlama | API |
-| BTC Open Interest | btc_oi | Coinglass | API (Free) |
-| Long/Short Ratio | long_short_ratio | Binance | API |
-| Funding Rate | funding_rate | Binance | API |
+| ┗ Ethereum | stablecoin_by_chain.ethereum | DeFiLlama | API |
+| ┗ Tron | stablecoin_by_chain.tron | DeFiLlama | API |
+| ┗ BSC | stablecoin_by_chain.bsc | DeFiLlama | API |
+| CEX Net Flow BTC | cex_flow_btc | Manual | Coinglass URL |
+| CEX Net Flow ETH | cex_flow_eth | Manual | Coinglass URL |
+| Miner Breakeven | miner_breakeven | Manual | MacroMicro URL |
+| DeFi Total Borrow | defi_total_borrow | DeFiLlama | API |
+| ┗ Top 3 Protocols | defi_top_protocols | DeFiLlama | API |
+| BTC Open Interest | btc_oi | Manual | Coinglass URL |
+| Long/Short Ratio | long_short_ratio | Manual | Coinglass URL |
+| Funding Rate (BTC) | funding_rate | Binance | API |
 
 ### Section 3: 매크로 (macro)
 | 지표 | 키 | 소스 | 메서드 |
 |------|-----|------|--------|
-| DXY | dxy | yfinance | DX-Y.NYB |
-| US 10Y | us_10y | yfinance | ^TNX |
-| Gold | gold | yfinance | GC=F |
-| S&P 500 | sp500 | yfinance | ^GSPC |
-| FedWatch | fedwatch_rate | CME | Manual |
+| CPI | cpi | Manual | Investing.com URL |
+| PPI | ppi | Manual | Investing.com URL |
+| Non-farm Payrolls | nfp | Manual | Investing.com URL |
+| Unemployment Rate | unemployment | Manual | Investing.com URL |
+| FedWatch Rate | fedwatch_rate | Manual | CME URL |
+| SOFR | sofr | Manual | NY Fed URL |
+| DXY | dxy | Yahoo Finance | DX-Y.NYB |
+| US 10Y | us_10y | Yahoo Finance | ^TNX |
+| Gold | gold | Yahoo Finance | GC=F |
+| S&P 500 | sp500 | Yahoo Finance | ^GSPC |
+| NASDAQ | nasdaq | Yahoo Finance | ^IXIC |
+| S&P 500 / NASDAQ | sp500_nasdaq_ratio | 계산 | S&P ÷ NASDAQ |
 
 ### JSON 스키마 예시
 ```json
