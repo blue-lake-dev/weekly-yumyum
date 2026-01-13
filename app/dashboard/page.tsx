@@ -16,6 +16,7 @@ const SOURCE_URLS = {
   miner_breakeven: "https://en.macromicro.me/macro",
   btc_oi: "https://www.coinglass.com/open-interest/BTC",
   long_short_ratio: "https://www.coinglass.com/LongShortRatio",
+  funding_rate: "https://www.coinglass.com/FundingRate",
   // Macro manual fields
   cpi: "https://www.investing.com/economic-calendar/cpi-733",
   ppi: "https://www.investing.com/economic-calendar/ppi-734",
@@ -163,6 +164,8 @@ function buildRows(data: DashboardData) {
       label: "Funding Rate (BTC)",
       ...data.fund_flow.funding_rate,
       format: "percent" as const,
+      sourceUrl: SOURCE_URLS.funding_rate,
+      fieldPath: "fund_flow.funding_rate",
     },
   ];
 
@@ -219,6 +222,7 @@ export default function Dashboard() {
               miner_breakeven: data.fund_flow.miner_breakeven?.isManual ? data.fund_flow.miner_breakeven : newData.fund_flow.miner_breakeven,
               btc_oi: data.fund_flow.btc_oi?.isManual ? data.fund_flow.btc_oi : newData.fund_flow.btc_oi,
               long_short_ratio: data.fund_flow.long_short_ratio?.isManual ? data.fund_flow.long_short_ratio : newData.fund_flow.long_short_ratio,
+              funding_rate: data.fund_flow.funding_rate?.isManual ? data.fund_flow.funding_rate : newData.fund_flow.funding_rate,
             },
             macro: {
               ...newData.macro,
@@ -414,7 +418,7 @@ export default function Dashboard() {
         defi_top_protocols: [],
         btc_oi: { current: null, isManual: true, source: "manual" },
         long_short_ratio: { current: null, isManual: true, source: "manual" },
-        funding_rate: { current: null },
+        funding_rate: { current: null, isManual: true, source: "manual" },
       },
       macro: {
         dxy: { current: null },

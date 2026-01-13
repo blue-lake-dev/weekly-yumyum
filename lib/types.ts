@@ -92,6 +92,7 @@ export const MANUAL_FIELDS = [
   "fund_flow.miner_breakeven",
   "fund_flow.btc_oi",
   "fund_flow.long_short_ratio",
+  "fund_flow.funding_rate",
   // Macro
   "macro.cpi",
   "macro.ppi",

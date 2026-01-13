@@ -1,6 +1,5 @@
 import type { DashboardData, CryptoMarket, FundFlow, Macro, MetricValue } from "../types";
-import { fetchBtcPrice, fetchEthPrice, fetchFundingRateBinance } from "./binance";
-import { fetchBtcDominance } from "./coingecko";
+import { fetchBtcDominance, fetchBtcPrice, fetchEthPrice } from "./coingecko";
 import { fetchFearGreed } from "./alternative";
 import {
   fetchNasdaq,
@@ -75,7 +74,7 @@ async function fetchCryptoMarket(): Promise<CryptoMarket> {
 }
 
 // Fetch all fund flow data
-async function fetchFundFlow(previousData?: FundFlow): Promise<FundFlow> {
+async function fetchFundFlow(): Promise<FundFlow> {
   const [
     btcEtfFlow,
     ethEtfFlow,
@@ -84,7 +83,6 @@ async function fetchFundFlow(previousData?: FundFlow): Promise<FundFlow> {
     tronStable,
     bscStable,
     lendingData,
-    fundingRate,
   ] = await Promise.all([
     fetchBtcEtfFlow(),
     fetchEthEtfFlow(),
@@ -93,7 +91,6 @@ async function fetchFundFlow(previousData?: FundFlow): Promise<FundFlow> {
     fetchStablecoinByChain("Tron"),
     fetchStablecoinByChain("BSC"),
     fetchTopLendingProtocols(),
-    fetchFundingRateBinance(),
   ]);
 
   return {
@@ -106,19 +103,19 @@ async function fetchFundFlow(previousData?: FundFlow): Promise<FundFlow> {
       bsc: bscStable,
     },
     // Manual input fields (APIs not accessible)
-    cex_flow_btc: previousData?.cex_flow_btc ?? { current: null, isManual: true, source: "manual" },
-    cex_flow_eth: previousData?.cex_flow_eth ?? { current: null, isManual: true, source: "manual" },
-    miner_breakeven: previousData?.miner_breakeven ?? { current: null, isManual: true, source: "manual" },
+    cex_flow_btc: { current: null, isManual: true, source: "manual" },
+    cex_flow_eth: { current: null, isManual: true, source: "manual" },
+    miner_breakeven: { current: null, isManual: true, source: "manual" },
     defi_total_borrow: lendingData.total,
     defi_top_protocols: lendingData.protocols,
-    btc_oi: previousData?.btc_oi ?? { current: null, isManual: true, source: "manual" },
-    long_short_ratio: (previousData?.long_short_ratio?.isManual ? previousData.long_short_ratio : null) ?? { current: null, isManual: true, source: "manual" },
-    funding_rate: fundingRate,
+    btc_oi: { current: null, isManual: true, source: "manual" },
+    long_short_ratio: { current: null, isManual: true, source: "manual" },
+    funding_rate: { current: null, isManual: true, source: "manual" },
   };
 }
 
 // Fetch all macro data
-async function fetchMacro(previousData?: Macro): Promise<Macro> {
+async function fetchMacro(): Promise<Macro> {
   const [dxy, us10y, gold, sp500, nasdaq] = await Promise.all([
     fetchDxy(),
     fetchUs10y(),
@@ -142,21 +139,21 @@ async function fetchMacro(previousData?: Macro): Promise<Macro> {
     nasdaq,
     sp500_nasdaq_ratio: sp500NasdaqRatio,
     // Manual inputs (monthly releases)
-    cpi: previousData?.cpi ?? { current: null, isManual: true, source: "manual" },
-    ppi: previousData?.ppi ?? { current: null, isManual: true, source: "manual" },
-    nfp: previousData?.nfp ?? { current: null, isManual: true, source: "manual" },
-    unemployment: previousData?.unemployment ?? { current: null, isManual: true, source: "manual" },
-    sofr: previousData?.sofr ?? { current: null, isManual: true, source: "manual" },
-    fedwatch_rate: previousData?.fedwatch_rate ?? { current: null, isManual: true, source: "manual" },
+    cpi: { current: null, isManual: true, source: "manual" },
+    ppi: { current: null, isManual: true, source: "manual" },
+    nfp: { current: null, isManual: true, source: "manual" },
+    unemployment: { current: null, isManual: true, source: "manual" },
+    sofr: { current: null, isManual: true, source: "manual" },
+    fedwatch_rate: { current: null, isManual: true, source: "manual" },
   };
 }
 
 // Main function to fetch all data
-export async function fetchAllData(previousData?: DashboardData): Promise<DashboardData> {
+export async function fetchAllData(): Promise<DashboardData> {
   const [cryptoMarket, fundFlow, macro] = await Promise.all([
     fetchCryptoMarket(),
-    fetchFundFlow(previousData?.fund_flow),
-    fetchMacro(previousData?.macro),
+    fetchFundFlow(),
+    fetchMacro(),
   ]);
 
   return {

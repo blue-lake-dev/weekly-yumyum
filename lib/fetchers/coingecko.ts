@@ -34,3 +34,32 @@ export async function fetchBtcDominance(): Promise<MetricValue> {
     return { current: null, error: "Failed to fetch BTC dominance", source: "coingecko" };
   }
 }
+
+interface SimplePriceResponse {
+  bitcoin: { usd: number };
+  ethereum: { usd: number };
+}
+
+export async function fetchBtcPrice(): Promise<MetricValue> {
+  try {
+    const data = await fetchWithTimeout<SimplePriceResponse>(
+      `${COINGECKO_API}/simple/price?ids=bitcoin&vs_currencies=usd`
+    );
+    return { current: data.bitcoin.usd, source: "coingecko" };
+  } catch (error) {
+    console.error("fetchBtcPrice error:", error);
+    return { current: null, error: "Failed to fetch BTC price", source: "coingecko" };
+  }
+}
+
+export async function fetchEthPrice(): Promise<MetricValue> {
+  try {
+    const data = await fetchWithTimeout<SimplePriceResponse>(
+      `${COINGECKO_API}/simple/price?ids=ethereum&vs_currencies=usd`
+    );
+    return { current: data.ethereum.usd, source: "coingecko" };
+  } catch (error) {
+    console.error("fetchEthPrice error:", error);
+    return { current: null, error: "Failed to fetch ETH price", source: "coingecko" };
+  }
+}
