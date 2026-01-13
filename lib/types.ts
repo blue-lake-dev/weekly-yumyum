@@ -9,7 +9,7 @@ export type DataSource =
 
 // Metric value - current value only, no change tracking
 export interface MetricValue {
-  current: number | null;
+  current: number | string | null;
   error?: string;
   source?: DataSource;
   isManual?: boolean;
@@ -84,7 +84,15 @@ export interface DashboardData {
 
 // Manual fields that can be edited in the dashboard
 export const MANUAL_FIELDS = [
+  // Fund flow
+  "fund_flow.btc_etf_flow",
+  "fund_flow.eth_etf_flow",
+  "fund_flow.cex_flow_btc",
+  "fund_flow.cex_flow_eth",
   "fund_flow.miner_breakeven",
+  "fund_flow.btc_oi",
+  "fund_flow.long_short_ratio",
+  // Macro
   "macro.cpi",
   "macro.ppi",
   "macro.nfp",

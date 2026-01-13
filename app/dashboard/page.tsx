@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import * as XLSX from "xlsx";
 import { Header, SectionHeader, DataTable, ActionButtons } from "@/components";
+import { formatCurrency, formatPercent, formatCompact, formatNumber, formatRatio } from "@/lib/utils";
 import type { DashboardData } from "@/lib/types";
 
 // Source URLs for manual input fields
@@ -86,12 +88,14 @@ function buildRows(data: DashboardData) {
       ...data.fund_flow.btc_etf_flow,
       format: "compact" as const,
       sourceUrl: SOURCE_URLS.btc_etf,
+      fieldPath: "fund_flow.btc_etf_flow",
     },
     {
       label: "ETH ETF Net Inflow",
       ...data.fund_flow.eth_etf_flow,
       format: "compact" as const,
       sourceUrl: SOURCE_URLS.eth_etf,
+      fieldPath: "fund_flow.eth_etf_flow",
     },
     {
       label: "Stablecoin Supply",
@@ -118,18 +122,21 @@ function buildRows(data: DashboardData) {
       ...data.fund_flow.cex_flow_btc,
       format: "number" as const,
       sourceUrl: SOURCE_URLS.cex_flow_btc,
+      fieldPath: "fund_flow.cex_flow_btc",
     },
     {
       label: "CEX Net Flow ETH",
       ...data.fund_flow.cex_flow_eth,
       format: "number" as const,
       sourceUrl: SOURCE_URLS.cex_flow_eth,
+      fieldPath: "fund_flow.cex_flow_eth",
     },
     {
       label: "Miner Breakeven",
       ...data.fund_flow.miner_breakeven,
       format: "currency" as const,
       sourceUrl: SOURCE_URLS.miner_breakeven,
+      fieldPath: "fund_flow.miner_breakeven",
     },
     {
       label: "DeFi Total Borrow",
@@ -142,12 +149,14 @@ function buildRows(data: DashboardData) {
       ...data.fund_flow.btc_oi,
       format: "compact" as const,
       sourceUrl: SOURCE_URLS.btc_oi,
+      fieldPath: "fund_flow.btc_oi",
     },
     {
       label: "Long/Short Ratio",
       ...data.fund_flow.long_short_ratio,
       format: "number" as const,
       sourceUrl: SOURCE_URLS.long_short_ratio,
+      fieldPath: "fund_flow.long_short_ratio",
     },
     {
       label: "Funding Rate (BTC)",
@@ -157,12 +166,12 @@ function buildRows(data: DashboardData) {
   ];
 
   const macroRows = [
-    { label: "CPI", ...data.macro.cpi, format: "percent" as const, sourceUrl: SOURCE_URLS.cpi },
-    { label: "PPI", ...data.macro.ppi, format: "percent" as const, sourceUrl: SOURCE_URLS.ppi },
-    { label: "Non-farm Payrolls", ...data.macro.nfp, format: "number" as const, sourceUrl: SOURCE_URLS.nfp },
-    { label: "Unemployment Rate", ...data.macro.unemployment, format: "percent" as const, sourceUrl: SOURCE_URLS.unemployment },
-    { label: "FedWatch Rate", ...data.macro.fedwatch_rate, sourceUrl: SOURCE_URLS.fedwatch },
-    { label: "SOFR", ...data.macro.sofr, format: "percent" as const, sourceUrl: SOURCE_URLS.sofr },
+    { label: "CPI", ...data.macro.cpi, format: "percent" as const, sourceUrl: SOURCE_URLS.cpi, fieldPath: "macro.cpi" },
+    { label: "PPI", ...data.macro.ppi, format: "percent" as const, sourceUrl: SOURCE_URLS.ppi, fieldPath: "macro.ppi" },
+    { label: "Non-farm Payrolls", ...data.macro.nfp, format: "number" as const, sourceUrl: SOURCE_URLS.nfp, fieldPath: "macro.nfp" },
+    { label: "Unemployment Rate", ...data.macro.unemployment, format: "percent" as const, sourceUrl: SOURCE_URLS.unemployment, fieldPath: "macro.unemployment" },
+    { label: "FedWatch Rate", ...data.macro.fedwatch_rate, sourceUrl: SOURCE_URLS.fedwatch, fieldPath: "macro.fedwatch_rate" },
+    { label: "SOFR", ...data.macro.sofr, format: "percent" as const, sourceUrl: SOURCE_URLS.sofr, fieldPath: "macro.sofr" },
     { label: "DXY", ...data.macro.dxy, format: "number" as const },
     { label: "US 10Y Yield", ...data.macro.us_10y, format: "percent" as const },
     { label: "Gold", ...data.macro.gold, format: "currency" as const },
@@ -214,6 +223,100 @@ export default function Dashboard() {
       setIsLoading(false);
     }
   }, []);
+
+  const handleManualUpdate = useCallback(async (fieldPath: string, value: number | string | null) => {
+    try {
+      const response = await fetch("/api/update-manual", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ field: fieldPath, value: { current: value } }),
+      });
+      const result = await response.json();
+      if (result.success && result.data) {
+        setData(result.data);
+      } else {
+        throw new Error(result.error || "업데이트 실패");
+      }
+    } catch (err) {
+      console.error("Manual update failed:", err);
+      throw err;
+    }
+  }, []);
+
+  const handleExportExcel = useCallback(() => {
+    if (!data) return;
+
+    const formatValue = (val: number | string | null, format?: string, isManual?: boolean): string | number => {
+      if (val === null || val === undefined) return "-";
+      if (isManual || typeof val === "string") return String(val);
+      switch (format) {
+        case "currency": return formatCurrency(val);
+        case "percent": return formatPercent(val);
+        case "compact": return formatCompact(val);
+        case "ratio": return formatRatio(val);
+        default: return formatNumber(val);
+      }
+    };
+
+    const { cryptoMarketRows, fundFlowRows, macroRows } = buildRows(data);
+
+    const rows = [
+      ["📊 암호화폐 시장", "", ""],
+      ["지표", "현재", "소스"],
+      ...cryptoMarketRows.map(r => [r.label, formatValue(r.current, r.format, r.isManual), r.source || ""]),
+      ["", "", ""],
+      ["💰 자금흐름", "", ""],
+      ["지표", "현재", "소스"],
+      ...fundFlowRows.map(r => [r.label, formatValue(r.current, r.format, r.isManual), r.source || ""]),
+      ["", "", ""],
+      ["🌍 매크로", "", ""],
+      ["지표", "현재", "소스"],
+      ...macroRows.map(r => [r.label, formatValue(r.current, r.format, r.isManual), r.source || ""]),
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Dashboard");
+
+    const date = new Date().toISOString().split("T")[0];
+    XLSX.writeFile(wb, `yumyum_${date}.xlsx`);
+  }, [data]);
+
+  const handleCopyTelegram = useCallback(() => {
+    if (!data) return;
+
+    const formatValue = (val: number | string | null, format?: string, isManual?: boolean): string => {
+      if (val === null || val === undefined) return "-";
+      if (isManual || typeof val === "string") return String(val);
+      switch (format) {
+        case "currency": return formatCurrency(val);
+        case "percent": return formatPercent(val);
+        case "compact": return formatCompact(val);
+        case "ratio": return formatRatio(val);
+        default: return formatNumber(val);
+      }
+    };
+
+    const { cryptoMarketRows, fundFlowRows, macroRows } = buildRows(data);
+    const date = new Date().toISOString().split("T")[0];
+
+    const lines = [
+      `📊 *YUMYUM Weekly* (${date})`,
+      "",
+      "*암호화폐 시장*",
+      ...cryptoMarketRows.map(r => `• ${r.label}: ${formatValue(r.current, r.format, r.isManual)}`),
+      "",
+      "*자금흐름*",
+      ...fundFlowRows.map(r => `• ${r.label}: ${formatValue(r.current, r.format, r.isManual)}`),
+      "",
+      "*매크로*",
+      ...macroRows.map(r => `• ${r.label}: ${formatValue(r.current, r.format, r.isManual)}`),
+    ];
+
+    navigator.clipboard.writeText(lines.join("\n"))
+      .then(() => alert("클립보드에 복사되었습니다!"))
+      .catch(() => alert("복사 실패"));
+  }, [data]);
 
   useEffect(() => {
     fetchData();
@@ -277,7 +380,12 @@ export default function Dashboard() {
       )}
 
       <div className="flex justify-end mb-6">
-        <ActionButtons onRefresh={handleRefresh} isLoading={isLoading} />
+        <ActionButtons
+          onRefresh={handleRefresh}
+          onExportExcel={handleExportExcel}
+          onCopyTelegram={handleCopyTelegram}
+          isLoading={isLoading}
+        />
       </div>
 
       <div className="space-y-8">
@@ -288,12 +396,12 @@ export default function Dashboard() {
 
         <section>
           <SectionHeader emoji="💰" title="자금흐름" />
-          <DataTable data={fundFlowRows} />
+          <DataTable data={fundFlowRows} onUpdate={handleManualUpdate} />
         </section>
 
         <section>
           <SectionHeader emoji="🌍" title="매크로" />
-          <DataTable data={macroRows} />
+          <DataTable data={macroRows} onUpdate={handleManualUpdate} />
         </section>
       </div>
     </main>

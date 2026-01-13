@@ -330,7 +330,7 @@ Dashboard → ✏️ 수동 입력 → /api/update-manual → Vercel KV 업데�
 - [x] Phase 1: 프로젝트 셋업
 - [x] Phase 2: UI 컴포넌트 개발
 - [x] Phase 3: 대시보드 페이지 조립
-- [ ] Phase 4: Export 기능 구현
+- [x] Phase 4: Export 기능 구현
 - [x] Phase 5: 데이터 수집 API (TypeScript)
-- [ ] Phase 6: 자동화 및 배포
+- [ ] Phase 6: 배포
 - [ ] Phase 7: 인증 및 추가 기능 (나중에)

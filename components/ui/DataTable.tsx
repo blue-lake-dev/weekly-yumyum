@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { formatCurrency, formatCompact, formatNumber, formatPercent, formatRatio, getSourceLabel } from "@/lib/utils";
 import type { DataSource } from "@/lib/types";
 
@@ -11,11 +14,12 @@ interface DataRow {
   source?: DataSource;
   isManual?: boolean;
   sourceUrl?: string;
+  fieldPath?: string;
 }
 
 interface DataTableProps {
   data: DataRow[];
-  onEdit?: (label: string) => void;
+  onUpdate?: (fieldPath: string, value: number | string | null) => Promise<void>;
 }
 
 function formatValue(value: number | string | null | undefined, format?: FormatType): string {
@@ -37,10 +41,60 @@ function formatValue(value: number | string | null | undefined, format?: FormatT
   }
 }
 
-export function DataTable({ data, onEdit }: DataTableProps) {
+function ManualInput({
+  row,
+  onUpdate,
+}: {
+  row: DataRow;
+  onUpdate?: (fieldPath: string, value: number | string | null) => Promise<void>;
+}) {
+  const [inputValue, setInputValue] = useState(
+    row.current !== null && row.current !== undefined ? String(row.current) : ""
+  );
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleBlur = async () => {
+    if (!onUpdate || !row.fieldPath) return;
+
+    const trimmed = inputValue.trim();
+    const newValue = trimmed === "" ? null : trimmed;
+
+    // Only save if value changed
+    if (newValue === row.current) return;
+
+    setIsSaving(true);
+    try {
+      await onUpdate(row.fieldPath, newValue);
+    } catch (error) {
+      console.error("Failed to save:", error);
+      // Revert on error
+      setInputValue(row.current !== null ? String(row.current) : "");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <input
+      type="text"
+      value={inputValue}
+      onChange={(e) => setInputValue(e.target.value)}
+      onBlur={handleBlur}
+      disabled={isSaving}
+      className="w-24 px-2 py-0.5 text-right text-sm tabular-nums bg-white border border-neutral/20 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+    />
+  );
+}
+
+export function DataTable({ data, onUpdate }: DataTableProps) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+      <table className="w-full text-sm table-fixed">
+        <colgroup>
+          <col className="w-[45%]" />
+          <col className="w-[30%]" />
+          <col className="w-[25%]" />
+        </colgroup>
         <thead>
           <tr className="text-left text-neutral text-xs">
             <th className="py-1.5 pr-4 font-medium">지표</th>
@@ -51,7 +105,7 @@ export function DataTable({ data, onEdit }: DataTableProps) {
         <tbody>
           {data.map((row, index) => {
             const hasError = !!row.error && !row.isManual;
-            const isEditable = row.isManual && onEdit;
+            const showInput = row.isManual && onUpdate && row.fieldPath;
 
             return (
               <tr
@@ -65,7 +119,7 @@ export function DataTable({ data, onEdit }: DataTableProps) {
                 <td className="py-2 pr-4 font-medium text-foreground">
                   {row.label}
                   {row.isManual && (
-                    <span className="ml-1 text-xs text-neutral" title="수동 입력 필드">
+                    <span className="ml-1 text-xs text-neutral" title="수동 입력">
                       ✏️
                     </span>
                   )}
@@ -78,18 +132,11 @@ export function DataTable({ data, onEdit }: DataTableProps) {
                     >
                       ⚠️ 조회실패
                     </span>
+                  ) : showInput ? (
+                    <ManualInput row={row} onUpdate={onUpdate} />
                   ) : (
                     <span className="text-foreground">
                       {formatValue(row.current, row.format)}
-                      {isEditable && (
-                        <button
-                          onClick={() => onEdit(row.label)}
-                          className="ml-1 text-neutral hover:text-foreground"
-                          title="편집"
-                        >
-                          ✏️
-                        </button>
-                      )}
                     </span>
                   )}
                 </td>
