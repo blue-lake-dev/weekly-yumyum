@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import * as XLSX from "xlsx";
 import { Header, SectionHeader, DataTable, ActionButtons } from "@/components";
 import { formatCurrency, formatPercent, formatCompact, formatNumber, formatRatio } from "@/lib/utils";
+import { getStoredData, saveStoredData } from "@/lib/client-storage";
 import type { DashboardData } from "@/lib/types";
 
 // Source URLs for manual input fields
@@ -170,7 +171,7 @@ function buildRows(data: DashboardData) {
     { label: "PPI", ...data.macro.ppi, format: "percent" as const, sourceUrl: SOURCE_URLS.ppi, fieldPath: "macro.ppi" },
     { label: "Non-farm Payrolls", ...data.macro.nfp, format: "number" as const, sourceUrl: SOURCE_URLS.nfp, fieldPath: "macro.nfp" },
     { label: "Unemployment Rate", ...data.macro.unemployment, format: "percent" as const, sourceUrl: SOURCE_URLS.unemployment, fieldPath: "macro.unemployment" },
-    { label: "FedWatch Rate", ...data.macro.fedwatch_rate, sourceUrl: SOURCE_URLS.fedwatch, fieldPath: "macro.fedwatch_rate" },
+    { label: "FedWatch Rate", ...data.macro.fedwatch_rate, format: undefined, sourceUrl: SOURCE_URLS.fedwatch, fieldPath: "macro.fedwatch_rate" },
     { label: "SOFR", ...data.macro.sofr, format: "percent" as const, sourceUrl: SOURCE_URLS.sofr, fieldPath: "macro.sofr" },
     { label: "DXY", ...data.macro.dxy, format: "number" as const },
     { label: "US 10Y Yield", ...data.macro.us_10y, format: "percent" as const },
@@ -188,22 +189,12 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const response = await fetch("/api/data");
-      const result = await response.json();
-      if (result.success && result.data) {
-        setData(result.data);
-      } else {
-        setError("데이터를 불러올 수 없습니다");
-      }
-    } catch {
-      setError("서버 연결에 실패했습니다");
-    } finally {
-      setIsLoading(false);
+  const loadCachedData = useCallback(() => {
+    const cached = getStoredData();
+    if (cached) {
+      setData(cached);
     }
+    setIsLoading(false);
   }, []);
 
   const handleRefresh = useCallback(async () => {
@@ -213,7 +204,36 @@ export default function Dashboard() {
       const response = await fetch("/api/fetch-data", { method: "POST" });
       const result = await response.json();
       if (result.success && result.data) {
-        setData(result.data);
+        let newData = result.data as DashboardData;
+
+        // Preserve manual field values from current data
+        if (data) {
+          newData = {
+            ...newData,
+            fund_flow: {
+              ...newData.fund_flow,
+              btc_etf_flow: data.fund_flow.btc_etf_flow?.isManual ? data.fund_flow.btc_etf_flow : newData.fund_flow.btc_etf_flow,
+              eth_etf_flow: data.fund_flow.eth_etf_flow?.isManual ? data.fund_flow.eth_etf_flow : newData.fund_flow.eth_etf_flow,
+              cex_flow_btc: data.fund_flow.cex_flow_btc?.isManual ? data.fund_flow.cex_flow_btc : newData.fund_flow.cex_flow_btc,
+              cex_flow_eth: data.fund_flow.cex_flow_eth?.isManual ? data.fund_flow.cex_flow_eth : newData.fund_flow.cex_flow_eth,
+              miner_breakeven: data.fund_flow.miner_breakeven?.isManual ? data.fund_flow.miner_breakeven : newData.fund_flow.miner_breakeven,
+              btc_oi: data.fund_flow.btc_oi?.isManual ? data.fund_flow.btc_oi : newData.fund_flow.btc_oi,
+              long_short_ratio: data.fund_flow.long_short_ratio?.isManual ? data.fund_flow.long_short_ratio : newData.fund_flow.long_short_ratio,
+            },
+            macro: {
+              ...newData.macro,
+              cpi: data.macro.cpi?.isManual ? data.macro.cpi : newData.macro.cpi,
+              ppi: data.macro.ppi?.isManual ? data.macro.ppi : newData.macro.ppi,
+              nfp: data.macro.nfp?.isManual ? data.macro.nfp : newData.macro.nfp,
+              unemployment: data.macro.unemployment?.isManual ? data.macro.unemployment : newData.macro.unemployment,
+              sofr: data.macro.sofr?.isManual ? data.macro.sofr : newData.macro.sofr,
+              fedwatch_rate: data.macro.fedwatch_rate?.isManual ? data.macro.fedwatch_rate : newData.macro.fedwatch_rate,
+            },
+          };
+        }
+
+        setData(newData);
+        saveStoredData(newData);
       } else {
         setError(result.error || "데이터 새로고침에 실패했습니다");
       }
@@ -222,26 +242,26 @@ export default function Dashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [data]);
 
   const handleManualUpdate = useCallback(async (fieldPath: string, value: number | string | null) => {
-    try {
-      const response = await fetch("/api/update-manual", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ field: fieldPath, value: { current: value } }),
-      });
-      const result = await response.json();
-      if (result.success && result.data) {
-        setData(result.data);
-      } else {
-        throw new Error(result.error || "업데이트 실패");
-      }
-    } catch (err) {
-      console.error("Manual update failed:", err);
-      throw err;
+    if (!data) return;
+
+    // Update client state and localStorage
+    const newData = JSON.parse(JSON.stringify(data)) as DashboardData;
+    const [section, key] = fieldPath.split(".");
+    const sectionData = newData[section as keyof DashboardData] as unknown as Record<string, unknown>;
+
+    if (sectionData && key in sectionData) {
+      sectionData[key] = {
+        ...(sectionData[key] as object),
+        current: value,
+        isManual: true,
+      };
+      setData(newData);
+      saveStoredData(newData);
     }
-  }, []);
+  }, [data]);
 
   const handleExportExcel = useCallback(() => {
     if (!data) return;
@@ -319,8 +339,8 @@ export default function Dashboard() {
   }, [data]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    loadCachedData();
+  }, [loadCachedData]);
 
   // Loading skeleton
   if (isLoading && !data) {
@@ -355,7 +375,7 @@ export default function Dashboard() {
         <div className="text-center">
           <p className="text-red-500 mb-4">{error}</p>
           <button
-            onClick={fetchData}
+            onClick={handleRefresh}
             className="px-4 py-2 bg-foreground text-background rounded-md hover:opacity-90"
           >
             다시 시도
@@ -365,7 +385,86 @@ export default function Dashboard() {
     );
   }
 
-  if (!data) return null;
+  // No cached data - show empty dashboard
+  if (!data) {
+    const emptyData: DashboardData = {
+      updated_at: "",
+      crypto_market: {
+        btc_price: { current: null },
+        eth_price: { current: null },
+        btc_dominance: { current: null },
+        btc_gold_ratio: { current: null },
+        eth_btc_ratio: { current: null },
+        fear_greed: { current: null },
+        vol_7d: { current: null },
+        vol_30d: { current: null },
+        mstr: { current: null },
+        bmnr: { current: null },
+        cme_gap: { current: null },
+      },
+      fund_flow: {
+        btc_etf_flow: { current: null, isManual: true, source: "manual" },
+        eth_etf_flow: { current: null, isManual: true, source: "manual" },
+        stablecoin_supply: { current: null },
+        stablecoin_by_chain: { ethereum: { current: null }, tron: { current: null }, bsc: { current: null } },
+        cex_flow_btc: { current: null, isManual: true, source: "manual" },
+        cex_flow_eth: { current: null, isManual: true, source: "manual" },
+        miner_breakeven: { current: null, isManual: true, source: "manual" },
+        defi_total_borrow: { current: null },
+        defi_top_protocols: [],
+        btc_oi: { current: null, isManual: true, source: "manual" },
+        long_short_ratio: { current: null, isManual: true, source: "manual" },
+        funding_rate: { current: null },
+      },
+      macro: {
+        dxy: { current: null },
+        us_10y: { current: null },
+        gold: { current: null },
+        sp500: { current: null },
+        nasdaq: { current: null },
+        sp500_nasdaq_ratio: { current: null },
+        cpi: { current: null, isManual: true, source: "manual" },
+        ppi: { current: null, isManual: true, source: "manual" },
+        nfp: { current: null, isManual: true, source: "manual" },
+        unemployment: { current: null, isManual: true, source: "manual" },
+        sofr: { current: null, isManual: true, source: "manual" },
+        fedwatch_rate: { current: null, isManual: true, source: "manual" },
+      },
+    };
+    const { cryptoMarketRows, fundFlowRows, macroRows } = buildRows(emptyData);
+
+    return (
+      <main className="min-h-screen bg-background p-6 max-w-4xl mx-auto">
+        <Header updatedAt="" />
+
+        <div className="flex justify-end mb-6">
+          <ActionButtons
+            onRefresh={handleRefresh}
+            onExportExcel={handleExportExcel}
+            onCopyTelegram={handleCopyTelegram}
+            isLoading={isLoading}
+          />
+        </div>
+
+        <div className="space-y-8">
+          <section>
+            <SectionHeader emoji="📊" title="암호화폐 시장" />
+            <DataTable data={cryptoMarketRows} />
+          </section>
+
+          <section>
+            <SectionHeader emoji="💰" title="자금흐름" />
+            <DataTable data={fundFlowRows} onUpdate={handleManualUpdate} />
+          </section>
+
+          <section>
+            <SectionHeader emoji="🌍" title="매크로" />
+            <DataTable data={macroRows} onUpdate={handleManualUpdate} />
+          </section>
+        </div>
+      </main>
+    );
+  }
 
   const { cryptoMarketRows, fundFlowRows, macroRows } = buildRows(data);
 

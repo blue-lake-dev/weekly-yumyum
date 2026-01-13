@@ -10,7 +10,7 @@
 
 - **Frontend:** Next.js 15 + TypeScript + Tailwind CSS
 - **Data Fetching:** TypeScript API Routes → 외부 API 호출
-- **Storage:** Vercel KV (Redis 기반 key-value 스토리지)
+- **Storage:** Client-side state (세션 중 데이터 유지, 영구 저장 없음)
 - **Hosting:** Vercel (무료 tier)
 
 ## 디자인 가이드
@@ -272,25 +272,22 @@ Dashboard → ✏️ 수동 입력 → /api/update-manual → Vercel KV 업데�
 ---
 
 ### Phase 6: 배포
-**목표:** Vercel 배포 + KV 스토리지 연결
+**목표:** Vercel 배포
 
 **작업 내용:**
 1. Vercel 프로젝트 연결
-2. Vercel KV 스토리지 생성 및 연결
-3. 환경변수 설정 (KV_REST_API_URL, KV_REST_API_TOKEN)
-4. 배포 확인
+2. 배포 확인
 
 **운영 흐름:**
 ```
 1. 대시보드 접속
 2. 🔄 새로고침 버튼 클릭 → 최신 데이터 fetch
-3. 수동 필드 편집 (필요시)
+3. 수동 필드 편집 (필요시, 세션 중에만 유지)
 4. 📥 Excel 다운로드 → GDrive 아카이빙
 ```
 
 **완료 기준:**
 - [ ] Vercel 배포 후 대시보드 접근 가능
-- [ ] Vercel KV 연결 및 데이터 저장/조회 동작
 - [ ] 🔄 버튼으로 실시간 데이터 새로고침 동작
 
 ---

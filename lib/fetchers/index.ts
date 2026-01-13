@@ -50,12 +50,12 @@ async function fetchCryptoMarket(): Promise<CryptoMarket> {
 
   // Calculate derived values
   const btcGoldRatio: MetricValue =
-    btcPrice.current && gold.current
+    typeof btcPrice.current === "number" && typeof gold.current === "number"
       ? { current: btcPrice.current / gold.current, source: "yahoo" }
       : { current: null, error: "Missing BTC or Gold price" };
 
   const ethBtcRatio: MetricValue =
-    ethPrice.current && btcPrice.current
+    typeof ethPrice.current === "number" && typeof btcPrice.current === "number"
       ? { current: ethPrice.current / btcPrice.current, source: "binance" }
       : { current: null, error: "Missing ETH or BTC price" };
 
@@ -129,7 +129,7 @@ async function fetchMacro(previousData?: Macro): Promise<Macro> {
 
   // Calculate S&P 500 / NASDAQ ratio
   const sp500NasdaqRatio: MetricValue =
-    sp500.current && nasdaq.current
+    typeof sp500.current === "number" && typeof nasdaq.current === "number"
       ? { current: sp500.current / nasdaq.current, source: "yahoo" }
       : { current: null, error: "Missing S&P 500 or NASDAQ price" };
 
