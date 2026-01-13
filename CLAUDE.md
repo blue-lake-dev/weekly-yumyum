@@ -300,8 +300,8 @@ def main():
 ## 현재 진행 상태
 
 - [x] Phase 1: 프로젝트 셋업
-- [ ] Phase 2: UI 컴포넌트 개발
-- [ ] Phase 3: 대시보드 페이지 조립
+- [x] Phase 2: UI 컴포넌트 개발
+- [x] Phase 3: 대시보드 페이지 조립
 - [ ] Phase 4: Export 기능 구현
 - [ ] Phase 5: Python 데이터 수집 스크립트
 - [ ] Phase 6: 자동화 및 배포
