@@ -1,25 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { formatCurrency, formatCompact, formatNumber, formatPercent, formatRatio, getSourceLabel } from "@/lib/utils";
-import type { DataSource } from "@/lib/types";
+import { formatCurrency, formatCompact, formatNumber, formatPercent, formatRatio } from "@/lib/utils";
 
 type FormatType = "currency" | "percent" | "number" | "compact" | "ratio";
 
 interface DataRow {
   label: string;
   current: number | string | null;
+  current_at?: string; // Timestamp of current value
+  previous?: number | string | null;
+  previous_at?: string; // Timestamp of previous value
+  change_pct?: number;
   format?: FormatType;
   error?: string;
-  source?: DataSource;
   isManual?: boolean;
-  sourceUrl?: string;
-  fieldPath?: string;
+  fieldPath?: string; // For editing current value
+  previousFieldPath?: string; // For editing previous value (e.g., BTC Dominance)
 }
 
 interface DataTableProps {
   data: DataRow[];
-  onUpdate?: (fieldPath: string, value: number | string | null) => Promise<void>;
+  onUpdate?: (fieldPath: string, value: number | string | null) => void;
+  disabled?: boolean; // Disable inputs while fetching
 }
 
 function formatValue(value: number | string | null | undefined, format?: FormatType): string {
@@ -41,34 +44,55 @@ function formatValue(value: number | string | null | undefined, format?: FormatT
   }
 }
 
+function formatChangePct(change_pct: number | undefined): { text: string; color: string; emoji: string } {
+  if (change_pct === undefined || change_pct === null || isNaN(change_pct)) {
+    return { text: "-", color: "text-neutral", emoji: "⚪" };
+  }
+
+  const sign = change_pct >= 0 ? "+" : "";
+  const text = `${sign}${change_pct.toFixed(2)}%`;
+
+  if (change_pct > 0) {
+    return { text, color: "text-[var(--up)]", emoji: "" };
+  } else if (change_pct < 0) {
+    return { text, color: "text-[var(--down)]", emoji: "" };
+  } else {
+    return { text, color: "text-neutral", emoji: "⚪" };
+  }
+}
+
 function ManualInput({
-  row,
+  value,
+  fieldPath,
   onUpdate,
+  disabled,
 }: {
-  row: DataRow;
-  onUpdate?: (fieldPath: string, value: number | string | null) => Promise<void>;
+  value: number | string | null | undefined;
+  fieldPath: string;
+  onUpdate?: (fieldPath: string, value: number | string | null) => void;
+  disabled?: boolean;
 }) {
   const [inputValue, setInputValue] = useState(
-    row.current !== null && row.current !== undefined ? String(row.current) : ""
+    value !== null && value !== undefined ? String(value) : ""
   );
   const [isSaving, setIsSaving] = useState(false);
 
   const handleBlur = async () => {
-    if (!onUpdate || !row.fieldPath) return;
+    if (!onUpdate || disabled) return;
 
     const trimmed = inputValue.trim();
     const newValue = trimmed === "" ? null : trimmed;
 
     // Only save if value changed
-    if (newValue === row.current) return;
+    const currentStr = value !== null && value !== undefined ? String(value) : null;
+    if (newValue === currentStr) return;
 
     setIsSaving(true);
     try {
-      await onUpdate(row.fieldPath, newValue);
+      onUpdate(fieldPath, newValue);
     } catch (error) {
       console.error("Failed to save:", error);
-      // Revert on error
-      setInputValue(row.current !== null ? String(row.current) : "");
+      setInputValue(value !== null && value !== undefined ? String(value) : "");
     } finally {
       setIsSaving(false);
     }
@@ -80,32 +104,36 @@ function ManualInput({
       value={inputValue}
       onChange={(e) => setInputValue(e.target.value)}
       onBlur={handleBlur}
-      disabled={isSaving}
-      className="w-24 px-2 py-0.5 text-right text-sm tabular-nums bg-white border border-neutral/20 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+      disabled={isSaving || disabled}
+      className="w-20 px-1.5 py-0.5 text-right text-sm tabular-nums bg-white border border-neutral/20 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
     />
   );
 }
 
-export function DataTable({ data, onUpdate }: DataTableProps) {
+export function DataTable({ data, onUpdate, disabled }: DataTableProps) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm table-fixed">
         <colgroup>
-          <col className="w-[45%]" />
           <col className="w-[30%]" />
+          <col className="w-[20%]" />
+          <col className="w-[25%]" />
           <col className="w-[25%]" />
         </colgroup>
         <thead>
           <tr className="text-left text-neutral text-xs">
-            <th className="py-1.5 pr-4 font-medium">지표</th>
-            <th className="py-1.5 px-4 font-medium text-right">현재</th>
-            <th className="py-1.5 pl-4 font-medium text-right">소스</th>
+            <th className="py-1.5 pr-2 font-medium">지표</th>
+            <th className="py-1.5 px-2 font-medium text-right">이전</th>
+            <th className="py-1.5 px-2 font-medium text-right">현재</th>
+            <th className="py-1.5 pl-2 font-medium text-right">변화</th>
           </tr>
         </thead>
         <tbody>
           {data.map((row, index) => {
             const hasError = !!row.error && !row.isManual;
-            const showInput = row.isManual && onUpdate && row.fieldPath;
+            const showCurrentInput = row.isManual && onUpdate && row.fieldPath;
+            const showPreviousInput = row.previousFieldPath && onUpdate;
+            const change = formatChangePct(row.change_pct);
 
             return (
               <tr
@@ -116,15 +144,41 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
                   ${index % 2 === 0 ? "bg-transparent" : "bg-neutral/[0.02]"}
                 `}
               >
-                <td className="py-2 pr-4 font-medium text-foreground">
+                {/* 지표 (Label) */}
+                <td className="py-2 pr-2 font-medium text-foreground">
                   {row.label}
-                  {row.isManual && (
+                  {(row.isManual || row.previousFieldPath) && (
                     <span className="ml-1 text-xs text-neutral" title="수동 입력">
                       ✏️
                     </span>
                   )}
                 </td>
-                <td className="py-2 px-4 text-right tabular-nums font-medium">
+
+                {/* 이전 (Previous) */}
+                <td className="py-2 px-2 text-right tabular-nums">
+                  {showPreviousInput ? (
+                    <ManualInput
+                      value={row.previous}
+                      fieldPath={row.previousFieldPath!}
+                      onUpdate={onUpdate}
+                      disabled={disabled}
+                    />
+                  ) : (
+                    <div className="flex flex-col items-end">
+                      <span className="text-neutral">
+                        {formatValue(row.previous, row.format)}
+                      </span>
+                      {row.previous_at && (
+                        <span className="text-[10px] text-neutral/60">
+                          {row.previous_at}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </td>
+
+                {/* 현재 (Current) */}
+                <td className="py-2 px-2 text-right tabular-nums font-medium">
                   {hasError ? (
                     <span
                       className="text-amber-600 cursor-help"
@@ -132,29 +186,31 @@ export function DataTable({ data, onUpdate }: DataTableProps) {
                     >
                       ⚠️ 조회실패
                     </span>
-                  ) : showInput ? (
-                    <ManualInput row={row} onUpdate={onUpdate} />
+                  ) : showCurrentInput ? (
+                    <ManualInput
+                      value={row.current}
+                      fieldPath={row.fieldPath!}
+                      onUpdate={onUpdate}
+                      disabled={disabled}
+                    />
                   ) : (
-                    <span className="text-foreground">
-                      {formatValue(row.current, row.format)}
-                    </span>
+                    <div className="flex flex-col items-end">
+                      <span className="text-foreground">
+                        {formatValue(row.current, row.format)}
+                      </span>
+                      {row.current_at && (
+                        <span className="text-[10px] text-neutral/60 font-normal">
+                          {row.current_at}
+                        </span>
+                      )}
+                    </div>
                   )}
                 </td>
-                <td className="py-2 pl-4 text-right text-xs text-neutral">
-                  {row.sourceUrl ? (
-                    <a
-                      href={row.sourceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline"
-                      title="데이터 소스 보기"
-                    >
-                      {getSourceLabel(row.source)}
-                      <span>↗</span>
-                    </a>
-                  ) : (
-                    getSourceLabel(row.source)
-                  )}
+
+                {/* 변화 (Change) */}
+                <td className={`py-2 pl-2 text-right tabular-nums font-medium ${change.color}`}>
+                  {change.emoji && <span className="mr-1">{change.emoji}</span>}
+                  {change.text}
                 </td>
               </tr>
             );

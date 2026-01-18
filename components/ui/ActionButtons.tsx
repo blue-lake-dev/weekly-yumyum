@@ -3,14 +3,12 @@
 interface ActionButtonsProps {
   onRefresh?: () => void;
   onExportExcel?: () => void;
-  onCopyTelegram?: () => void;
   isLoading?: boolean;
 }
 
 export function ActionButtons({
   onRefresh,
   onExportExcel,
-  onCopyTelegram,
   isLoading = false,
 }: ActionButtonsProps) {
   const baseClass = "px-3 py-1.5 text-sm font-medium rounded-md transition-colors";
@@ -40,14 +38,6 @@ export function ActionButtons({
         title="Excel 다운로드"
       >
         📥 Excel
-      </button>
-      <button
-        onClick={onCopyTelegram}
-        disabled={isLoading}
-        className={`${baseClass} ${isLoading ? disabledClass : enabledClass}`}
-        title="텔레그램 복사"
-      >
-        ✈️ 텔레그램
       </button>
     </div>
   );

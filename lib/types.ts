@@ -7,9 +7,13 @@ export type DataSource =
   | "defillama"
   | "manual";
 
-// Metric value - current value only, no change tracking
+// Metric value with current and previous week values
 export interface MetricValue {
   current: number | string | null;
+  current_at?: string; // Timestamp of current value, e.g., "1/18 00:00 UTC"
+  previous?: number | string | null; // Value from 7 days ago
+  previous_at?: string; // Timestamp of previous value, e.g., "1/11 00:00 UTC"
+  change_pct?: number; // Percentage change: ((current - previous) / previous) * 100
   error?: string;
   source?: DataSource;
   isManual?: boolean;
@@ -18,6 +22,10 @@ export interface MetricValue {
 
 export interface StringMetricValue {
   current: string | null;
+  current_at?: string;
+  previous?: string | null;
+  previous_at?: string;
+  change_pct?: number;
   error?: string;
   source?: DataSource;
   isManual?: boolean;
@@ -84,6 +92,8 @@ export interface DashboardData {
 
 // Manual fields that can be edited in the dashboard
 export const MANUAL_FIELDS = [
+  // Crypto market (previous value only)
+  "crypto_market.btc_dominance.previous",
   // Fund flow
   "fund_flow.btc_etf_flow",
   "fund_flow.eth_etf_flow",

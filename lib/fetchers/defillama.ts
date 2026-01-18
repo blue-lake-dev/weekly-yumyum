@@ -1,21 +1,30 @@
 import type { MetricValue, LendingProtocol } from "../types";
+import { formatTimestamp } from "../utils";
 
 const DEFILLAMA_API = "https://api.llama.fi";
 const STABLECOINS_API = "https://stablecoins.llama.fi";
 
+// 7 days in seconds
+const SEVEN_DAYS_SEC = 7 * 24 * 60 * 60;
+
+interface StablecoinChartEntry {
+  date: string; // Unix timestamp in seconds
+  totalCirculating: { peggedUSD: number };
+}
+
+interface StablecoinChainChartEntry {
+  date: string;
+  totalCirculating: { peggedUSD: number };
+  totalCirculatingUSD: { peggedUSD: number };
+}
+
 interface ProtocolData {
   name: string;
   slug: string;
-  tvl: Array<{ date: number; totalLiquidityUSD: number }>;
-  chainTvls?: Record<string, number>;
-  currentChainTvls?: Record<string, number>;
-}
-
-interface StablecoinData {
-  peggedAssets: Array<{
-    name: string;
-    chainCirculating: Record<string, { current: { peggedUSD: number } }>;
+  chainTvls?: Record<string, {
+    tvl: Array<{ date: number; totalLiquidityUSD: number }>;
   }>;
+  currentChainTvls?: Record<string, number>;
 }
 
 async function fetchWithTimeout<T>(url: string, timeout = 15000): Promise<T> {
@@ -31,11 +40,40 @@ async function fetchWithTimeout<T>(url: string, timeout = 15000): Promise<T> {
   }
 }
 
-// Fetch total stablecoin supply
+// Helper to calculate change percentage
+function calcChangePct(current: number | null, previous: number | null): number | undefined {
+  if (current === null || previous === null || previous === 0) return undefined;
+  return ((current - previous) / previous) * 100;
+}
+
+// Helper to find entry closest to target timestamp
+function findEntryAtDate<T extends { date: string | number }>(
+  data: T[],
+  targetTimestamp: number
+): { entry: T | null; timestamp: number | null } {
+  if (!data || data.length === 0) return { entry: null, timestamp: null };
+
+  let closest = data[0];
+  let closestTimestamp = Number(data[0].date);
+  let minDiff = Math.abs(closestTimestamp - targetTimestamp);
+
+  for (const entry of data) {
+    const timestamp = Number(entry.date);
+    const diff = Math.abs(timestamp - targetTimestamp);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closest = entry;
+      closestTimestamp = timestamp;
+    }
+  }
+
+  return { entry: closest, timestamp: closestTimestamp };
+}
+
+// Fetch total stablecoin supply with historical data
 export async function fetchStablecoinSupply(): Promise<MetricValue> {
   try {
-    // API returns array directly with totalCirculating.peggedUSD
-    const data = await fetchWithTimeout<Array<{ date: string; totalCirculating: { peggedUSD: number } }>>(
+    const data = await fetchWithTimeout<StablecoinChartEntry[]>(
       `${STABLECOINS_API}/stablecoincharts/all`
     );
 
@@ -43,32 +81,64 @@ export async function fetchStablecoinSupply(): Promise<MetricValue> {
       throw new Error("No stablecoin data");
     }
 
+    // Latest entry
     const latest = data[data.length - 1];
     const current = latest.totalCirculating.peggedUSD / 1e9; // Billions
-    return { current, source: "defillama" };
+    const currentTimestamp = Number(latest.date);
+    const current_at = formatTimestamp(currentTimestamp, "UTC");
+
+    // Find entry from ~7 days ago
+    const sevenDaysAgo = currentTimestamp - SEVEN_DAYS_SEC;
+    const { entry: previousEntry, timestamp: previousTimestamp } = findEntryAtDate(data, sevenDaysAgo);
+    const previous = previousEntry ? previousEntry.totalCirculating.peggedUSD / 1e9 : null;
+    const previous_at = previousTimestamp ? formatTimestamp(previousTimestamp, "UTC") : undefined;
+
+    return {
+      current,
+      current_at,
+      previous,
+      previous_at,
+      change_pct: calcChangePct(current, previous),
+      source: "defillama",
+    };
   } catch (error) {
     console.error("fetchStablecoinSupply error:", error);
     return { current: null, error: "Failed to fetch stablecoin supply", source: "defillama" };
   }
 }
 
-// Fetch stablecoin by specific chain
+// Fetch stablecoin by specific chain with historical data
 export async function fetchStablecoinByChain(chain: string): Promise<MetricValue> {
   try {
-    const data = await fetchWithTimeout<StablecoinData>(
-      `${STABLECOINS_API}/stablecoins?includePrices=false`
+    // Use the chain-specific chart endpoint for historical data
+    const data = await fetchWithTimeout<StablecoinChainChartEntry[]>(
+      `${STABLECOINS_API}/stablecoincharts/${chain}`
     );
 
-    let total = 0;
-    for (const asset of data.peggedAssets) {
-      const chainData = asset.chainCirculating[chain];
-      if (chainData?.current?.peggedUSD) {
-        total += chainData.current.peggedUSD;
-      }
+    if (!data || data.length === 0) {
+      throw new Error(`No stablecoin data for ${chain}`);
     }
 
-    const current = total / 1e9; // Billions
-    return { current, source: "defillama" };
+    // Latest entry
+    const latest = data[data.length - 1];
+    const current = latest.totalCirculating.peggedUSD / 1e9; // Billions
+    const currentTimestamp = Number(latest.date);
+    const current_at = formatTimestamp(currentTimestamp, "UTC");
+
+    // Find entry from ~7 days ago
+    const sevenDaysAgo = currentTimestamp - SEVEN_DAYS_SEC;
+    const { entry: previousEntry, timestamp: previousTimestamp } = findEntryAtDate(data, sevenDaysAgo);
+    const previous = previousEntry ? previousEntry.totalCirculating.peggedUSD / 1e9 : null;
+    const previous_at = previousTimestamp ? formatTimestamp(previousTimestamp, "UTC") : undefined;
+
+    return {
+      current,
+      current_at,
+      previous,
+      previous_at,
+      change_pct: calcChangePct(current, previous),
+      source: "defillama",
+    };
   } catch (error) {
     console.error(`fetchStablecoinByChain(${chain}) error:`, error);
     return { current: null, error: `Failed to fetch ${chain} stablecoin`, source: "defillama" };
@@ -84,33 +154,64 @@ const LENDING_PROTOCOLS = [
   { slug: "justlend", name: "JustLend" },
 ];
 
-// Fetch single protocol total borrowed amount
-async function fetchProtocolBorrowed(slug: string): Promise<number | null> {
+// Fetch single protocol borrowed amount with historical data
+async function fetchProtocolBorrowed(slug: string): Promise<{
+  current: number | null;
+  current_at: string | undefined;
+  previous: number | null;
+  previous_at: string | undefined;
+}> {
   try {
     const data = await fetchWithTimeout<ProtocolData>(
       `${DEFILLAMA_API}/protocol/${slug}`
     );
 
-    // Sum all borrowed amounts from currentChainTvls (keys ending with "-borrowed")
-    if (!data.currentChainTvls) {
-      return null;
+    if (!data.chainTvls) {
+      return { current: null, current_at: undefined, previous: null, previous_at: undefined };
     }
 
-    let totalBorrowed = 0;
-    for (const [key, value] of Object.entries(data.currentChainTvls)) {
-      if (key.endsWith("-borrowed") && typeof value === "number") {
-        totalBorrowed += value;
+    let totalCurrent = 0;
+    let totalPrevious = 0;
+    let latestTimestamp = 0;
+    let previousTimestamp = 0;
+
+    const now = Math.floor(Date.now() / 1000);
+    const sevenDaysAgo = now - SEVEN_DAYS_SEC;
+
+    // Sum all borrowed amounts from chainTvls (keys ending with "-borrowed")
+    for (const [key, chainData] of Object.entries(data.chainTvls)) {
+      if (key.endsWith("-borrowed") && chainData.tvl && chainData.tvl.length > 0) {
+        // Current: latest entry
+        const latestEntry = chainData.tvl[chainData.tvl.length - 1];
+        totalCurrent += latestEntry.totalLiquidityUSD || 0;
+        if (latestEntry.date > latestTimestamp) {
+          latestTimestamp = latestEntry.date;
+        }
+
+        // Previous: find entry closest to 7 days ago
+        const { entry: prevEntry, timestamp: prevTs } = findEntryAtDate(chainData.tvl, sevenDaysAgo);
+        if (prevEntry) {
+          totalPrevious += prevEntry.totalLiquidityUSD || 0;
+          if (prevTs && prevTs > previousTimestamp) {
+            previousTimestamp = prevTs;
+          }
+        }
       }
     }
 
-    return totalBorrowed > 0 ? totalBorrowed : null;
+    return {
+      current: totalCurrent > 0 ? totalCurrent : null,
+      current_at: latestTimestamp > 0 ? formatTimestamp(latestTimestamp, "UTC") : undefined,
+      previous: totalPrevious > 0 ? totalPrevious : null,
+      previous_at: previousTimestamp > 0 ? formatTimestamp(previousTimestamp, "UTC") : undefined,
+    };
   } catch (error) {
     console.error(`fetchProtocolBorrowed(${slug}) error:`, error);
-    return null;
+    return { current: null, current_at: undefined, previous: null, previous_at: undefined };
   }
 }
 
-// Fetch top 3 lending protocols by borrowed amount
+// Fetch top 3 lending protocols by borrowed amount with historical data
 export async function fetchTopLendingProtocols(): Promise<{
   total: MetricValue;
   protocols: LendingProtocol[];
@@ -118,25 +219,46 @@ export async function fetchTopLendingProtocols(): Promise<{
   try {
     const results = await Promise.all(
       LENDING_PROTOCOLS.map(async (p) => {
-        const borrowed = await fetchProtocolBorrowed(p.slug);
-        return { name: p.name, borrowed };
+        const { current, current_at, previous, previous_at } = await fetchProtocolBorrowed(p.slug);
+        return { name: p.name, current, current_at, previous, previous_at };
       })
     );
 
-    // Filter out nulls and sort by borrowed amount
+    // Filter out nulls and sort by current borrowed amount
     const validResults = results
-      .filter((r) => r.borrowed !== null)
-      .sort((a, b) => (b.borrowed || 0) - (a.borrowed || 0));
+      .filter((r) => r.current !== null)
+      .sort((a, b) => (b.current || 0) - (a.current || 0));
 
-    // Calculate total and get top 3
-    const total = validResults.reduce((sum, r) => sum + (r.borrowed || 0), 0);
+    // Calculate totals
+    const totalCurrent = validResults.reduce((sum, r) => sum + (r.current || 0), 0);
+    const totalPrevious = validResults.reduce((sum, r) => sum + (r.previous || 0), 0);
+
+    // Use the most recent timestamp from results
+    const current_at = validResults[0]?.current_at;
+    const previous_at = validResults[0]?.previous_at;
+
+    // Get top 3
     const top3 = validResults.slice(0, 3);
 
     return {
-      total: { current: total / 1e9, source: "defillama" }, // Billions
+      total: {
+        current: totalCurrent / 1e9, // Billions
+        current_at,
+        previous: totalPrevious > 0 ? totalPrevious / 1e9 : null,
+        previous_at,
+        change_pct: calcChangePct(totalCurrent, totalPrevious),
+        source: "defillama",
+      },
       protocols: top3.map((p) => ({
         name: p.name,
-        borrow: { current: (p.borrowed || 0) / 1e9, source: "defillama" as const },
+        borrow: {
+          current: (p.current || 0) / 1e9,
+          current_at: p.current_at,
+          previous: p.previous ? p.previous / 1e9 : null,
+          previous_at: p.previous_at,
+          change_pct: calcChangePct(p.current, p.previous),
+          source: "defillama" as const,
+        },
       })),
     };
   } catch (error) {
@@ -148,11 +270,10 @@ export async function fetchTopLendingProtocols(): Promise<{
   }
 }
 
-// ETF Flow data - placeholder (requires specialized API)
+// ETF Flow data - manual input
 export async function fetchBtcEtfFlow(): Promise<MetricValue> {
   return {
     current: null,
-    error: "ETF flow requires manual input",
     source: "manual",
     isManual: true,
   };
@@ -161,7 +282,6 @@ export async function fetchBtcEtfFlow(): Promise<MetricValue> {
 export async function fetchEthEtfFlow(): Promise<MetricValue> {
   return {
     current: null,
-    error: "ETF flow requires manual input",
     source: "manual",
     isManual: true,
   };

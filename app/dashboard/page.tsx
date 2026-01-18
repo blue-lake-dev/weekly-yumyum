@@ -43,6 +43,7 @@ function buildRows(data: DashboardData) {
       label: "BTC Dominance",
       ...data.crypto_market.btc_dominance,
       format: "percent" as const,
+      previousFieldPath: "crypto_market.btc_dominance.previous",
     },
     {
       label: "BTC/Gold Ratio",
@@ -92,6 +93,7 @@ function buildRows(data: DashboardData) {
       format: "compact" as const,
       sourceUrl: SOURCE_URLS.btc_etf,
       fieldPath: "fund_flow.btc_etf_flow",
+      previousFieldPath: "fund_flow.btc_etf_flow.previous",
     },
     {
       label: "ETH ETF Net Inflow",
@@ -99,6 +101,7 @@ function buildRows(data: DashboardData) {
       format: "compact" as const,
       sourceUrl: SOURCE_URLS.eth_etf,
       fieldPath: "fund_flow.eth_etf_flow",
+      previousFieldPath: "fund_flow.eth_etf_flow.previous",
     },
     {
       label: "Stablecoin Supply",
@@ -121,11 +124,17 @@ function buildRows(data: DashboardData) {
       format: "compact" as const,
     },
     {
+      label: "┗ Solana",
+      ...data.fund_flow.stablecoin_by_chain.solana,
+      format: "compact" as const,
+    },
+    {
       label: "CEX Net Flow BTC",
       ...data.fund_flow.cex_flow_btc,
       format: "number" as const,
       sourceUrl: SOURCE_URLS.cex_flow_btc,
       fieldPath: "fund_flow.cex_flow_btc",
+      previousFieldPath: "fund_flow.cex_flow_btc.previous",
     },
     {
       label: "CEX Net Flow ETH",
@@ -133,6 +142,7 @@ function buildRows(data: DashboardData) {
       format: "number" as const,
       sourceUrl: SOURCE_URLS.cex_flow_eth,
       fieldPath: "fund_flow.cex_flow_eth",
+      previousFieldPath: "fund_flow.cex_flow_eth.previous",
     },
     {
       label: "Miner Breakeven",
@@ -140,6 +150,7 @@ function buildRows(data: DashboardData) {
       format: "currency" as const,
       sourceUrl: SOURCE_URLS.miner_breakeven,
       fieldPath: "fund_flow.miner_breakeven",
+      previousFieldPath: "fund_flow.miner_breakeven.previous",
     },
     {
       label: "DeFi Total Borrow",
@@ -153,6 +164,7 @@ function buildRows(data: DashboardData) {
       format: "compact" as const,
       sourceUrl: SOURCE_URLS.btc_oi,
       fieldPath: "fund_flow.btc_oi",
+      previousFieldPath: "fund_flow.btc_oi.previous",
     },
     {
       label: "Long/Short Ratio",
@@ -160,6 +172,7 @@ function buildRows(data: DashboardData) {
       format: "number" as const,
       sourceUrl: SOURCE_URLS.long_short_ratio,
       fieldPath: "fund_flow.long_short_ratio",
+      previousFieldPath: "fund_flow.long_short_ratio.previous",
     },
     {
       label: "Funding Rate (BTC)",
@@ -167,16 +180,17 @@ function buildRows(data: DashboardData) {
       format: "percent" as const,
       sourceUrl: SOURCE_URLS.funding_rate,
       fieldPath: "fund_flow.funding_rate",
+      previousFieldPath: "fund_flow.funding_rate.previous",
     },
   ];
 
   const macroRows = [
-    { label: "CPI", ...data.macro.cpi, format: "percent" as const, sourceUrl: SOURCE_URLS.cpi, fieldPath: "macro.cpi" },
-    { label: "PPI", ...data.macro.ppi, format: "percent" as const, sourceUrl: SOURCE_URLS.ppi, fieldPath: "macro.ppi" },
-    { label: "Non-farm Payrolls", ...data.macro.nfp, format: "number" as const, sourceUrl: SOURCE_URLS.nfp, fieldPath: "macro.nfp" },
-    { label: "Unemployment Rate", ...data.macro.unemployment, format: "percent" as const, sourceUrl: SOURCE_URLS.unemployment, fieldPath: "macro.unemployment" },
-    { label: "FedWatch Rate", ...data.macro.fedwatch_rate, format: undefined, sourceUrl: SOURCE_URLS.fedwatch, fieldPath: "macro.fedwatch_rate" },
-    { label: "SOFR", ...data.macro.sofr, format: "percent" as const, sourceUrl: SOURCE_URLS.sofr, fieldPath: "macro.sofr" },
+    { label: "CPI", ...data.macro.cpi, format: "percent" as const, sourceUrl: SOURCE_URLS.cpi, fieldPath: "macro.cpi", previousFieldPath: "macro.cpi.previous" },
+    { label: "PPI", ...data.macro.ppi, format: "percent" as const, sourceUrl: SOURCE_URLS.ppi, fieldPath: "macro.ppi", previousFieldPath: "macro.ppi.previous" },
+    { label: "Non-farm Payrolls", ...data.macro.nfp, format: "number" as const, sourceUrl: SOURCE_URLS.nfp, fieldPath: "macro.nfp", previousFieldPath: "macro.nfp.previous" },
+    { label: "Unemployment Rate", ...data.macro.unemployment, format: "percent" as const, sourceUrl: SOURCE_URLS.unemployment, fieldPath: "macro.unemployment", previousFieldPath: "macro.unemployment.previous" },
+    { label: "FedWatch Rate", ...data.macro.fedwatch_rate, format: undefined, sourceUrl: SOURCE_URLS.fedwatch, fieldPath: "macro.fedwatch_rate", previousFieldPath: "macro.fedwatch_rate.previous" },
+    { label: "SOFR", ...data.macro.sofr, format: "percent" as const, sourceUrl: SOURCE_URLS.sofr, fieldPath: "macro.sofr", previousFieldPath: "macro.sofr.previous" },
     { label: "DXY", ...data.macro.dxy, format: "number" as const },
     { label: "US 10Y Yield", ...data.macro.us_10y, format: "percent" as const },
     { label: "Gold", ...data.macro.gold, format: "currency" as const },
@@ -214,6 +228,14 @@ export default function Dashboard() {
         if (data) {
           newData = {
             ...newData,
+            crypto_market: {
+              ...newData.crypto_market,
+              // Preserve manually-input BTC Dominance previous value
+              btc_dominance: {
+                ...newData.crypto_market.btc_dominance,
+                previous: data.crypto_market.btc_dominance?.previous ?? newData.crypto_market.btc_dominance?.previous,
+              },
+            },
             fund_flow: {
               ...newData.fund_flow,
               btc_etf_flow: data.fund_flow.btc_etf_flow?.isManual ? data.fund_flow.btc_etf_flow : newData.fund_flow.btc_etf_flow,
@@ -252,16 +274,55 @@ export default function Dashboard() {
   const handleManualUpdate = useCallback(async (fieldPath: string, value: number | string | null) => {
     if (!data) return;
 
+    // Helper to calculate change percentage
+    const calcChangePct = (current: number | null, previous: number | null): number | undefined => {
+      if (current === null || previous === null || previous === 0) return undefined;
+      return ((current - previous) / previous) * 100;
+    };
+
+    // Parse numeric value
+    const parseNumeric = (val: number | string | null): number | null => {
+      if (val === null) return null;
+      const num = typeof val === "string" ? parseFloat(val) : val;
+      return isNaN(num) ? null : num;
+    };
+
     // Update client state and localStorage
     const newData = JSON.parse(JSON.stringify(data)) as DashboardData;
-    const [section, key] = fieldPath.split(".");
+    const parts = fieldPath.split(".");
+
+    // Handle nested path like "crypto_market.btc_dominance.previous"
+    if (parts.length === 3 && parts[2] === "previous") {
+      const [section, key] = parts;
+      const sectionData = newData[section as keyof DashboardData] as unknown as Record<string, unknown>;
+      if (sectionData && key in sectionData) {
+        const existing = sectionData[key] as { current?: number | string | null; previous?: number | string | null };
+        const newPrevious = parseNumeric(value);
+        const currentVal = parseNumeric(existing.current ?? null);
+        sectionData[key] = {
+          ...existing,
+          previous: value,
+          change_pct: calcChangePct(currentVal, newPrevious),
+        };
+        setData(newData);
+        saveStoredData(newData);
+      }
+      return;
+    }
+
+    // Handle regular path like "fund_flow.btc_etf_flow"
+    const [section, key] = parts;
     const sectionData = newData[section as keyof DashboardData] as unknown as Record<string, unknown>;
 
     if (sectionData && key in sectionData) {
+      const existing = sectionData[key] as { current?: number | string | null; previous?: number | string | null };
+      const newCurrent = parseNumeric(value);
+      const previousVal = parseNumeric(existing.previous ?? null);
       sectionData[key] = {
-        ...(sectionData[key] as object),
+        ...existing,
         current: value,
         isManual: true,
+        change_pct: calcChangePct(newCurrent, previousVal),
       };
       setData(newData);
       saveStoredData(newData);
@@ -271,7 +332,7 @@ export default function Dashboard() {
   const handleExportExcel = useCallback(async () => {
     if (!data) return;
 
-    const formatValue = (val: number | string | null, format?: string, isManual?: boolean): string | number => {
+    const formatValue = (val: number | string | null | undefined, format?: string, isManual?: boolean): string | number => {
       if (val === null || val === undefined) return "-";
       if (isManual || typeof val === "string") return String(val);
       switch (format) {
@@ -281,6 +342,12 @@ export default function Dashboard() {
         case "ratio": return formatRatio(val);
         default: return formatNumber(val);
       }
+    };
+
+    const formatChangePctExcel = (change_pct: number | undefined): string => {
+      if (change_pct === undefined || change_pct === null || isNaN(change_pct)) return "-";
+      const sign = change_pct >= 0 ? "+" : "";
+      return `${sign}${change_pct.toFixed(2)}%`;
     };
 
     const { cryptoMarketRows, fundFlowRows, macroRows } = buildRows(data);
@@ -288,58 +355,49 @@ export default function Dashboard() {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Dashboard");
 
-    worksheet.addRow(["📊 암호화폐 시장", "", ""]);
-    worksheet.addRow(["지표", "현재", "소스"]);
-    cryptoMarketRows.forEach(r => worksheet.addRow([r.label, formatValue(r.current, r.format, r.isManual), r.source || ""]));
-    worksheet.addRow(["", "", ""]);
-    worksheet.addRow(["💰 자금흐름", "", ""]);
-    worksheet.addRow(["지표", "현재", "소스"]);
-    fundFlowRows.forEach(r => worksheet.addRow([r.label, formatValue(r.current, r.format, r.isManual), r.source || ""]));
-    worksheet.addRow(["", "", ""]);
-    worksheet.addRow(["🌍 매크로", "", ""]);
-    worksheet.addRow(["지표", "현재", "소스"]);
-    macroRows.forEach(r => worksheet.addRow([r.label, formatValue(r.current, r.format, r.isManual), r.source || ""]));
+    // Set column widths
+    worksheet.columns = [
+      { width: 20 },  // 지표
+      { width: 15 },  // 이전
+      { width: 15 },  // 현재
+      { width: 12 },  // 변화율
+      { width: 12 },  // 소스
+    ];
+
+    worksheet.addRow(["📊 암호화폐 시장", "", "", "", ""]);
+    worksheet.addRow(["지표", "이전", "현재", "변화율", "소스"]);
+    cryptoMarketRows.forEach(r => worksheet.addRow([
+      r.label,
+      formatValue(r.previous, r.format, r.isManual),
+      formatValue(r.current, r.format, r.isManual),
+      formatChangePctExcel(r.change_pct),
+      r.source || ""
+    ]));
+    worksheet.addRow(["", "", "", "", ""]);
+    worksheet.addRow(["💰 자금흐름", "", "", "", ""]);
+    worksheet.addRow(["지표", "이전", "현재", "변화율", "소스"]);
+    fundFlowRows.forEach(r => worksheet.addRow([
+      r.label,
+      formatValue(r.previous, r.format, r.isManual),
+      formatValue(r.current, r.format, r.isManual),
+      formatChangePctExcel(r.change_pct),
+      r.source || ""
+    ]));
+    worksheet.addRow(["", "", "", "", ""]);
+    worksheet.addRow(["🌍 매크로", "", "", "", ""]);
+    worksheet.addRow(["지표", "이전", "현재", "변화율", "소스"]);
+    macroRows.forEach(r => worksheet.addRow([
+      r.label,
+      formatValue(r.previous, r.format, r.isManual),
+      formatValue(r.current, r.format, r.isManual),
+      formatChangePctExcel(r.change_pct),
+      r.source || ""
+    ]));
 
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
     const date = new Date().toISOString().split("T")[0];
     saveAs(blob, `yumyum_${date}.xlsx`);
-  }, [data]);
-
-  const handleCopyTelegram = useCallback(() => {
-    if (!data) return;
-
-    const formatValue = (val: number | string | null, format?: string, isManual?: boolean): string => {
-      if (val === null || val === undefined) return "-";
-      if (isManual || typeof val === "string") return String(val);
-      switch (format) {
-        case "currency": return formatCurrency(val);
-        case "percent": return formatPercent(val);
-        case "compact": return formatCompact(val);
-        case "ratio": return formatRatio(val);
-        default: return formatNumber(val);
-      }
-    };
-
-    const { cryptoMarketRows, fundFlowRows, macroRows } = buildRows(data);
-    const date = new Date().toISOString().split("T")[0];
-
-    const lines = [
-      `📊 *YUMYUM Weekly* (${date})`,
-      "",
-      "*암호화폐 시장*",
-      ...cryptoMarketRows.map(r => `• ${r.label}: ${formatValue(r.current, r.format, r.isManual)}`),
-      "",
-      "*자금흐름*",
-      ...fundFlowRows.map(r => `• ${r.label}: ${formatValue(r.current, r.format, r.isManual)}`),
-      "",
-      "*매크로*",
-      ...macroRows.map(r => `• ${r.label}: ${formatValue(r.current, r.format, r.isManual)}`),
-    ];
-
-    navigator.clipboard.writeText(lines.join("\n"))
-      .then(() => alert("클립보드에 복사되었습니다!"))
-      .catch(() => alert("복사 실패"));
   }, [data]);
 
   useEffect(() => {
@@ -410,7 +468,7 @@ export default function Dashboard() {
         btc_etf_flow: { current: null, isManual: true, source: "manual" },
         eth_etf_flow: { current: null, isManual: true, source: "manual" },
         stablecoin_supply: { current: null },
-        stablecoin_by_chain: { ethereum: { current: null }, tron: { current: null }, bsc: { current: null } },
+        stablecoin_by_chain: { ethereum: { current: null }, tron: { current: null }, bsc: { current: null }, solana: { current: null } },
         cex_flow_btc: { current: null, isManual: true, source: "manual" },
         cex_flow_eth: { current: null, isManual: true, source: "manual" },
         miner_breakeven: { current: null, isManual: true, source: "manual" },
@@ -445,7 +503,6 @@ export default function Dashboard() {
           <ActionButtons
             onRefresh={handleRefresh}
             onExportExcel={handleExportExcel}
-            onCopyTelegram={handleCopyTelegram}
             isLoading={isLoading}
           />
         </div>
@@ -453,17 +510,17 @@ export default function Dashboard() {
         <div className="space-y-8">
           <section>
             <SectionHeader emoji="📊" title="암호화폐 시장" />
-            <DataTable data={cryptoMarketRows} />
+            <DataTable data={cryptoMarketRows} onUpdate={handleManualUpdate} disabled={isLoading} />
           </section>
 
           <section>
             <SectionHeader emoji="💰" title="자금흐름" />
-            <DataTable data={fundFlowRows} onUpdate={handleManualUpdate} />
+            <DataTable data={fundFlowRows} onUpdate={handleManualUpdate} disabled={isLoading} />
           </section>
 
           <section>
             <SectionHeader emoji="🌍" title="매크로" />
-            <DataTable data={macroRows} onUpdate={handleManualUpdate} />
+            <DataTable data={macroRows} onUpdate={handleManualUpdate} disabled={isLoading} />
           </section>
         </div>
       </main>
@@ -486,7 +543,6 @@ export default function Dashboard() {
         <ActionButtons
           onRefresh={handleRefresh}
           onExportExcel={handleExportExcel}
-          onCopyTelegram={handleCopyTelegram}
           isLoading={isLoading}
         />
       </div>
@@ -494,17 +550,17 @@ export default function Dashboard() {
       <div className="space-y-8">
         <section>
           <SectionHeader emoji="📊" title="암호화폐 시장" />
-          <DataTable data={cryptoMarketRows} />
+          <DataTable data={cryptoMarketRows} onUpdate={handleManualUpdate} disabled={isLoading} />
         </section>
 
         <section>
           <SectionHeader emoji="💰" title="자금흐름" />
-          <DataTable data={fundFlowRows} onUpdate={handleManualUpdate} />
+          <DataTable data={fundFlowRows} onUpdate={handleManualUpdate} disabled={isLoading} />
         </section>
 
         <section>
           <SectionHeader emoji="🌍" title="매크로" />
-          <DataTable data={macroRows} onUpdate={handleManualUpdate} />
+          <DataTable data={macroRows} onUpdate={handleManualUpdate} disabled={isLoading} />
         </section>
       </div>
     </main>

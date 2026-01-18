@@ -21,6 +21,42 @@ import {
   fetchEthEtfFlow,
 } from "./defillama";
 
+// Helper to calculate change percentage
+function calcChangePct(current: number | null, previous: number | null): number | undefined {
+  if (current === null || previous === null || previous === 0) return undefined;
+  return ((current - previous) / previous) * 100;
+}
+
+// Helper to calculate ratio MetricValue with both current and previous
+function calcRatio(
+  numerator: MetricValue,
+  denominator: MetricValue,
+  source: MetricValue["source"]
+): MetricValue {
+  const numCurrent = typeof numerator.current === "number" ? numerator.current : null;
+  const denCurrent = typeof denominator.current === "number" ? denominator.current : null;
+  const numPrevious = typeof numerator.previous === "number" ? numerator.previous : null;
+  const denPrevious = typeof denominator.previous === "number" ? denominator.previous : null;
+
+  if (numCurrent === null || denCurrent === null || denCurrent === 0) {
+    return { current: null, error: "Missing data for ratio calculation", source };
+  }
+
+  const current = numCurrent / denCurrent;
+  const previous = numPrevious !== null && denPrevious !== null && denPrevious !== 0
+    ? numPrevious / denPrevious
+    : null;
+
+  return {
+    current,
+    current_at: numerator.current_at, // Use numerator's timestamp
+    previous,
+    previous_at: numerator.previous_at,
+    change_pct: calcChangePct(current, previous),
+    source,
+  };
+}
+
 // Fetch all crypto market data
 async function fetchCryptoMarket(): Promise<CryptoMarket> {
   // Fetch CoinGecko data first (combined to avoid rate limiting)
@@ -46,16 +82,9 @@ async function fetchCryptoMarket(): Promise<CryptoMarket> {
     fetchCmeGap(),
   ]);
 
-  // Calculate derived values
-  const btcGoldRatio: MetricValue =
-    typeof btcPrice.current === "number" && typeof gold.current === "number"
-      ? { current: btcPrice.current / gold.current, source: "yahoo" }
-      : { current: null, error: "Missing BTC or Gold price" };
-
-  const ethBtcRatio: MetricValue =
-    typeof ethPrice.current === "number" && typeof btcPrice.current === "number"
-      ? { current: ethPrice.current / btcPrice.current, source: "coingecko" }
-      : { current: null, error: "Missing ETH or BTC price" };
+  // Calculate derived values with both current and previous
+  const btcGoldRatio = calcRatio(btcPrice, gold, "yahoo");
+  const ethBtcRatio = calcRatio(ethPrice, btcPrice, "coingecko");
 
   return {
     btc_price: btcPrice,
@@ -81,6 +110,7 @@ async function fetchFundFlow(): Promise<FundFlow> {
     ethereumStable,
     tronStable,
     bscStable,
+    solanaStable,
     lendingData,
   ] = await Promise.all([
     fetchBtcEtfFlow(),
@@ -89,6 +119,7 @@ async function fetchFundFlow(): Promise<FundFlow> {
     fetchStablecoinByChain("Ethereum"),
     fetchStablecoinByChain("Tron"),
     fetchStablecoinByChain("BSC"),
+    fetchStablecoinByChain("Solana"),
     fetchTopLendingProtocols(),
   ]);
 
@@ -100,6 +131,7 @@ async function fetchFundFlow(): Promise<FundFlow> {
       ethereum: ethereumStable,
       tron: tronStable,
       bsc: bscStable,
+      solana: solanaStable,
     },
     // Manual input fields (APIs not accessible)
     cex_flow_btc: { current: null, isManual: true, source: "manual" },
@@ -123,11 +155,8 @@ async function fetchMacro(): Promise<Macro> {
     fetchNasdaq(),
   ]);
 
-  // Calculate S&P 500 / NASDAQ ratio
-  const sp500NasdaqRatio: MetricValue =
-    typeof sp500.current === "number" && typeof nasdaq.current === "number"
-      ? { current: sp500.current / nasdaq.current, source: "yahoo" }
-      : { current: null, error: "Missing S&P 500 or NASDAQ price" };
+  // Calculate S&P 500 / NASDAQ ratio with both current and previous
+  const sp500NasdaqRatio = calcRatio(sp500, nasdaq, "yahoo");
 
   return {
     // Auto-fetched
