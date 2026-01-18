@@ -61,6 +61,14 @@ function buildRows(data: DashboardData) {
       format: "number" as const,
     },
     {
+      label: "MVRV",
+      ...data.crypto_market.mvrv,
+      format: "number" as const,
+      sourceUrl: "https://www.coinglass.com/pro/i/mvrv-ratio",
+      fieldPath: "crypto_market.mvrv",
+      previousFieldPath: "crypto_market.mvrv.previous",
+    },
+    {
       label: "Realized Vol 7D",
       ...data.crypto_market.vol_7d,
       format: "percent" as const,
@@ -111,6 +119,21 @@ function buildRows(data: DashboardData) {
     {
       label: "┗ Ethereum",
       ...data.fund_flow.stablecoin_by_chain.ethereum,
+      format: "compact" as const,
+    },
+    {
+      label: "  ┗ Base",
+      ...data.fund_flow.stablecoin_by_chain.base,
+      format: "compact" as const,
+    },
+    {
+      label: "  ┗ Arbitrum",
+      ...data.fund_flow.stablecoin_by_chain.arbitrum,
+      format: "compact" as const,
+    },
+    {
+      label: "  ┗ Optimism",
+      ...data.fund_flow.stablecoin_by_chain.optimism,
       format: "compact" as const,
     },
     {
@@ -235,6 +258,8 @@ export default function Dashboard() {
                 ...newData.crypto_market.btc_dominance,
                 previous: data.crypto_market.btc_dominance?.previous ?? newData.crypto_market.btc_dominance?.previous,
               },
+              // Preserve manually-input MVRV values
+              mvrv: data.crypto_market.mvrv?.isManual ? data.crypto_market.mvrv : newData.crypto_market.mvrv,
             },
             fund_flow: {
               ...newData.fund_flow,
@@ -458,6 +483,7 @@ export default function Dashboard() {
         btc_gold_ratio: { current: null },
         eth_btc_ratio: { current: null },
         fear_greed: { current: null },
+        mvrv: { current: null, isManual: true, source: "manual" },
         vol_7d: { current: null },
         vol_30d: { current: null },
         mstr: { current: null },
@@ -468,7 +494,7 @@ export default function Dashboard() {
         btc_etf_flow: { current: null, isManual: true, source: "manual" },
         eth_etf_flow: { current: null, isManual: true, source: "manual" },
         stablecoin_supply: { current: null },
-        stablecoin_by_chain: { ethereum: { current: null }, tron: { current: null }, bsc: { current: null }, solana: { current: null } },
+        stablecoin_by_chain: { ethereum: { current: null }, base: { current: null }, arbitrum: { current: null }, optimism: { current: null }, tron: { current: null }, bsc: { current: null }, solana: { current: null } },
         cex_flow_btc: { current: null, isManual: true, source: "manual" },
         cex_flow_eth: { current: null, isManual: true, source: "manual" },
         miner_breakeven: { current: null, isManual: true, source: "manual" },

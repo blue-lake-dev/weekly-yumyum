@@ -39,6 +39,7 @@ export interface CryptoMarket {
   btc_gold_ratio: MetricValue;
   eth_btc_ratio: MetricValue;
   fear_greed: MetricValue;
+  mvrv: MetricValue;
   vol_7d: MetricValue;
   vol_30d: MetricValue;
   mstr: MetricValue;
