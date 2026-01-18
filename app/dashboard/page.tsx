@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 import { Header, SectionHeader, DataTable, ActionButtons } from "@/components";
 import { formatCurrency, formatPercent, formatCompact, formatNumber, formatRatio } from "@/lib/utils";
 import { getStoredData, saveStoredData } from "@/lib/client-storage";
@@ -267,7 +268,7 @@ export default function Dashboard() {
     }
   }, [data]);
 
-  const handleExportExcel = useCallback(() => {
+  const handleExportExcel = useCallback(async () => {
     if (!data) return;
 
     const formatValue = (val: number | string | null, format?: string, isManual?: boolean): string | number => {
@@ -284,26 +285,25 @@ export default function Dashboard() {
 
     const { cryptoMarketRows, fundFlowRows, macroRows } = buildRows(data);
 
-    const rows = [
-      ["📊 암호화폐 시장", "", ""],
-      ["지표", "현재", "소스"],
-      ...cryptoMarketRows.map(r => [r.label, formatValue(r.current, r.format, r.isManual), r.source || ""]),
-      ["", "", ""],
-      ["💰 자금흐름", "", ""],
-      ["지표", "현재", "소스"],
-      ...fundFlowRows.map(r => [r.label, formatValue(r.current, r.format, r.isManual), r.source || ""]),
-      ["", "", ""],
-      ["🌍 매크로", "", ""],
-      ["지표", "현재", "소스"],
-      ...macroRows.map(r => [r.label, formatValue(r.current, r.format, r.isManual), r.source || ""]),
-    ];
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Dashboard");
 
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Dashboard");
+    worksheet.addRow(["📊 암호화폐 시장", "", ""]);
+    worksheet.addRow(["지표", "현재", "소스"]);
+    cryptoMarketRows.forEach(r => worksheet.addRow([r.label, formatValue(r.current, r.format, r.isManual), r.source || ""]));
+    worksheet.addRow(["", "", ""]);
+    worksheet.addRow(["💰 자금흐름", "", ""]);
+    worksheet.addRow(["지표", "현재", "소스"]);
+    fundFlowRows.forEach(r => worksheet.addRow([r.label, formatValue(r.current, r.format, r.isManual), r.source || ""]));
+    worksheet.addRow(["", "", ""]);
+    worksheet.addRow(["🌍 매크로", "", ""]);
+    worksheet.addRow(["지표", "현재", "소스"]);
+    macroRows.forEach(r => worksheet.addRow([r.label, formatValue(r.current, r.format, r.isManual), r.source || ""]));
 
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
     const date = new Date().toISOString().split("T")[0];
-    XLSX.writeFile(wb, `yumyum_${date}.xlsx`);
+    saveAs(blob, `yumyum_${date}.xlsx`);
   }, [data]);
 
   const handleCopyTelegram = useCallback(() => {
