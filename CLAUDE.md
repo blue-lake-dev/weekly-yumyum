@@ -1,16 +1,42 @@
-# CLAUDE.md - YUMYUM Weekly Dashboard
+# CLAUDE.md - YUMYUM Dashboard
+
+## 현재 버전
+
+> **V2 개발 중** - 내부 대시보드 → 퍼블릭 커뮤니티 플랫폼 전환
+>
+> 상세 마이그레이션 계획: [`docs/v2-plan.md`](./docs/v2-plan.md)
+
+---
 
 ## 프로젝트 개요
 
-**프로젝트명:** YUMYUM Weekly Dashboard  
-**목적:** 크립토 시장 주간 지표 대시보드 (팀 내부용, 3명)  
-**채널:** 얌얌코인 유튜브/텔레그램 채널의 주간 시황 콘텐츠 제작 지원
+**프로젝트명:** YUMYUM Dashboard
+**목적:** ETH 중심 주간 시장 지표 대시보드 + 커뮤니티 플랫폼
+**채널:** 얌얌코인 유튜브/텔레그램 채널
+
+### V1 (완료)
+- 팀 내부용 대시보드 (3명)
+- localStorage 기반
+- 40+ 지표, 15개 수동 입력
+
+### V2 (진행 중)
+- 퍼블릭 커뮤니티 플랫폼
+- Supabase 백엔드 (DB + Realtime + Auth)
+- ETH 중심 지표 (Supply, RWA, ETF, TVL)
+- 일정 캘린더 + 실시간 채팅
 
 ## 기술 스택
 
+### V1 (현재)
 - **Frontend:** Next.js 15 + TypeScript + Tailwind CSS
-- **Data Fetching:** TypeScript API Routes → 외부 API 호출
-- **Storage:** Client-side state (세션 중 데이터 유지, 영구 저장 없음)
+- **Storage:** localStorage
+- **Hosting:** Vercel
+
+### V2 (마이그레이션 예정)
+- **Frontend:** Next.js 15 + TypeScript + Tailwind CSS
+- **Backend:** Supabase (PostgreSQL + Realtime)
+- **Auth:** Telegram OTP (@yumyumcoin_admin_bot)
+- **Data Fetch:** Daily cron + Admin manual trigger
 - **Hosting:** Vercel (무료 tier)
 
 ## 디자인 가이드
@@ -90,7 +116,15 @@
 
 ---
 
-## 개발 계획 (Phase별)
+## 개발 계획
+
+### V2 계획
+> **V2 상세 계획은 [`docs/v2-plan.md`](./docs/v2-plan.md) 참조**
+
+### V1 Phase별 계획 (참고용)
+
+<details>
+<summary>V1 개발 계획 (완료됨) - 클릭하여 펼치기</summary>
 
 ### Phase 1: 프로젝트 셋업
 **목표:** Next.js 프로젝트 초기화 및 기본 구조 생성
@@ -300,6 +334,8 @@ Dashboard → ✏️ 수동 입력 → /api/update-manual → Vercel KV 업데�
 - 데이터 히스토리 저장 (Vercel Postgres 또는 JSON 누적)
 - 차트 시각화 (필요 시)
 
+</details>
+
 ---
 
 ## 코딩 규칙
@@ -318,16 +354,33 @@ Dashboard → ✏️ 수동 입력 → /api/update-manual → Vercel KV 업데�
 
 ## 참고 자료
 
-- 데이터 소스 문서: 이 대화 내 "Final API Sources" 참조
+- **V2 마이그레이션 계획:** [`docs/v2-plan.md`](./docs/v2-plan.md)
+- **API 테스트 스크립트:**
+  - `scripts/test-farside-scraper.ts` - ETF 플로우 스크래퍼 (Puppeteer)
+  - `scripts/test-dune-api.ts` - Dune Analytics API 테스트
+  - `scripts/test-defillama-rwa.ts` - DeFiLlama RWA 데이터
+  - `scripts/test-defillama-dat.ts` - DeFiLlama DAT 데이터
 
 ---
 
 ## 현재 진행 상태
 
+### V1 (내부 대시보드)
 - [x] Phase 1: 프로젝트 셋업
 - [x] Phase 2: UI 컴포넌트 개발
 - [x] Phase 3: 대시보드 페이지 조립
 - [x] Phase 4: Export 기능 구현
 - [x] Phase 5: 데이터 수집 API (TypeScript)
-- [ ] Phase 6: 배포
-- [ ] Phase 7: 인증 및 추가 기능 (나중에)
+- [x] Phase 6: 배포 (완료)
+
+### V2 (퍼블릭 플랫폼) - 진행 중
+- [x] 데이터 소스 리서치 및 API 테스트
+- [x] 아키텍처 설계 (Supabase, normalized schema)
+- [x] UI/UX 결정 (top nav, 지표별 시각화)
+- [x] 마이그레이션 계획 작성 (`docs/v2-plan.md`)
+- [ ] Supabase 셋업
+- [ ] 신규 fetcher 구현 (Etherscan, Dune, Farside)
+- [ ] 프론트엔드 리팩토링
+- [ ] 캘린더 & 채팅 기능
+- [ ] Telegram OTP 인증
+- [ ] 배포
