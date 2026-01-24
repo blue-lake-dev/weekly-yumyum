@@ -368,11 +368,13 @@ async function fetchData() {
 ## 9. Migration Steps
 
 ### Phase 1: Setup
-- [ ] Create Supabase project
-- [ ] Create tables (metrics, calendar_events)
-- [ ] Set up RLS policies
+- [x] Create Supabase project
+- [x] Create tables (metrics, calendar_events, admins)
+- [x] Set up RLS policies
 - [ ] Create Telegram bot (@yumyumcoin_admin_bot)
-- [ ] Add environment variables
+- [x] Add environment variables
+- [x] Add Supabase client (`lib/supabase.ts`)
+- [x] Add database types (`lib/database.types.ts`)
 
 ### Phase 2: Backend
 - [ ] Create new fetchers (Etherscan, Dune, Farside)
