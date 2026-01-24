@@ -1,16 +1,25 @@
 import { NextResponse } from "next/server";
 import { fetchAndStoreV2Metrics } from "@/lib/fetchers/v2-aggregator";
+import { extractToken, verifyJwt } from "@/lib/auth";
 
 // Manual trigger for admin to fetch all metrics
-// TODO: Replace with JWT auth middleware after Telegram OTP is implemented
+// Protected by JWT auth (Telegram OTP login)
 
 export async function POST(request: Request) {
-  // Simple admin secret check (temporary until JWT auth)
-  const authHeader = request.headers.get("authorization");
-  const adminSecret = process.env.ADMIN_SECRET;
+  // Verify JWT token
+  const token = extractToken(request);
 
-  if (adminSecret && authHeader !== `Bearer ${adminSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!token) {
+    return NextResponse.json({ error: "No token provided" }, { status: 401 });
+  }
+
+  const { valid, error } = await verifyJwt(token);
+
+  if (!valid) {
+    return NextResponse.json(
+      { error: error || "Invalid token" },
+      { status: 401 }
+    );
   }
 
   try {

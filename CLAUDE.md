@@ -392,5 +392,8 @@ Dashboard → ✏️ 수동 입력 → /api/update-manual → Vercel KV 업데�
   - [x] `/api/admin/fetch` - Manual trigger
 - [ ] 프론트엔드 리팩토링
 - [ ] 캘린더 & 채팅 기능
-- [ ] Telegram OTP 인증
+- [x] Telegram OTP 인증
+  - [x] `lib/telegram.ts` - Bot API helper
+  - [x] `lib/auth.ts` - JWT sign/verify
+  - [x] `/api/auth/request-otp`, `/api/auth/verify-otp`
 - [ ] 배포

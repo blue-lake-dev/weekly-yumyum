@@ -397,7 +397,12 @@ async function fetchData() {
 - [x] Create V2 aggregator (`lib/fetchers/v2-aggregator.ts`)
 - [x] Create `/api/cron/fetch` route
 - [x] Create `/api/admin/fetch` route (manual trigger)
-- [ ] Implement JWT auth middleware (after Telegram OTP)
+- [x] Implement Telegram OTP + JWT auth
+  - [x] `lib/telegram.ts` - Bot API, send OTP
+  - [x] `lib/auth.ts` - JWT sign/verify
+  - [x] `lib/otp-store.ts` - In-memory OTP storage
+  - [x] `/api/auth/request-otp` - Request OTP
+  - [x] `/api/auth/verify-otp` - Verify and issue JWT
 
 ### Phase 3: Frontend
 - [ ] Remove localStorage logic
