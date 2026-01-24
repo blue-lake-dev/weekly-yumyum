@@ -378,8 +378,15 @@ Dashboard → ✏️ 수동 입력 → /api/update-manual → Vercel KV 업데�
 - [x] 아키텍처 설계 (Supabase, normalized schema)
 - [x] UI/UX 결정 (top nav, 지표별 시각화)
 - [x] 마이그레이션 계획 작성 (`docs/v2-plan.md`)
-- [ ] Supabase 셋업
-- [ ] 신규 fetcher 구현 (Etherscan, Dune, Farside)
+- [x] Supabase 셋업 (DB, types, client, RLS)
+- [ ] 신규 fetcher 구현
+  - [x] Etherscan (ETH supply)
+  - [x] ultrasound.money (daily burn/issuance)
+  - [ ] Dune (ETF holdings)
+  - [ ] Farside (ETF flows)
+  - [ ] DeFiLlama (RWA by chain)
+  - [ ] rwa.xyz CSV parser
+- [ ] API routes (cron, admin)
 - [ ] 프론트엔드 리팩토링
 - [ ] 캘린더 & 채팅 기능
 - [ ] Telegram OTP 인증

@@ -88,12 +88,12 @@
 
 | Category | Metric | Source | API/Method |
 |----------|--------|--------|------------|
-| **ETH Core** | ETH Supply | Etherscan | `ethsupply2` endpoint |
-| | ETH Daily Burn | Etherscan | `ethsupply2` endpoint |
-| | ETH Daily Issuance | Etherscan | `ethsupply2` endpoint |
+| **ETH Core** | ETH Supply | Etherscan | `ethsupply2` → calculate: `EthSupply + Eth2Staking - BurntFees` |
+| | ETH Daily Burn | ultrasound.money | `/api/v2/fees/gauge-rates` → `d1.burn_rate_yearly.eth / 365` |
+| | ETH Daily Issuance | ultrasound.money | `/api/v2/fees/gauge-rates` → `d1.issuance_rate_yearly.eth / 365` |
 | | ETH Price | CoinGecko | `/simple/price` |
-| **RWA** | RWA Total (ETH + L2) | DeFiLlama | `/api/protocols` filter `category=RWA` |
-| | RWA by Category | DeFiLlama | Calculated from protocols (Gold, Treasuries, etc.) |
+| **RWA** | RWA Total by Category | rwa.xyz | Admin CSV upload → parse `rwa-token-timeseries-export.csv` |
+| | RWA TVL by Chain (ETH + L2) | DeFiLlama | `/v2/chains` + `/protocols?category=RWA` filter by chain |
 | **Holdings** | ETF Holdings Total | Dune | Query `3944634` |
 | | ETF Holdings by Ticker | Dune | Query `3944634` (ETHA, ETHE, etc.) |
 | | DAT Holdings | DeFiLlama | `/treasuries` endpoint |
@@ -117,6 +117,8 @@
 | DeFiLlama | None | Unlimited |
 | CoinGecko | None (or demo key) | 10-30 calls/min |
 | Alternative.me | None | Unlimited |
+| ultrasound.money | None | Unlimited |
+| rwa.xyz | Account required | CSV download (API pending approval) |
 
 ---
 
@@ -235,6 +237,7 @@ CREATE POLICY "Service write" ON calendar_events FOR ALL USING (auth.role() = 's
 | Feature | Description |
 |---------|-------------|
 | 🔄 Fetch Now | Manual trigger to fetch all data |
+| 📤 RWA Upload | Upload rwa.xyz CSV for RWA category data |
 | 📅 Calendar | Show/hide events, add custom events |
 | 💬 Chat (later) | Clear chat, basic moderation |
 
@@ -416,6 +419,8 @@ async function fetchData() {
     /admin
       /fetch
         route.ts          # Manual fetch trigger
+      /rwa-upload
+        route.ts          # Parse & store rwa.xyz CSV
       /calendar
         route.ts          # Calendar CRUD
     /auth
@@ -445,9 +450,10 @@ async function fetchData() {
   auth.ts                 # NEW: JWT helpers
   telegram.ts             # NEW: Bot API
   fetchers/
-    etherscan.ts          # NEW
-    dune.ts               # NEW
-    farside.ts            # NEW (Puppeteer scraper)
+    etherscan.ts          # NEW: ETH total supply
+    ultrasound.ts         # NEW: ETH daily burn/issuance
+    dune.ts               # NEW: ETF holdings
+    farside.ts            # NEW: ETF flows (Puppeteer scraper)
     coingecko.ts          # Keep
     defillama.ts          # Update: add RWA, treasuries
     alternative.ts        # Keep
