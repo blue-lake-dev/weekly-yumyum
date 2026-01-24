@@ -92,8 +92,8 @@
 | | ETH Daily Burn | ultrasound.money | `/api/v2/fees/gauge-rates` → `d1.burn_rate_yearly.eth / 365` |
 | | ETH Daily Issuance | ultrasound.money | `/api/v2/fees/gauge-rates` → `d1.issuance_rate_yearly.eth / 365` |
 | | ETH Price | CoinGecko | `/simple/price` |
-| **RWA** | RWA Total by Category | rwa.xyz | Admin CSV upload → parse `rwa-token-timeseries-export.csv` |
-| | RWA TVL by Chain (ETH + L2) | DeFiLlama | `/v2/chains` + `/protocols?category=RWA` filter by chain |
+| **RWA** | RWA Total by Category | rwa.xyz | Admin CSV upload → `rwa-token-timeseries-export.csv` (excl. Stablecoins) |
+| | RWA by Chain (ETH + L2) | DeFiLlama | `/protocols` → filter `category=RWA` → aggregate `chainTvls` |
 | **Holdings** | ETF Holdings Total | Dune | Query `3944634` |
 | | ETF Holdings by Ticker | Dune | Query `3944634` (ETHA, ETHE, etc.) |
 | | DAT Holdings | DeFiLlama | `/treasuries` endpoint |
@@ -119,6 +119,12 @@
 | Alternative.me | None | Unlimited |
 | ultrasound.money | None | Unlimited |
 | rwa.xyz | Account required | CSV download (API pending approval) |
+
+### Data Source Notes
+
+- **rwa.xyz CSV** provides RWA by category (Treasury, Private Credit, Commodities, etc.) but excludes Stablecoins since DeFiLlama provides better chain-level breakdown
+- **DeFiLlama** is primary source for: Stablecoins by chain, RWA by chain, TVL
+- Categories in rwa.xyz CSV: US Treasury Debt, non-US Government Debt, Corporate Bonds, Private Credit, Public Equity, Private Equity, Commodities, Structured Credit, Institutional Alternative Funds, Actively-Managed Strategies
 
 ---
 
@@ -170,8 +176,9 @@ CREATE TABLE admins (
 -- ETH Core
 eth_supply, eth_burn, eth_issuance, eth_price
 
--- RWA
-rwa_total, rwa_by_category (metadata: {gold, treasuries, stocks, ...})
+-- RWA (excl. Stablecoins - tracked separately)
+rwa_total, rwa_by_category (metadata: {treasuries, private_credit, commodities, corporate_bonds, ...})
+rwa_by_chain (metadata: {ethereum, arbitrum, base, optimism, polygon, ...})
 
 -- Holdings
 etf_holdings_total, etf_holdings (metadata: [{ticker, value}, ...])
@@ -380,8 +387,13 @@ async function fetchData() {
 - [x] Add database types (`lib/database.types.ts`)
 
 ### Phase 2: Backend
-- [ ] Create new fetchers (Etherscan, Dune, Farside)
-- [ ] Update existing fetchers (DeFiLlama RWA endpoints)
+- [x] Create new fetchers
+  - [x] Etherscan (`lib/fetchers/etherscan.ts`) - ETH supply
+  - [x] ultrasound.money (`lib/fetchers/ultrasound.ts`) - ETH burn/issuance
+  - [x] Dune (`lib/fetchers/dune.ts`) - ETF holdings
+  - [x] Farside (`lib/fetchers/farside.ts`) - ETF flows
+  - [x] rwa.xyz (`lib/fetchers/rwa-xyz.ts`) - RWA by category
+- [x] Add DeFiLlama RWA fetcher (`lib/fetchers/defillama-rwa.ts`) - RWA by chain
 - [ ] Create `/api/cron/fetch` route
 - [ ] Create `/api/admin/fetch` route (manual trigger)
 - [ ] Implement JWT auth middleware
