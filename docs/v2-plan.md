@@ -394,9 +394,10 @@ async function fetchData() {
   - [x] Farside (`lib/fetchers/farside.ts`) - ETF flows
   - [x] rwa.xyz (`lib/fetchers/rwa-xyz.ts`) - RWA by category
 - [x] Add DeFiLlama RWA fetcher (`lib/fetchers/defillama-rwa.ts`) - RWA by chain
-- [ ] Create `/api/cron/fetch` route
-- [ ] Create `/api/admin/fetch` route (manual trigger)
-- [ ] Implement JWT auth middleware
+- [x] Create V2 aggregator (`lib/fetchers/v2-aggregator.ts`)
+- [x] Create `/api/cron/fetch` route
+- [x] Create `/api/admin/fetch` route (manual trigger)
+- [ ] Implement JWT auth middleware (after Telegram OTP)
 
 ### Phase 3: Frontend
 - [ ] Remove localStorage logic

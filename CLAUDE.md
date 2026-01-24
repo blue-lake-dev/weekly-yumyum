@@ -386,7 +386,10 @@ Dashboard → ✏️ 수동 입력 → /api/update-manual → Vercel KV 업데�
   - [x] Farside (ETF flows)
   - [x] DeFiLlama (RWA by chain) - `/protocols` → filter RWA → aggregate chainTvls
   - [x] rwa.xyz CSV parser (RWA by category, excl. Stablecoins)
-- [ ] API routes (cron, admin)
+- [x] API routes (cron, admin)
+  - [x] V2 aggregator (`lib/fetchers/v2-aggregator.ts`)
+  - [x] `/api/cron/fetch` - Vercel cron daily fetch
+  - [x] `/api/admin/fetch` - Manual trigger
 - [ ] 프론트엔드 리팩토링
 - [ ] 캘린더 & 채팅 기능
 - [ ] Telegram OTP 인증

@@ -73,7 +73,8 @@ export const METRIC_KEYS = {
 
   // RWA
   rwa_total: "rwa_total",
-  rwa_by_category: "rwa_by_category", // metadata: {gold, treasuries, stocks, ...}
+  rwa_by_category: "rwa_by_category", // metadata: {treasuries, private_credit, ...}
+  rwa_by_chain: "rwa_by_chain", // metadata: {ethereum, arbitrum, base, ...}
 
   // Holdings
   etf_holdings_total: "etf_holdings_total",
