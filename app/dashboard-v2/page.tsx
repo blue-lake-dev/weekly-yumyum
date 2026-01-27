@@ -64,7 +64,7 @@ export default function DashboardV2Preview() {
       <header className="sticky top-0 z-50 w-full border-b border-[#E5E7EB] bg-white">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
           {/* Left: Logo + Pixel Mascots */}
-          <div className="flex items-center gap-3">
+          <div className="flex flex-1 items-center gap-3">
             <span className="font-pixel text-xl text-[#171717]">
               YUMYUM
             </span>
@@ -117,7 +117,7 @@ export default function DashboardV2Preview() {
           </nav>
 
           {/* Right: Social + Admin */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-1 items-center justify-end gap-2">
             <a href="#" className="flex h-8 w-8 items-center justify-center">
               <svg viewBox="0 0 24 24" className="h-6 w-6 fill-[#FF0000]">
                 <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
@@ -181,7 +181,7 @@ export default function DashboardV2Preview() {
                   <Area
                     type="monotone"
                     dataKey="price"
-                    stroke="#E7F60E"
+                    stroke="#B8C20A"
                     strokeWidth={2}
                     fill="#E7F60E"
                     fillOpacity={1}
@@ -202,9 +202,6 @@ export default function DashboardV2Preview() {
                   </p>
                   <p className="text-2xl font-bold text-[#171717] tabular-nums">
                     1.2억 ETH
-                  </p>
-                  <p className="text-xs text-[#6B7280]">
-                    유통 공급량 1.19억 ETH
                   </p>
                 </div>
                 <div className="h-16 w-32">
@@ -232,9 +229,8 @@ export default function DashboardV2Preview() {
                     총 예치량 (TVL)
                   </p>
                   <p className="text-2xl font-bold text-[#171717] tabular-nums">
-                    48조 KRW
+                    $48B
                   </p>
-                  <p className="text-xs text-[#6B7280]">예치 비율 18.5%</p>
                 </div>
                 <div className="h-16 w-32">
                   <ResponsiveContainer width="100%" height="100%">

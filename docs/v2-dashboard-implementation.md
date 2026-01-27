@@ -193,9 +193,9 @@ components/v2/
 
 | Chart | Component | Data Shape | Colors |
 |-------|-----------|------------|--------|
-| ETH Price | `AreaChart` | `[{date, price}]` | Line: `#E7F60E`, Fill: `#E7F60E26` |
-| Supply | `Sparkline` | `[{date, value}]` | `#0D9488` (teal) |
-| TVL | `Sparkline` | `[{date, value}]` | `#6366F1` (indigo) |
+| ETH Price | `AreaChart` | `[{date, price}]` | Line: `#B8C20A`, Fill: `#E7F60E` (solid) |
+| Supply | `AreaChart` (sparkline) | `[{day, value}]` | Line/Fill: `#0D9488` (teal, 20% opacity) |
+| TVL | `AreaChart` (sparkline) | `[{day, value}]` | Line/Fill: `#6366F1` (indigo, 20% opacity) |
 | Burn vs Issuance | `GroupedBarChart` | `[{date, burn, issuance}]` | Burn: `#E7F60E`, Issuance: `#9CA3AF` |
 | RWA by Chain | `HorizontalBar` | `[{name, value, pct}]` | Gradient from `#E7F60E` |
 | RWA by Category | `HorizontalBar` | `[{name, value, pct}]` | `#E7F60E` |
