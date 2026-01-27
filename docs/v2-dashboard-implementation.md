@@ -209,7 +209,7 @@ components/v2/
 
 ## Build Steps
 
-### Phase 1: Aesthetic Preview (Current)
+### Phase 1: Aesthetic Preview ✅ COMPLETE
 - [x] Receive pixel art assets from user ✅
 - [x] Create static preview page with assets ✅
 - [x] Header with logo, mascots, nav, social icons ✅
@@ -218,7 +218,19 @@ components/v2/
   - [x] Supply card (sparkline with fill, teal)
   - [x] TVL card (sparkline with fill, indigo)
   - [x] Burn vs Issuance card (grouped BarChart)
-- [ ] User validates visual direction
+- [x] RWA Section ✅
+  - [x] RWA Total card with bank icon
+  - [x] Chain breakdown (horizontal bars)
+  - [x] Category breakdown (horizontal bars with background)
+- [x] ETF Section ✅
+  - [x] ETH ETF Flow card (bar chart + doge-suit)
+  - [x] ETH Holdings card (horizontal bars)
+  - [x] BTC ETF Flow card (bar chart)
+- [x] Market Section ✅
+  - [x] 5 metric cards (BTC price, dominance, fear/greed gauge, ETH/BTC, stablecoin)
+  - [x] Stablecoin by chain (segmented bar)
+- [x] Footer with data sources ✅
+- [x] Floating chat bubble with toggle panel ✅
 
 ### Phase 2: Chart Components
 - [ ] Install Recharts (`npm install recharts`)
