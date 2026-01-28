@@ -90,9 +90,13 @@ export default function DashboardV2Preview() {
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
           {/* Left: Logo + Pixel Mascots */}
           <div className="flex flex-1 items-center gap-3">
-            <span className="font-pixel text-xl text-[#171717]">
-              YUMYUM
-            </span>
+            <Image
+              src="/assets/logo-full.png"
+              alt="얌얌코인"
+              width={120}
+              height={36}
+              className="object-contain"
+            />
             <div className="flex items-center gap-1">
               <Image
                 src="/assets/pixels/doge.png"
@@ -164,9 +168,7 @@ export default function DashboardV2Preview() {
       <main className="mx-auto max-w-3xl px-4 py-4">
         {/* ETH Section */}
         <section className="mb-4">
-          <h2 className="mb-4 font-pixel text-lg text-[#171717]">
-            이더리움
-          </h2>
+          <h2 className="mb-4 font-pixel text-lg text-[#171717]">이더리움</h2>
 
           {/* Row 1: ETH Price Card - Full Width */}
           <div className="mb-3 rounded-xl bg-white p-6 shadow-sm">
@@ -176,8 +178,7 @@ export default function DashboardV2Preview() {
                   이더리움 현재가
                 </p>
                 <p className="text-4xl font-bold text-[#171717] tabular-nums tracking-tight">
-                  $3,456{" "}
-                  <span className="text-lg text-[#16A34A]">+5.7%</span>
+                  $3,456 <span className="text-lg text-[#16A34A]">+5.7%</span>
                 </p>
               </div>
               <Image
@@ -209,7 +210,7 @@ export default function DashboardV2Preview() {
                     stroke="#B8C20A"
                     strokeWidth={2}
                     fill="#E7F60E"
-                    fillOpacity={1}
+                    fillOpacity={0.3}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -222,15 +223,15 @@ export default function DashboardV2Preview() {
             <div className="rounded-xl bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-pixel text-sm text-[#6B7280]">
-                    공급량
-                  </p>
+                  <p className="font-pixel text-sm text-[#6B7280]">공급량</p>
                   <p className="text-2xl font-extrabold text-[#171717] tabular-nums tracking-tight">
                     1.2억 ETH
                   </p>
-                  <p className="text-xs font-semibold text-[#16A34A]">+1,247 (7d)</p>
+                  <p className="text-xs font-semibold text-[#16A34A]">
+                    +1,247 (7d)
+                  </p>
                 </div>
-                <div className="h-16 w-32">
+                <div className="h-20 w-40">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={supplyData}>
                       <Area
@@ -257,9 +258,11 @@ export default function DashboardV2Preview() {
                   <p className="text-2xl font-extrabold text-[#171717] tabular-nums tracking-tight">
                     $48B
                   </p>
-                  <p className="text-xs font-semibold text-[#16A34A]">+2.1% (7d)</p>
+                  <p className="text-xs font-semibold text-[#16A34A]">
+                    +2.1% (7d)
+                  </p>
                 </div>
-                <div className="h-16 w-32">
+                <div className="h-20 w-40">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={tvlData}>
                       <Area
@@ -294,7 +297,7 @@ export default function DashboardV2Preview() {
                 </span>
               </div>
             </div>
-            <p className="text-xl font-extrabold text-[#16A34A] tabular-nums tracking-tight mb-2">
+            <p className="text-xl font-extrabold text-[#DC2626] tabular-nums tracking-tight mb-2">
               -4,285 ETH
             </p>
             <div className="h-36">
@@ -319,7 +322,11 @@ export default function DashboardV2Preview() {
                     }
                   />
                   <Bar dataKey="burn" fill="#E7F60E" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="issuance" fill="#9CA3AF" radius={[4, 4, 0, 0]} />
+                  <Bar
+                    dataKey="issuance"
+                    fill="#9CA3AF"
+                    radius={[4, 4, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -352,28 +359,66 @@ export default function DashboardV2Preview() {
 
             {/* Chain RWA Card */}
             <div className="rounded-xl bg-white p-4 shadow-sm">
-              <p className="font-pixel text-sm text-[#6B7280] mb-3">체인별 RWA</p>
+              <p className="font-pixel text-sm text-[#6B7280] mb-3">
+                체인별 RWA
+              </p>
               {/* Horizontal bars */}
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
-                  <span className="w-16 font-semibold text-[#171717]">Ethereum</span>
-                  <div className="h-3 bg-[#E7F60E] rounded-full" style={{ width: "55%" }} />
-                  <span className="font-semibold text-[#171717]">$12.3B</span>
+                  <span className="w-16 font-semibold text-[#171717]">
+                    Ethereum
+                  </span>
+                  <div className="flex-1">
+                    <div
+                      className="h-3 bg-[#E7F60E] rounded-full"
+                      style={{ width: "100%" }}
+                    />
+                  </div>
+                  <span className="w-14 text-right font-semibold text-[#171717]">
+                    $12.3B
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="w-16 font-semibold text-[#171717]">Tron</span>
-                  <div className="h-3 bg-[#E7F60E] rounded-full" style={{ width: "25%" }} />
-                  <span className="font-semibold text-[#171717]">$1.48B</span>
+                  <span className="w-16 font-semibold text-[#171717]">
+                    Tron
+                  </span>
+                  <div className="flex-1">
+                    <div
+                      className="h-3 bg-[#E7F60E] rounded-full"
+                      style={{ width: "45%" }}
+                    />
+                  </div>
+                  <span className="w-14 text-right font-semibold text-[#171717]">
+                    $1.48B
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="w-16 font-semibold text-[#171717]">Solana</span>
-                  <div className="h-3 bg-[#E7F60E] rounded-full" style={{ width: "10%" }} />
-                  <span className="font-semibold text-[#171717]">$0.36B</span>
+                  <span className="w-16 font-semibold text-[#171717]">
+                    Solana
+                  </span>
+                  <div className="flex-1">
+                    <div
+                      className="h-3 bg-[#E7F60E] rounded-full"
+                      style={{ width: "18%" }}
+                    />
+                  </div>
+                  <span className="w-14 text-right font-semibold text-[#171717]">
+                    $0.36B
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="w-16 font-semibold text-[#171717]">Other</span>
-                  <div className="h-3 bg-[#E7F60E] rounded-full" style={{ width: "5%" }} />
-                  <span className="font-semibold text-[#171717]">$0.14B</span>
+                  <span className="w-16 font-semibold text-[#171717]">
+                    Other
+                  </span>
+                  <div className="flex-1">
+                    <div
+                      className="h-3 bg-[#E7F60E] rounded-full"
+                      style={{ width: "9%" }}
+                    />
+                  </div>
+                  <span className="w-14 text-right font-semibold text-[#171717]">
+                    $0.14B
+                  </span>
                 </div>
               </div>
             </div>
@@ -381,50 +426,94 @@ export default function DashboardV2Preview() {
 
           {/* Row 2: Category RWA - Full Width */}
           <div className="rounded-xl bg-white p-4 shadow-sm">
-            <p className="font-pixel text-sm text-[#6B7280] mb-3">카테고리별 RWA</p>
+            <p className="font-pixel text-sm text-[#6B7280] mb-3">
+              카테고리별 RWA
+            </p>
             {/* Horizontal bars with background */}
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2">
-                <span className="w-24 font-semibold text-[#171717]">Real Estate</span>
+                <span className="w-24 font-semibold text-[#171717]">
+                  Real Estate
+                </span>
                 <div className="flex-1 h-3 bg-[#E5E7EB] rounded-full overflow-hidden">
-                  <div className="h-full bg-[#E7F60E] rounded-full" style={{ width: "100%" }} />
+                  <div
+                    className="h-full bg-[#E7F60E] rounded-full"
+                    style={{ width: "100%" }}
+                  />
                 </div>
-                <span className="w-24 font-semibold text-[#171717]">$12.4B <span className="text-[#6B7280] font-normal">(100%)</span></span>
+                <span className="w-24 font-semibold text-[#171717]">
+                  $12.4B{" "}
+                  <span className="text-[#6B7280] font-normal">(100%)</span>
+                </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-24 font-semibold text-[#171717]">Commodities</span>
+                <span className="w-24 font-semibold text-[#171717]">
+                  Commodities
+                </span>
                 <div className="flex-1 h-3 bg-[#E5E7EB] rounded-full overflow-hidden">
-                  <div className="h-full bg-[#E7F60E] rounded-full" style={{ width: "65%" }} />
+                  <div
+                    className="h-full bg-[#E7F60E] rounded-full"
+                    style={{ width: "65%" }}
+                  />
                 </div>
-                <span className="w-24 font-semibold text-[#171717]">$30.2B <span className="text-[#6B7280] font-normal">(132%)</span></span>
+                <span className="w-24 font-semibold text-[#171717]">
+                  $30.2B{" "}
+                  <span className="text-[#6B7280] font-normal">(132%)</span>
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-24 font-semibold text-[#171717]">Bonds</span>
                 <div className="flex-1 h-3 bg-[#E5E7EB] rounded-full overflow-hidden">
-                  <div className="h-full bg-[#E7F60E] rounded-full" style={{ width: "45%" }} />
+                  <div
+                    className="h-full bg-[#E7F60E] rounded-full"
+                    style={{ width: "45%" }}
+                  />
                 </div>
-                <span className="w-24 font-semibold text-[#171717]">$33.6B <span className="text-[#6B7280] font-normal">(12%)</span></span>
+                <span className="w-24 font-semibold text-[#171717]">
+                  $33.6B{" "}
+                  <span className="text-[#6B7280] font-normal">(12%)</span>
+                </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-24 font-semibold text-[#171717]">Companies</span>
+                <span className="w-24 font-semibold text-[#171717]">
+                  Companies
+                </span>
                 <div className="flex-1 h-3 bg-[#E5E7EB] rounded-full overflow-hidden">
-                  <div className="h-full bg-[#E7F60E] rounded-full" style={{ width: "20%" }} />
+                  <div
+                    className="h-full bg-[#E7F60E] rounded-full"
+                    style={{ width: "20%" }}
+                  />
                 </div>
-                <span className="w-24 font-semibold text-[#171717]">$12.6B <span className="text-[#6B7280] font-normal">(5%)</span></span>
+                <span className="w-24 font-semibold text-[#171717]">
+                  $12.6B{" "}
+                  <span className="text-[#6B7280] font-normal">(5%)</span>
+                </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-24 font-semibold text-[#171717]">Enterprises</span>
+                <span className="w-24 font-semibold text-[#171717]">
+                  Enterprises
+                </span>
                 <div className="flex-1 h-3 bg-[#E5E7EB] rounded-full overflow-hidden">
-                  <div className="h-full bg-[#E7F60E] rounded-full" style={{ width: "10%" }} />
+                  <div
+                    className="h-full bg-[#E7F60E] rounded-full"
+                    style={{ width: "10%" }}
+                  />
                 </div>
-                <span className="w-24 font-semibold text-[#171717]">$6.3B <span className="text-[#6B7280] font-normal">(6%)</span></span>
+                <span className="w-24 font-semibold text-[#171717]">
+                  $6.3B <span className="text-[#6B7280] font-normal">(6%)</span>
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-24 font-semibold text-[#171717]">Other</span>
                 <div className="flex-1 h-3 bg-[#E5E7EB] rounded-full overflow-hidden">
-                  <div className="h-full bg-[#E7F60E] rounded-full" style={{ width: "5%" }} />
+                  <div
+                    className="h-full bg-[#E7F60E] rounded-full"
+                    style={{ width: "5%" }}
+                  />
                 </div>
-                <span className="w-24 font-semibold text-[#171717]">$3.5B <span className="text-[#6B7280] font-normal">(0%)</span></span>
+                <span className="w-24 font-semibold text-[#171717]">
+                  $3.5B <span className="text-[#6B7280] font-normal">(0%)</span>
+                </span>
               </div>
             </div>
           </div>
@@ -438,19 +527,13 @@ export default function DashboardV2Preview() {
           <div className="mb-3 grid grid-cols-2 gap-3">
             {/* ETH ETF Flow Card */}
             <div className="rounded-xl bg-white p-4 shadow-sm">
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <p className="font-pixel text-sm text-[#6B7280]">ETH ETF 자금흐름</p>
-                  <p className="text-xl font-extrabold text-[#DC2626] tabular-nums tracking-tight">
-                    -$242M
-                  </p>
-                </div>
-                <Image
-                  src="/assets/pixels/doge-suit.png"
-                  alt="Doge Suit"
-                  width={48}
-                  height={48}
-                />
+              <div className="mb-2">
+                <p className="font-pixel text-sm text-[#6B7280]">
+                  ETH ETF 자금흐름
+                </p>
+                <p className="text-xl font-extrabold text-[#DC2626] tabular-nums tracking-tight">
+                  -$242M
+                </p>
               </div>
               <div className="h-24">
                 <ResponsiveContainer width="100%" height="100%">
@@ -466,29 +549,52 @@ export default function DashboardV2Preview() {
 
             {/* ETH Holdings Card */}
             <div className="rounded-xl bg-white p-4 shadow-sm">
-              <p className="font-pixel text-sm text-[#6B7280] mb-3">ETH 보유량</p>
+              <p className="font-pixel text-sm text-[#6B7280] mb-3">
+                ETH 보유량
+              </p>
               {/* Horizontal bars */}
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
-                  <span className="w-12 font-semibold text-[#171717]">ETHA</span>
+                  <span className="w-12 font-semibold text-[#171717]">
+                    ETHA
+                  </span>
                   <div className="flex-1">
-                    <div className="h-3 bg-[#E7F60E] rounded-full" style={{ width: "100%" }} />
+                    <div
+                      className="h-3 bg-[#E7F60E] rounded-full"
+                      style={{ width: "100%" }}
+                    />
                   </div>
-                  <span className="w-10 text-right font-semibold text-[#171717]">60%</span>
+                  <span className="w-10 text-right font-semibold text-[#171717]">
+                    60%
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="w-12 font-semibold text-[#171717]">ETHW</span>
+                  <span className="w-12 font-semibold text-[#171717]">
+                    ETHW
+                  </span>
                   <div className="flex-1">
-                    <div className="h-3 bg-[#0D9488] rounded-full" style={{ width: "42%" }} />
+                    <div
+                      className="h-3 bg-[#0D9488] rounded-full"
+                      style={{ width: "42%" }}
+                    />
                   </div>
-                  <span className="w-10 text-right font-semibold text-[#171717]">25%</span>
+                  <span className="w-10 text-right font-semibold text-[#171717]">
+                    25%
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="w-12 font-semibold text-[#171717]">Others</span>
+                  <span className="w-12 font-semibold text-[#171717]">
+                    Others
+                  </span>
                   <div className="flex-1">
-                    <div className="h-3 bg-[#9CA3AF] rounded-full" style={{ width: "25%" }} />
+                    <div
+                      className="h-3 bg-[#9CA3AF] rounded-full"
+                      style={{ width: "25%" }}
+                    />
                   </div>
-                  <span className="w-10 text-right font-semibold text-[#171717]">15%</span>
+                  <span className="w-10 text-right font-semibold text-[#171717]">
+                    15%
+                  </span>
                 </div>
               </div>
             </div>
@@ -497,7 +603,9 @@ export default function DashboardV2Preview() {
           {/* Row 2: BTC ETF Flow - Full Width */}
           <div className="rounded-xl bg-white p-4 shadow-sm">
             <div className="flex items-start justify-between mb-2">
-              <p className="font-pixel text-sm text-[#6B7280]">BTC ETF 자금흐름</p>
+              <p className="font-pixel text-sm text-[#6B7280]">
+                BTC ETF 자금흐름
+              </p>
               <p className="text-xl font-extrabold text-[#16A34A] tabular-nums tracking-tight">
                 +$10M
               </p>
@@ -528,7 +636,9 @@ export default function DashboardV2Preview() {
           <div className="mb-3 grid grid-cols-5 gap-3">
             {/* BTC Price */}
             <div className="rounded-xl bg-white p-3 shadow-sm text-center h-40 flex flex-col justify-between">
-              <p className="font-pixel text-xs text-[#6B7280]">비트코인 현재가</p>
+              <p className="font-pixel text-xs text-[#6B7280]">
+                비트코인 현재가
+              </p>
               <div className="flex justify-center">
                 <Image
                   src="/assets/pixels/bitcoin.png"
@@ -566,43 +676,64 @@ export default function DashboardV2Preview() {
 
             {/* Fear & Greed */}
             <div className="rounded-xl bg-white p-3 shadow-sm text-center h-40 flex flex-col justify-between">
-              <p className="font-pixel text-xs text-[#6B7280]">공포 탐욕 지수</p>
+              <p className="font-pixel text-xs text-[#6B7280]">
+                공포 탐욕 지수
+              </p>
               <div className="flex justify-center">
-                <div className="relative w-16 h-10">
-                  {/* Half circle gauge */}
-                  <svg viewBox="0 0 100 50" className="w-full h-full">
-                    {/* Background arc */}
+                <div className="relative">
+                  {/* Half circle gauge with 4 segments */}
+                  <svg width="96" height="52" viewBox="0 0 96 52">
+                    {/* Center at (48, 44), radius 40, smaller gaps */}
+                    {/* Red segment: 180° to 137° */}
                     <path
-                      d="M 5 50 A 45 45 0 0 1 95 50"
+                      d="M 8 44 A 40 40 0 0 1 18.7 16.7"
                       fill="none"
-                      stroke="url(#gaugeGradient)"
-                      strokeWidth="8"
-                      strokeLinecap="round"
+                      stroke="#DC2626"
+                      strokeWidth="10"
                     />
-                    <defs>
-                      <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#DC2626" />
-                        <stop offset="35%" stopColor="#F59E0B" />
-                        <stop offset="65%" stopColor="#EAB308" />
-                        <stop offset="100%" stopColor="#16A34A" />
-                      </linearGradient>
-                    </defs>
-                    {/* Needle */}
+                    {/* Orange segment: 134° to 91° */}
+                    <path
+                      d="M 20.2 15.2 A 40 40 0 0 1 47.3 4"
+                      fill="none"
+                      stroke="#F97316"
+                      strokeWidth="10"
+                    />
+                    {/* Lime segment: 88° to 45° */}
+                    <path
+                      d="M 49.4 4 A 40 40 0 0 1 76.3 15.7"
+                      fill="none"
+                      stroke="#E7F60E"
+                      strokeWidth="10"
+                    />
+                    {/* Green segment: 42° to 0° */}
+                    <path
+                      d="M 77.7 17.2 A 40 40 0 0 1 88 44"
+                      fill="none"
+                      stroke="#16A34A"
+                      strokeWidth="10"
+                    />
+                    {/* Needle: 72/100 = 0.72 * 180° = 129.6° from left */}
                     <line
-                      x1="50"
-                      y1="50"
-                      x2="50"
-                      y2="12"
-                      stroke="#374151"
+                      x1="48"
+                      y1="44"
+                      x2="48"
+                      y2="10"
+                      stroke="#1F2937"
                       strokeWidth="2"
                       strokeLinecap="round"
-                      transform="rotate(50, 50, 50)"
+                      transform="rotate(40, 48, 44)"
                     />
-                    <circle cx="50" cy="50" r="4" fill="#374151" />
-                    {/* Labels */}
-                    <text x="8" y="48" fontSize="8" fill="#6B7280">0</text>
-                    <text x="85" y="48" fontSize="8" fill="#6B7280">100</text>
+                    <circle cx="48" cy="44" r="4" fill="#1F2937" />
                   </svg>
+                  {/* Labels below gauge */}
+                  <div className="flex justify-between px-1">
+                    <span className="text-xs text-[#6B7280] font-medium">
+                      0
+                    </span>
+                    <span className="text-xs text-[#6B7280] font-medium">
+                      100
+                    </span>
+                  </div>
                 </div>
               </div>
               <p className="text-lg font-extrabold text-[#16A34A] tabular-nums tracking-tight">
@@ -641,7 +772,9 @@ export default function DashboardV2Preview() {
 
             {/* Stablecoin Market Cap */}
             <div className="rounded-xl bg-white p-3 shadow-sm text-center h-40 flex flex-col justify-between">
-              <p className="font-pixel text-xs text-[#6B7280]">스테이블코인 시가총액</p>
+              <p className="font-pixel text-xs text-[#6B7280]">
+                스테이블코인 시가총액
+              </p>
               <div className="flex justify-center">
                 <div className="relative w-14 h-14">
                   <Image
@@ -671,7 +804,9 @@ export default function DashboardV2Preview() {
 
           {/* Row 2: Stablecoin by Chain - Full Width */}
           <div className="rounded-xl bg-white p-4 shadow-sm">
-            <p className="font-pixel text-sm text-[#6B7280] mb-3">체인별 스테이블코인</p>
+            <p className="font-pixel text-sm text-[#6B7280] mb-3">
+              체인별 스테이블코인
+            </p>
             {/* Segmented bar */}
             <div className="flex h-4 w-full rounded-full overflow-hidden mb-3">
               <div className="bg-[#E7F60E]" style={{ width: "45%" }} />
@@ -786,10 +921,7 @@ export default function DashboardV2Preview() {
           onClick={() => setChatOpen(!chatOpen)}
           className="w-14 h-14 bg-[#E7F60E] rounded-full shadow-lg flex items-center justify-center hover:bg-[#d4e30d] transition-colors"
         >
-          <svg
-            viewBox="0 0 24 24"
-            className="w-6 h-6 fill-[#171717]"
-          >
+          <svg viewBox="0 0 24 24" className="w-6 h-6 fill-[#171717]">
             {chatOpen ? (
               <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
             ) : (

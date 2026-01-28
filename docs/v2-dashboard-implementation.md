@@ -31,7 +31,7 @@ Location: `/public/assets/pixels/`
 | 4 | `ethereum-original.png` | ETH diamond (black/gray) | ETH Price card, 공급량 card | 64px, 32px |
 | 5 | `ethereum.png` | ETH in blue circle | ETH/BTC 비율 card | 24px |
 | 6 | `bank.png` | Pixel bank with columns | RWA 총액 card | 48px |
-| 7 | `doge-suit.png` | Doge in business suit | ETH ETF 자금흐름 card | 48px |
+| 7 | `doge-suit.png` | Doge in business suit | (unused - removed) | - |
 | 8 | `bitcoin.png` | Orange BTC coin | 비트코인 현재가 card, ETH/BTC 비율 card | 40px, 24px |
 | 9 | `usdt.png` | Green Tether logo | 스테이블코인 시가총액 card | 24px |
 | 10 | `usdc.png` | Blue USDC logo | 스테이블코인 시가총액 card | 24px |
@@ -40,16 +40,16 @@ Location: `/public/assets/pixels/`
 
 | Location | Asset(s) | Size | Notes |
 |----------|----------|------|-------|
-| Header (left) | doge + pepe + robot | 32px each | Row of 3 mascots |
+| Header (left) | logo-full.png + doge + pepe + robot | 120x36, 32px each | Logo image + mascots |
 | ETH Price card | ethereum-original | 64px | Top-right corner |
-| 공급량 card | ethereum-original | 32px | Smaller version |
-| RWA 총액 card | bank | 48px | Center or right |
-| ETH ETF 자금흐름 card | doge-suit | 48px | Professional doge |
-| 비트코인 현재가 card | bitcoin | 40px | Orange BTC |
-| BTC 도미넌스 card | pepe | 40px | Green Pepe |
-| 공포 탐욕 지수 card | (none) | - | Gauge only, no icon |
-| ETH/BTC 비율 card | bitcoin + ethereum | 24px each | Side by side |
-| 스테이블코인 시가총액 card | usdt + usdc | 24px each | Side by side |
+| 공급량 card | (none) | - | Sparkline only |
+| RWA 총액 card | bank | 80px | Center or right |
+| ETH ETF 자금흐름 card | (none) | - | Chart only, no icon |
+| 비트코인 현재가 card | bitcoin | 56px | Orange BTC |
+| BTC 도미넌스 card | pepe | 56px | Green Pepe |
+| 공포 탐욕 지수 card | (none) | - | 4-segment gauge |
+| ETH/BTC 비율 card | bitcoin + ethereum | 40px each | Overlapping |
+| 스테이블코인 시가총액 card | usdt + usdc | 40px each | Overlapping |
 
 ### Asset Specifications
 
