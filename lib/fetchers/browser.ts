@@ -13,9 +13,9 @@ export async function launchBrowser(): Promise<Browser> {
     // Production: Use @sparticuz/chromium for serverless
     return puppeteer.launch({
       args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
+      defaultViewport: { width: 1920, height: 1080 },
       executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
+      headless: true,
     });
   } else {
     // Local dev: Use system Chrome

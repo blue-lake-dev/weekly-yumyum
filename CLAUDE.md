@@ -355,11 +355,11 @@ Dashboard → ✏️ 수동 입력 → /api/update-manual → Vercel KV 업데�
 ## 참고 자료
 
 - **V2 마이그레이션 계획:** [`docs/v2-plan.md`](./docs/v2-plan.md)
-- **API 테스트 스크립트:**
-  - `scripts/test-farside-scraper.ts` - ETF 플로우 스크래퍼 (Puppeteer)
-  - `scripts/test-dune-api.ts` - Dune Analytics API 테스트
-  - `scripts/test-defillama-rwa.ts` - DeFiLlama RWA 데이터
-  - `scripts/test-defillama-dat.ts` - DeFiLlama DAT 데이터
+- **주요 유틸리티:**
+  - `lib/utils/format.ts` - 숫자 포맷팅 유틸 (USD, ETH, %, flow 등)
+  - `lib/hooks/use-v2-metrics.ts` - V2 대시보드 메트릭 훅
+  - `lib/fetchers/browser.ts` - Puppeteer 브라우저 런처 (Vercel/로컬 지원)
+  - `lib/fetchers/v2-aggregator.ts` - V2 데이터 수집기
 
 ---
 
@@ -379,21 +379,28 @@ Dashboard → ✏️ 수동 입력 → /api/update-manual → Vercel KV 업데�
 - [x] UI/UX 결정 (top nav, 지표별 시각화)
 - [x] 마이그레이션 계획 작성 (`docs/v2-plan.md`)
 - [x] Supabase 셋업 (DB, types, client, RLS)
-- [ ] 신규 fetcher 구현
+- [x] 신규 fetcher 구현
   - [x] Etherscan (ETH supply)
   - [x] ultrasound.money (daily burn/issuance)
   - [x] Dune (ETF holdings)
-  - [x] Farside (ETF flows)
-  - [x] DeFiLlama (RWA by chain) - `/protocols` → filter RWA → aggregate chainTvls
-  - [x] rwa.xyz CSV parser (RWA by category, excl. Stablecoins)
+  - [x] Farside (ETF flows) - Puppeteer scraper
+  - [x] DeFiLlama (RWA by chain, TVL, Stablecoins)
+  - [x] DeFiLlama DAT scraper (corporate treasuries)
+  - [x] CoinGecko (BTC/ETH prices, BTC dominance)
 - [x] API routes (cron, admin)
   - [x] V2 aggregator (`lib/fetchers/v2-aggregator.ts`)
   - [x] `/api/cron/fetch` - Vercel cron daily fetch
   - [x] `/api/admin/fetch` - Manual trigger
-- [ ] 프론트엔드 리팩토링
+  - [x] `/api/admin/backfill` - Historical data backfill
+- [x] 프론트엔드 리팩토링
+  - [x] V2 대시보드 (`/dashboard-v2`)
+  - [x] Supabase 연동 (`use-v2-metrics` 훅)
+  - [x] 포맷터 유틸 (`lib/utils/format.ts`)
+  - [x] Recharts 차트 (가격, TVL, ETF 플로우, Burn/Issuance)
+  - [x] 일일 변동률 계산 (ETH, BTC, BTC.D, ETH/BTC, Stablecoin)
 - [ ] 캘린더 & 채팅 기능
 - [x] Telegram OTP 인증
   - [x] `lib/telegram.ts` - Bot API helper
   - [x] `lib/auth.ts` - JWT sign/verify
   - [x] `/api/auth/request-otp`, `/api/auth/verify-otp`
-- [ ] 배포
+- [ ] 배포 (Vercel production)

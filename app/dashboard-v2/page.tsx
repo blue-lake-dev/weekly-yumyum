@@ -15,6 +15,14 @@ import {
   Tooltip,
 } from "recharts";
 import { useV2Metrics } from "@/lib/hooks/use-v2-metrics";
+import {
+  formatUsd,
+  formatUsdFull,
+  formatEthAmount,
+  formatFlow,
+  formatPercent,
+  formatCompactNumber,
+} from "@/lib/utils/format";
 
 // RWA by category placeholder (from rwa.xyz CSV - will be dynamic after admin CSV upload)
 const rwaByCategory = [
@@ -29,47 +37,6 @@ const rwaByCategory = [
   { name: "Other", value: 0.20e9 },
 ];
 const rwaCategoryTotal = rwaByCategory.reduce((sum, c) => sum + c.value, 0);
-
-// Formatting helpers
-function formatCurrency(value: number | null, decimals = 0): string {
-  if (value === null) return "—";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(value);
-}
-
-function formatBillions(value: number | null): string {
-  if (value === null) return "—";
-  // Handle raw USD values (convert to billions)
-  if (value >= 1e9) return `$${(value / 1e9).toFixed(1)}B`;
-  if (value >= 1e6) return `$${(value / 1e6).toFixed(0)}M`;
-  // Handle values already in billions (legacy)
-  if (value >= 1) return `$${value.toFixed(1)}B`;
-  return `$${(value * 1000).toFixed(0)}M`;
-}
-
-function formatCompact(value: number | null): string {
-  if (value === null) return "—";
-  if (value >= 1e9) return `${(value / 1e9).toFixed(2)}억`;
-  if (value >= 1e6) return `${(value / 1e6).toFixed(1)}M`;
-  return value.toLocaleString();
-}
-
-function formatEth(value: number | null): string {
-  if (value === null) return "—";
-  if (value >= 1e6) return `${(value / 1e6).toFixed(2)}M`;
-  if (value >= 1e3) return `${(value / 1e3).toFixed(1)}K`;
-  return value.toLocaleString();
-}
-
-function formatPercent(value: number | null, showSign = true): string {
-  if (value === null) return "—";
-  const sign = showSign && value > 0 ? "+" : "";
-  return `${sign}${value.toFixed(1)}%`;
-}
 
 // Transform ETF flow data for stacked bar chart
 function transformFlowData(history: Array<{ date: string; value: number }>) {
@@ -88,11 +55,6 @@ function Skeleton({ className = "" }: { className?: string }) {
 export default function DashboardV2() {
   const [chatOpen, setChatOpen] = useState(false);
   const { data: metrics, isLoading, error, refetch } = useV2Metrics();
-
-  // Calculate derived values
-  const ethBtcRatio = metrics?.ethPrice && metrics?.btcPrice
-    ? metrics.ethPrice / metrics.btcPrice
-    : null;
 
   // Calculate net supply change (issuance - burn) for 7d
   // Positive = inflationary (supply grows), Negative = deflationary (supply shrinks)
@@ -224,7 +186,7 @@ export default function DashboardV2() {
                   이더리움 현재가
                 </p>
                 <p className="text-4xl font-bold text-[#171717] tabular-nums tracking-tight">
-                  {formatCurrency(metrics?.ethPrice ?? null)}{" "}
+                  {formatUsdFull(metrics?.ethPrice)}{" "}
                   <span className={`text-lg ${(metrics?.ethPriceChange ?? 0) >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
                     {formatPercent(metrics?.ethPriceChange ?? null)}
                   </span>
@@ -250,7 +212,7 @@ export default function DashboardV2() {
                       color: "#fff",
                     }}
                     formatter={(value: number | undefined) =>
-                      value !== undefined ? [`$${value}`, "Price"] : ["", ""]
+                      value !== undefined ? [`$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`, "Price"] : ["—", ""]
                     }
                   />
                   <Area
@@ -272,59 +234,59 @@ export default function DashboardV2() {
             <div className="rounded-xl bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-pixel text-sm text-[#6B7280]">공급량</p>
+                  <p className="font-pixel text-sm text-[#6B7280]">총 공급량</p>
                   <p className="text-2xl font-extrabold text-[#171717] tabular-nums tracking-tight">
-                    {formatCompact(metrics?.ethSupply ?? null)} ETH
-                  </p>
-                  <p className="text-xs font-semibold text-[#6B7280]">
-                    (7d)
+                    {formatCompactNumber(metrics?.ethSupply, 2)} ETH
                   </p>
                 </div>
-                <div className="h-20 w-40">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={metrics?.ethSupplyHistory ?? []}>
-                      <Area
-                        type="monotone"
-                        dataKey="value"
-                        stroke="#0D9488"
-                        strokeWidth={2}
-                        fill="#0D9488"
-                        fillOpacity={0.2}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
+                <Image
+                  src="/assets/pixels/ethereum.png"
+                  alt="ETH"
+                  width={64}
+                  height={64}
+                />
               </div>
             </div>
 
             {/* TVL Card */}
             <div className="rounded-xl bg-white p-4 shadow-sm">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-2">
                 <div>
                   <p className="font-pixel text-sm text-[#6B7280]">
                     총 예치량 (TVL)
                   </p>
                   <p className="text-2xl font-extrabold text-[#171717] tabular-nums tracking-tight">
-                    {formatBillions(metrics?.ethTvl ?? null)}
-                  </p>
-                  <p className="text-xs font-semibold text-[#6B7280]">
-                    (7d)
+                    {metrics?.ethTvl != null ? `$${metrics.ethTvl.toFixed(2)}B` : "—"}
                   </p>
                 </div>
-                <div className="h-20 w-40">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={metrics?.ethTvlHistory ?? []}>
-                      <Area
-                        type="monotone"
-                        dataKey="value"
-                        stroke="#6366F1"
-                        strokeWidth={2}
-                        fill="#6366F1"
-                        fillOpacity={0.2}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
+              </div>
+              <div className="h-24">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={metrics?.ethTvlHistory ?? []}>
+                    <XAxis dataKey="date" hide />
+                    <YAxis hide domain={["dataMin - 1", "dataMax + 1"]} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#171717",
+                        border: "none",
+                        borderRadius: "8px",
+                        color: "#fff",
+                      }}
+                      formatter={(value: number | undefined) =>
+                        value !== undefined ? [`$${value.toFixed(2)}B`, "TVL"] : ["—", "TVL"]
+                      }
+                      labelStyle={{ color: "#9CA3AF" }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#6366F1"
+                      strokeWidth={2}
+                      fill="#6366F1"
+                      fillOpacity={0.2}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
             </div>
           </div>
@@ -333,7 +295,7 @@ export default function DashboardV2() {
           <div className="mb-3 rounded-xl bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between mb-2">
               <p className="font-pixel text-sm text-[#6B7280]">
-                소각 vs 발행 7d
+                소각 vs 발행
               </p>
               <div className="flex items-center gap-4 text-xs">
                 <span className="flex items-center gap-1">
@@ -347,7 +309,7 @@ export default function DashboardV2() {
               </div>
             </div>
             <p className={`text-xl font-extrabold tabular-nums tracking-tight mb-2 ${(netSupplyChange7d ?? 0) >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
-              {netSupplyChange7d !== null ? `${netSupplyChange7d >= 0 ? "+" : ""}${netSupplyChange7d.toLocaleString()} ETH` : "—"}
+              {netSupplyChange7d !== null ? `${netSupplyChange7d >= 0 ? "+" : ""}${netSupplyChange7d.toLocaleString(undefined, { maximumFractionDigits: 2 })} ETH` : "—"}
             </p>
             <div className="h-36">
               <ResponsiveContainer width="100%" height="100%">
@@ -360,6 +322,7 @@ export default function DashboardV2() {
                   />
                   <YAxis hide />
                   <Tooltip
+                    cursor={false}
                     contentStyle={{
                       backgroundColor: "#171717",
                       border: "none",
@@ -367,14 +330,15 @@ export default function DashboardV2() {
                       color: "#fff",
                     }}
                     formatter={(value: number | undefined) =>
-                      value !== undefined ? [`${value} ETH`, ""] : ["", ""]
+                      value !== undefined ? [`${value.toLocaleString(undefined, { maximumFractionDigits: 2 })} ETH`, ""] : ["", ""]
                     }
                   />
-                  <Bar dataKey="burn" fill="#E7F60E" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="burn" fill="#E7F60E" radius={[4, 4, 0, 0]} activeBar={{ fill: "#E7F60E" }} />
                   <Bar
                     dataKey="issuance"
                     fill="#9CA3AF"
                     radius={[4, 4, 0, 0]}
+                    activeBar={{ fill: "#9CA3AF" }}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -408,7 +372,7 @@ export default function DashboardV2() {
                   <span className="w-3 h-3 rounded-sm bg-[#E7F60E]" />
                   <span className="font-semibold">ETF</span>
                   <span className="text-[#171717] font-semibold tabular-nums">
-                    {formatEth(metrics?.etfHoldingsEth ?? null)} ETH
+                    {formatEthAmount(metrics?.etfHoldingsEth)} ETH
                   </span>
                   <span className="text-[#6B7280]">
                     ({metrics?.etfHoldingsPct != null ? `${metrics.etfHoldingsPct.toFixed(2)}%` : "—"})
@@ -418,7 +382,7 @@ export default function DashboardV2() {
                   <span className="w-3 h-3 rounded-sm bg-[#0D9488]" />
                   <span className="font-semibold">DAT</span>
                   <span className="text-[#171717] font-semibold tabular-nums">
-                    {formatEth(metrics?.datHoldingsEth ?? null)} ETH
+                    {formatEthAmount(metrics?.datHoldingsEth)} ETH
                   </span>
                   <span className="text-[#6B7280]">
                     ({metrics?.datHoldingsPct != null ? `${metrics.datHoldingsPct.toFixed(2)}%` : "—"})
@@ -426,7 +390,7 @@ export default function DashboardV2() {
                 </span>
               </div>
               <span className="text-[#9CA3AF]">
-                총 공급량: {formatCompact(metrics?.ethSupply ?? null)} ETH
+                총 공급량: {formatCompactNumber(metrics?.ethSupply, 2)} ETH
               </span>
             </div>
           </div>
@@ -444,7 +408,7 @@ export default function DashboardV2() {
                 <div>
                   <p className="font-pixel text-sm text-[#6B7280]">RWA 총액</p>
                   <p className="text-3xl font-extrabold text-[#171717] tabular-nums tracking-tight">
-                    {formatBillions(metrics?.rwaTotal ?? null)}
+                    {formatUsd(metrics?.rwaTotal)}
                   </p>
                 </div>
                 <Image
@@ -536,22 +500,11 @@ export default function DashboardV2() {
             <div className="rounded-xl bg-white p-4 shadow-sm">
               <div className="mb-2">
                 <p className="font-pixel text-sm text-[#6B7280]">
-                  ETH ETF (7d)
+                  ETH ETF
                 </p>
-                {(() => {
-                  const weeklyTotal = metrics?.etfFlowEthHistory?.reduce((sum, d) => sum + d.value, 0) ?? null;
-                  const formatFlow = (v: number) => {
-                    const abs = Math.abs(v);
-                    const sign = v >= 0 ? "+" : "-";
-                    if (abs >= 1000) return `${sign}$${(abs / 1000).toFixed(2)}B`;
-                    return `${sign}$${abs.toFixed(0)}M`;
-                  };
-                  return (
-                    <p className={`text-xl font-extrabold tabular-nums tracking-tight ${(weeklyTotal ?? 0) >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
-                      {weeklyTotal != null ? formatFlow(weeklyTotal) : "—"}
-                    </p>
-                  );
-                })()}
+                <p className={`text-xl font-extrabold tabular-nums tracking-tight ${(metrics?.etfFlowEth ?? 0) >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
+                  {formatFlow(metrics?.etfFlowEth)}
+                </p>
               </div>
               <div className="h-32">
                 <ResponsiveContainer width="100%" height="100%">
@@ -570,6 +523,7 @@ export default function DashboardV2() {
                       width={35}
                     />
                     <Tooltip
+                      cursor={false}
                       content={({ active, payload, label }) => {
                         if (active && payload && payload.length) {
                           const value = (payload[0]?.value as number) || (payload[1]?.value as number) || 0;
@@ -577,7 +531,7 @@ export default function DashboardV2() {
                             <div className="rounded bg-[#171717] px-2 py-1 text-xs text-white shadow">
                               <p>{label}</p>
                               <p className={value >= 0 ? "text-[#E7F60E]" : "text-[#DC2626]"}>
-                                {value >= 0 ? "+" : ""}${Math.abs(value).toFixed(1)}M
+                                {value >= 0 ? "+" : ""}${Math.abs(value).toFixed(2)}M
                               </p>
                             </div>
                           );
@@ -586,8 +540,8 @@ export default function DashboardV2() {
                       }}
                     />
                     <ReferenceLine y={0} stroke="#E5E7EB" />
-                    <Bar dataKey="positive" fill="#E7F60E" stackId="stack" barSize={12} />
-                    <Bar dataKey="negative" fill="#DC2626" stackId="stack" barSize={12} />
+                    <Bar dataKey="positive" fill="#E7F60E" stackId="stack" barSize={12} activeBar={{ fill: "#E7F60E" }} />
+                    <Bar dataKey="negative" fill="#DC2626" stackId="stack" barSize={12} activeBar={{ fill: "#DC2626" }} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -597,22 +551,11 @@ export default function DashboardV2() {
             <div className="rounded-xl bg-white p-4 shadow-sm">
               <div className="mb-2">
                 <p className="font-pixel text-sm text-[#6B7280]">
-                  BTC ETF (7d)
+                  BTC ETF
                 </p>
-                {(() => {
-                  const weeklyTotal = metrics?.etfFlowBtcHistory?.reduce((sum, d) => sum + d.value, 0) ?? null;
-                  const formatFlow = (v: number) => {
-                    const abs = Math.abs(v);
-                    const sign = v >= 0 ? "+" : "-";
-                    if (abs >= 1000) return `${sign}$${(abs / 1000).toFixed(2)}B`;
-                    return `${sign}$${abs.toFixed(0)}M`;
-                  };
-                  return (
-                    <p className={`text-xl font-extrabold tabular-nums tracking-tight ${(weeklyTotal ?? 0) >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
-                      {weeklyTotal != null ? formatFlow(weeklyTotal) : "—"}
-                    </p>
-                  );
-                })()}
+                <p className={`text-xl font-extrabold tabular-nums tracking-tight ${(metrics?.etfFlowBtc ?? 0) >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
+                  {formatFlow(metrics?.etfFlowBtc)}
+                </p>
               </div>
               <div className="h-32">
                 <ResponsiveContainer width="100%" height="100%">
@@ -631,6 +574,7 @@ export default function DashboardV2() {
                       width={40}
                     />
                     <Tooltip
+                      cursor={false}
                       content={({ active, payload, label }) => {
                         if (active && payload && payload.length) {
                           const value = (payload[0]?.value as number) || (payload[1]?.value as number) || 0;
@@ -638,7 +582,7 @@ export default function DashboardV2() {
                             <div className="rounded bg-[#171717] px-2 py-1 text-xs text-white shadow">
                               <p>{label}</p>
                               <p className={value >= 0 ? "text-[#E7F60E]" : "text-[#DC2626]"}>
-                                {value >= 0 ? "+" : ""}${Math.abs(value).toFixed(1)}M
+                                {value >= 0 ? "+" : ""}${Math.abs(value).toFixed(2)}M
                               </p>
                             </div>
                           );
@@ -647,8 +591,8 @@ export default function DashboardV2() {
                       }}
                     />
                     <ReferenceLine y={0} stroke="#E5E7EB" />
-                    <Bar dataKey="positive" fill="#E7F60E" stackId="stack" barSize={12} />
-                    <Bar dataKey="negative" fill="#DC2626" stackId="stack" barSize={12} />
+                    <Bar dataKey="positive" fill="#E7F60E" stackId="stack" barSize={12} activeBar={{ fill: "#E7F60E" }} />
+                    <Bar dataKey="negative" fill="#DC2626" stackId="stack" barSize={12} activeBar={{ fill: "#DC2626" }} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -677,7 +621,7 @@ export default function DashboardV2() {
               </div>
               <div>
                 <p className="text-lg font-extrabold text-[#171717] tabular-nums tracking-tight">
-                  {formatCurrency(metrics?.btcPrice ?? null)}
+                  {formatUsdFull(metrics?.btcPrice)}
                 </p>
                 <p className={`text-xs font-semibold ${(metrics?.btcPriceChange ?? 0) >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
                   {formatPercent(metrics?.btcPriceChange ?? null)}
@@ -700,7 +644,9 @@ export default function DashboardV2() {
                 <p className="text-lg font-extrabold text-[#171717] tabular-nums tracking-tight">
                   {metrics?.btcDominance !== null ? `${metrics?.btcDominance?.toFixed(1)}%` : "—"}
                 </p>
-                <p className="text-xs font-semibold text-[#6B7280]">—</p>
+                <p className={`text-xs font-semibold ${(metrics?.btcDominanceChange ?? 0) >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
+                  {metrics?.btcDominanceChange != null ? `${metrics.btcDominanceChange >= 0 ? "+" : ""}${metrics.btcDominanceChange.toFixed(2)}%` : "—"}
+                </p>
               </div>
             </div>
 
@@ -789,9 +735,11 @@ export default function DashboardV2() {
               </div>
               <div>
                 <p className="text-lg font-extrabold text-[#171717] tabular-nums tracking-tight">
-                  {ethBtcRatio !== null ? ethBtcRatio.toFixed(4) : "—"}
+                  {metrics?.ethBtcRatio !== null ? metrics?.ethBtcRatio?.toFixed(4) : "—"}
                 </p>
-                <p className="text-xs font-semibold text-[#6B7280]">—</p>
+                <p className={`text-xs font-semibold ${(metrics?.ethBtcRatioChange ?? 0) >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
+                  {formatPercent(metrics?.ethBtcRatioChange)}
+                </p>
               </div>
             </div>
 
@@ -820,9 +768,11 @@ export default function DashboardV2() {
               </div>
               <div>
                 <p className="text-lg font-extrabold text-[#171717] tabular-nums tracking-tight">
-                  {formatBillions(metrics?.stablecoinTotal ?? null)}
+                  {formatUsd(metrics?.stablecoinTotal)}
                 </p>
-                <p className="text-xs font-semibold text-[#6B7280]">—</p>
+                <p className={`text-xs font-semibold ${(metrics?.stablecoinTotalChange ?? 0) >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
+                  {formatPercent(metrics?.stablecoinTotalChange)}
+                </p>
               </div>
             </div>
           </div>

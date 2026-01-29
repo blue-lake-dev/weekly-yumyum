@@ -48,3 +48,14 @@ body {
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
+
+/* Remove focus outline on Recharts (known issue in v3.0+) */
+.recharts-wrapper,
+.recharts-wrapper *,
+.recharts-wrapper:focus,
+.recharts-wrapper *:focus,
+.recharts-surface,
+.recharts-surface:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}

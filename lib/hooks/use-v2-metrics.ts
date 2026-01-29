@@ -49,8 +49,12 @@ export interface DashboardMetrics {
   btcPrice: number | null;
   btcPriceChange: number | null;
   btcDominance: number | null;
+  btcDominanceChange: number | null;
+  ethBtcRatio: number | null;
+  ethBtcRatioChange: number | null;
   fearGreed: number | null;
   stablecoinTotal: number | null;
+  stablecoinTotalChange: number | null;
   stablecoinByChain: Record<string, number>;
 
   // RWA Section
@@ -147,10 +151,15 @@ export function useV2Metrics(): UseV2MetricsResult {
 
         // Process ETH price
         const ethPriceLatest = getLatest("eth_price");
-        const ethPriceHistory = getHistory("eth_price").map((r) => ({
+        const ethPriceRows = getHistory("eth_price");
+        const ethPriceHistory = ethPriceRows.map((r) => ({
           date: formatChartDate(r.date),
           price: r.value ?? 0,
         }));
+        // Calculate daily price change (latest vs previous day)
+        const ethPriceChange = ethPriceRows.length >= 2
+          ? ((ethPriceRows[ethPriceRows.length - 1].value ?? 0) - (ethPriceRows[ethPriceRows.length - 2].value ?? 0)) / (ethPriceRows[ethPriceRows.length - 2].value ?? 1) * 100
+          : null;
 
         // Process ETH supply
         const ethSupplyLatest = getLatest("eth_supply");
@@ -185,9 +194,38 @@ export function useV2Metrics(): UseV2MetricsResult {
 
         // Process market metrics
         const btcPriceLatest = getLatest("btc_price");
+        const btcPriceRows = getHistory("btc_price");
+        // Calculate daily BTC price change (latest vs previous day)
+        const btcPriceChange = btcPriceRows.length >= 2
+          ? ((btcPriceRows[btcPriceRows.length - 1].value ?? 0) - (btcPriceRows[btcPriceRows.length - 2].value ?? 0)) / (btcPriceRows[btcPriceRows.length - 2].value ?? 1) * 100
+          : null;
         const btcDomLatest = getLatest("btc_dominance");
+        const btcDomRows = getHistory("btc_dominance");
+        // Calculate daily BTC dominance change (absolute difference)
+        const btcDominanceChange = btcDomRows.length >= 2
+          ? (btcDomRows[btcDomRows.length - 1].value ?? 0) - (btcDomRows[btcDomRows.length - 2].value ?? 0)
+          : null;
+
+        // Calculate ETH/BTC ratio and its daily change
+        const ethBtcRatio = ethPriceLatest?.value && btcPriceLatest?.value
+          ? ethPriceLatest.value / btcPriceLatest.value
+          : null;
+        const ethPricePrev = ethPriceRows.length >= 2 ? ethPriceRows[ethPriceRows.length - 2].value : null;
+        const btcPricePrev = btcPriceRows.length >= 2 ? btcPriceRows[btcPriceRows.length - 2].value : null;
+        const ethBtcRatioPrev = ethPricePrev && btcPricePrev
+          ? ethPricePrev / btcPricePrev
+          : null;
+        const ethBtcRatioChange = ethBtcRatio && ethBtcRatioPrev
+          ? ((ethBtcRatio - ethBtcRatioPrev) / ethBtcRatioPrev) * 100
+          : null;
+
         const fearGreedLatest = getLatest("fear_greed");
         const stableTotalLatest = getLatest("stablecoin_total");
+        const stableTotalRows = getHistory("stablecoin_total");
+        // Calculate daily stablecoin total change
+        const stablecoinTotalChange = stableTotalRows.length >= 2
+          ? ((stableTotalRows[stableTotalRows.length - 1].value ?? 0) - (stableTotalRows[stableTotalRows.length - 2].value ?? 0)) / (stableTotalRows[stableTotalRows.length - 2].value ?? 1) * 100
+          : null;
         const stableByChainLatest = getLatest("stablecoin_by_chain");
 
         // Process RWA
@@ -226,7 +264,7 @@ export function useV2Metrics(): UseV2MetricsResult {
         const metrics: DashboardMetrics = {
           // ETH Section
           ethPrice: ethPriceLatest?.value ?? null,
-          ethPriceChange: (ethPriceLatest?.metadata as { change_pct?: number })?.change_pct ?? null,
+          ethPriceChange,
           ethPriceHistory,
           ethSupply: ethSupplyLatest?.value ?? null,
           ethSupplyHistory,
@@ -244,10 +282,14 @@ export function useV2Metrics(): UseV2MetricsResult {
 
           // Market Section
           btcPrice: btcPriceLatest?.value ?? null,
-          btcPriceChange: (btcPriceLatest?.metadata as { change_pct?: number })?.change_pct ?? null,
+          btcPriceChange,
           btcDominance: btcDomLatest?.value ?? null,
+          btcDominanceChange,
+          ethBtcRatio,
+          ethBtcRatioChange,
           fearGreed: fearGreedLatest?.value ?? null,
           stablecoinTotal: stableTotalLatest?.value ?? null,
+          stablecoinTotalChange,
           stablecoinByChain: (stableByChainLatest?.metadata as { byChain?: Record<string, number> })?.byChain || {},
 
           // RWA Section

@@ -424,14 +424,15 @@ Store d7/d30 values in metadata for future "vs 7d avg" or "vs 30d avg" displays.
   - [x] Etherscan (`lib/fetchers/etherscan.ts`) - ETH supply
   - [x] ultrasound.money (`lib/fetchers/ultrasound.ts`) - ETH burn/issuance
   - [x] Dune (`lib/fetchers/dune.ts`) - ETF holdings
-  - [x] Farside (`lib/fetchers/farside.ts`) - ETF flows
-  - [x] rwa.xyz (`lib/fetchers/rwa-xyz.ts`) - RWA by category
+  - [x] Farside (`lib/fetchers/farside.ts`) - ETF flows (Puppeteer)
+  - [x] rwa.xyz (`lib/fetchers/rwa-xyz.ts`) - RWA by category (CSV parser)
 - [x] Add DeFiLlama RWA fetcher (`lib/fetchers/defillama-rwa.ts`) - RWA by chain
-- [ ] Add DeFiLlama DAT fetcher (`lib/fetchers/defillama-dat.ts`) - DAT ETH holdings via `/treasuries`
-- [ ] Update Farside scraper to extract "Total" row for ETF holdings
+- [x] Add DeFiLlama DAT scraper (`lib/fetchers/defillama-dat-scraper.ts`) - DAT ETH holdings (Puppeteer)
+- [x] Shared browser launcher (`lib/fetchers/browser.ts`) - Vercel/local compatible
 - [x] Create V2 aggregator (`lib/fetchers/v2-aggregator.ts`)
 - [x] Create `/api/cron/fetch` route
 - [x] Create `/api/admin/fetch` route (manual trigger)
+- [x] Create `/api/admin/backfill` route (historical data)
 - [x] Implement Telegram OTP + JWT auth
   - [x] `lib/telegram.ts` - Bot API, send OTP
   - [x] `lib/auth.ts` - JWT sign/verify
@@ -440,11 +441,21 @@ Store d7/d30 values in metadata for future "vs 7d avg" or "vs 30d avg" displays.
   - [x] `/api/auth/verify-otp` - Verify and issue JWT
 
 ### Phase 3: Frontend
-- [ ] Remove localStorage logic
-- [ ] Add Supabase client
-- [ ] Update dashboard to read from Supabase
-- [ ] Implement new visualizations (sparklines, bar charts)
-- [ ] Add social links to header (YouTube, Telegram icons)
+- [x] Remove localStorage logic (V2 dashboard uses Supabase)
+- [x] Add Supabase client (`lib/supabase.ts`)
+- [x] Create V2 dashboard (`/dashboard-v2`)
+- [x] Create metrics hook (`lib/hooks/use-v2-metrics.ts`)
+- [x] Create formatting utils (`lib/utils/format.ts`)
+- [x] Implement visualizations with Recharts
+  - [x] Price sparklines (ETH, BTC)
+  - [x] TVL area chart
+  - [x] Burn vs Issuance grouped bar chart
+  - [x] ETF flows stacked bar chart (green/red)
+  - [x] Fear & Greed gauge
+  - [x] RWA horizontal bar charts (by chain, by category)
+  - [x] Stablecoin segmented bar
+- [x] Daily change calculations (ETH, BTC, BTC.D, ETH/BTC, Stablecoin)
+- [x] Add social links to header (YouTube, Telegram icons)
 
 ### Phase 4: New Features
 - [ ] Create `/calendar` page
@@ -455,8 +466,8 @@ Store d7/d30 values in metadata for future "vs 7d avg" or "vs 30d avg" displays.
 
 ### Phase 5: Deploy
 - [ ] Configure Vercel cron job
-- [ ] Test Day 1 historical fetch
-- [ ] Verify all API integrations
+- [x] Test Day 1 historical fetch (backfill API)
+- [x] Verify all API integrations (local testing)
 - [ ] Deploy to production
 
 ---
@@ -518,16 +529,17 @@ Store d7/d30 values in metadata for future "vs 7d avg" or "vs 30d avg" displays.
 
 ---
 
-## 11. Test Scripts (Existing)
+## 11. Key Files (Current)
 
-These scripts were created during planning and can be used as reference:
-
-| Script | Purpose | Status |
-|--------|---------|--------|
-| `scripts/test-farside-scraper.ts` | Puppeteer ETF flow scraper | ✅ Working |
-| `scripts/test-dune-api.ts` | Dune API query testing | ✅ Query 3944634 works |
-| `scripts/test-defillama-rwa.ts` | RWA data from DeFiLlama | ✅ Working |
-| `scripts/test-defillama-dat.ts` | DAT treasuries data | ✅ Working |
+| File | Purpose |
+|------|---------|
+| `lib/fetchers/v2-aggregator.ts` | Main data aggregator for V2 |
+| `lib/fetchers/browser.ts` | Shared Puppeteer launcher (Vercel/local) |
+| `lib/fetchers/farside.ts` | ETF flows Puppeteer scraper |
+| `lib/fetchers/defillama-dat-scraper.ts` | DAT holdings Puppeteer scraper |
+| `lib/hooks/use-v2-metrics.ts` | Dashboard metrics hook |
+| `lib/utils/format.ts` | Number formatting utilities |
+| `app/api/admin/backfill/route.ts` | Historical data backfill API |
 
 ---
 
