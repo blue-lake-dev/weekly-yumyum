@@ -286,3 +286,42 @@ export async function fetchEthEtfFlow(): Promise<MetricValue> {
     isManual: true,
   };
 }
+
+// Fetch Ethereum chain TVL from DeFiLlama
+interface ChainTvlEntry {
+  gecko_id: string;
+  tvl: number;
+  tokenSymbol: string;
+  cmcId: string;
+  name: string;
+  chainId: number | null;
+}
+
+export async function fetchEthTvl(): Promise<MetricValue> {
+  try {
+    const data = await fetchWithTimeout<ChainTvlEntry[]>(`${DEFILLAMA_API}/v2/chains`);
+
+    if (!data || !Array.isArray(data)) {
+      throw new Error("Invalid chains data");
+    }
+
+    // Find Ethereum entry
+    const ethChain = data.find((c) => c.name === "Ethereum");
+    if (!ethChain) {
+      throw new Error("Ethereum chain not found");
+    }
+
+    const current = ethChain.tvl / 1e9; // Convert to billions
+    const now = Date.now();
+
+    return {
+      current,
+      current_at: formatTimestamp(Math.floor(now / 1000), "UTC"),
+      previous: null, // No historical API for chains TVL
+      source: "defillama",
+    };
+  } catch (error) {
+    console.error("fetchEthTvl error:", error);
+    return { current: null, error: "Failed to fetch ETH TVL", source: "defillama" };
+  }
+}

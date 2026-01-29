@@ -94,9 +94,9 @@
 | | ETH Price | CoinGecko | `/simple/price` |
 | **RWA** | RWA Total by Category | rwa.xyz | Admin CSV upload → `rwa-token-timeseries-export.csv` (excl. Stablecoins) |
 | | RWA by Chain (ETH + L2) | DeFiLlama | `/protocols` → filter `category=RWA` → aggregate `chainTvls` |
-| **Holdings** | ETF Holdings Total | Dune | Query `3944634` |
-| | ETF Holdings by Ticker | Dune | Query `3944634` (ETHA, ETHE, etc.) |
-| | DAT Holdings | DeFiLlama | `/treasuries` endpoint |
+| **Holdings** | ETF Holdings Total | Farside | Scrape "Total" row from `farside.co.uk/eth/` |
+| | DAT Holdings Total | DeFiLlama | `/treasuries` endpoint → filter ETH holdings |
+| | *Display* | Calculated | Show ETH amount + % of total supply |
 | **Flows** | ETH ETF Daily Flow | Farside | Puppeteer scraper (`farside.co.uk/eth/`) |
 | | BTC ETF Daily Flow | Farside | Puppeteer scraper (`farside.co.uk/btc/`) |
 | **TVL** | ETH DApp TVL | DeFiLlama | `/v2/chains` |
@@ -180,9 +180,9 @@ eth_supply, eth_burn, eth_issuance, eth_price
 rwa_total, rwa_by_category (metadata: {treasuries, private_credit, commodities, corporate_bonds, ...})
 rwa_by_chain (metadata: {ethereum, arbitrum, base, optimism, polygon, ...})
 
--- Holdings
-etf_holdings_total, etf_holdings (metadata: [{ticker, value}, ...])
-dat_holdings_total, dat_holdings (metadata: [{name, value}, ...])
+-- Holdings (displayed in ETH Section, side-by-side with burn/issuance)
+etf_holdings_total (value: ETH amount, metadata: {usd, source: 'farside'})
+dat_holdings_total (value: ETH amount, metadata: {usd, companies: [{name, eth, usd}, ...]})
 
 -- Flows
 etf_flow_eth, etf_flow_btc
@@ -275,22 +275,41 @@ CREATE POLICY "Service write" ON calendar_events FOR ALL USING (auth.role() = 's
 
 ### Visualization by Metric
 
-| Metric Type | Visualization | History |
-|-------------|---------------|---------|
-| ETH/BTC Price | Sparkline + value + % | 7-day |
-| ETH Supply | Value only | Today |
-| ETH Burn | Bar chart (daily) | 7-day |
-| ETH Issuance | Value only | Today |
-| RWA Total | Sparkline + value | 7-day |
-| RWA by Category | Horizontal bar chart | Today |
-| ETF Holdings Total | Sparkline + value | 7-day |
-| ETF by Ticker | Horizontal bar chart | Today |
-| ETF Flows | Bar chart (green/red) | 7-day |
-| Fear & Greed | Gauge + sparkline | 7-day |
-| BTC Dominance | Progress bar + sparkline | 7-day |
-| Stablecoin Total | Sparkline + value | 7-day |
-| Stablecoin by Chain | Horizontal bar chart | Today |
-| Macro (DXY, Gold, etc.) | Sparkline + value | 7-day |
+| Metric Type | Visualization | History | Data Source | Historical API? |
+|-------------|---------------|---------|-------------|-----------------|
+| ETH Price | Sparkline + value + % | 7-day | CoinGecko | ✅ Yes |
+| BTC Price | Sparkline + value + % | 7-day | CoinGecko | ✅ Yes |
+| ETH Supply | Sparkline + value | 7-day | Etherscan | ⏳ Build from Day 1 |
+| ETH TVL | Sparkline + value | 7-day | DeFiLlama | ✅ Yes (`/v2/historicalChainTvl`) |
+| ETH Burn/Issuance | Grouped bar chart | 7-day | ultrasound.money | ⏳ Build from Day 1 |
+| RWA Total | Value only | Today | DeFiLlama | N/A |
+| RWA by Category | Horizontal bar chart | Today | rwa.xyz CSV | N/A (manual upload) |
+| RWA by Chain | Horizontal bar chart | Today | DeFiLlama | N/A |
+| ETH Holdings | Value + % of supply | Today | Farside + DeFiLlama | ⏳ Build from Day 1 |
+|   ↳ ETF Total | `3.5M ETH (2.9%)` | Today | Farside "Total" row | N/A |
+|   ↳ DAT Total | `1.2M ETH (1.0%)` | Today | DeFiLlama `/treasuries` | N/A |
+| ETF Flows | Bar chart (green/red) | 7-day | Farside | ✅ Yes |
+| Fear & Greed | Gauge + value | Today | Alternative.me | ⏳ Build from Day 1 |
+| BTC Dominance | Progress bar + value | Today | CoinGecko | ⏳ Build from Day 1 |
+| Stablecoin Total | Sparkline + value | 7-day | DeFiLlama | ✅ Yes |
+| Stablecoin by Chain | Segmented bar | Today | DeFiLlama | N/A |
+
+### Placeholder State for Building Data
+
+For metrics that build from Day 1 (no historical API), show a placeholder chart until sufficient data accumulates:
+
+```
+┌─────────────────────────────────┐
+│  📊 데이터 수집 중... (2/7일)   │
+│  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░  │
+│  Data collecting... (2/7 days)  │
+└─────────────────────────────────┘
+```
+
+- Display current value normally
+- Show placeholder for sparkline/chart area
+- Include progress indicator (X/7 days)
+- Once 7 days of data exist, show full chart
 
 ### Price Data
 - **Granularity:** Daily close (midnight UTC)
@@ -365,13 +384,27 @@ async function fetchData() {
 
 ### APIs with Historical Support
 
-| Source | Historical? | Method |
-|--------|-------------|--------|
-| DeFiLlama | ✅ Yes | `/historical` endpoints |
-| CoinGecko | ✅ Yes | `/coins/{id}/market_chart` |
-| Farside | ✅ Yes | Table has all dates |
-| Etherscan | ❌ No | Current only (build from Day 1) |
-| Dune | ⚠️ Depends | Query-specific |
+| Source | Metric | Historical? | Endpoint / Method |
+|--------|--------|-------------|-------------------|
+| CoinGecko | ETH/BTC Price | ✅ Yes | `/coins/{id}/market_chart?days=7` |
+| DeFiLlama | Stablecoin Supply | ✅ Yes | `/stablecoincharts/all` or `/stablecoincharts/{chain}` |
+| DeFiLlama | ETH TVL | ✅ Yes | `/v2/historicalChainTvl/Ethereum` |
+| DeFiLlama | L2 TVL | ✅ Yes | `/v2/historicalChainTvl/{Arbitrum,Base,OP Mainnet}` |
+| Farside | ETF Flows | ✅ Yes | Table scraper supports date range |
+| Etherscan | ETH Supply | ❌ No (free tier) | Build from Day 1 (`ethsupply2`) |
+| ultrasound.money | Burn/Issuance | ❌ No | Build from Day 1 (d7/d30 aggregates available) |
+| Dune | ETF Holdings | ❌ No | Build from Day 1 (query 3944634) |
+| Alternative.me | Fear & Greed | ❌ No | Build from Day 1 |
+
+### ultrasound.money Aggregates
+
+The `/api/v2/fees/gauge-rates` endpoint returns aggregated data for multiple timeframes:
+- `d1` - 1-day rate (used for daily value)
+- `d7` - 7-day rate (store in metadata for comparison)
+- `d30` - 30-day rate (store in metadata for comparison)
+- `since_merge` - Since The Merge
+
+Store d7/d30 values in metadata for future "vs 7d avg" or "vs 30d avg" displays.
 
 ---
 
@@ -394,6 +427,8 @@ async function fetchData() {
   - [x] Farside (`lib/fetchers/farside.ts`) - ETF flows
   - [x] rwa.xyz (`lib/fetchers/rwa-xyz.ts`) - RWA by category
 - [x] Add DeFiLlama RWA fetcher (`lib/fetchers/defillama-rwa.ts`) - RWA by chain
+- [ ] Add DeFiLlama DAT fetcher (`lib/fetchers/defillama-dat.ts`) - DAT ETH holdings via `/treasuries`
+- [ ] Update Farside scraper to extract "Total" row for ETF holdings
 - [x] Create V2 aggregator (`lib/fetchers/v2-aggregator.ts`)
 - [x] Create `/api/cron/fetch` route
 - [x] Create `/api/admin/fetch` route (manual trigger)
