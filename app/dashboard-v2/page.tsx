@@ -43,6 +43,10 @@ function formatCurrency(value: number | null, decimals = 0): string {
 
 function formatBillions(value: number | null): string {
   if (value === null) return "—";
+  // Handle raw USD values (convert to billions)
+  if (value >= 1e9) return `$${(value / 1e9).toFixed(1)}B`;
+  if (value >= 1e6) return `$${(value / 1e6).toFixed(0)}M`;
+  // Handle values already in billions (legacy)
   if (value >= 1) return `$${value.toFixed(1)}B`;
   return `$${(value * 1000).toFixed(0)}M`;
 }
@@ -90,9 +94,10 @@ export default function DashboardV2() {
     ? metrics.ethPrice / metrics.btcPrice
     : null;
 
-  // Calculate net burn (burn - issuance) for 7d
-  const netBurn7d = metrics?.ethBurnIssuanceHistory.reduce(
-    (sum, d) => sum + (d.burn - d.issuance),
+  // Calculate net supply change (issuance - burn) for 7d
+  // Positive = inflationary (supply grows), Negative = deflationary (supply shrinks)
+  const netSupplyChange7d = metrics?.ethBurnIssuanceHistory.reduce(
+    (sum, d) => sum + (d.issuance - d.burn),
     0
   ) ?? null;
 
@@ -341,8 +346,8 @@ export default function DashboardV2() {
                 </span>
               </div>
             </div>
-            <p className={`text-xl font-extrabold tabular-nums tracking-tight mb-2 ${(netBurn7d ?? 0) < 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
-              {netBurn7d !== null ? `${netBurn7d > 0 ? "+" : ""}${netBurn7d.toLocaleString()} ETH` : "—"}
+            <p className={`text-xl font-extrabold tabular-nums tracking-tight mb-2 ${(netSupplyChange7d ?? 0) >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
+              {netSupplyChange7d !== null ? `${netSupplyChange7d >= 0 ? "+" : ""}${netSupplyChange7d.toLocaleString()} ETH` : "—"}
             </p>
             <div className="h-36">
               <ResponsiveContainer width="100%" height="100%">
@@ -384,15 +389,15 @@ export default function DashboardV2() {
 
             {/* Segmented bar representing 100% supply */}
             <div className="flex h-6 w-full rounded-full overflow-hidden bg-[#E5E7EB] mb-3">
-              {/* ETF segment - scale up for visibility (actual % is very small) */}
+              {/* ETF segment */}
               <div
                 className="h-full bg-[#E7F60E]"
-                style={{ width: `${Math.max((metrics?.etfHoldingsPct ?? 0) * 10, 0.5)}%` }}
+                style={{ width: `${Math.max(metrics?.etfHoldingsPct ?? 0, 0.5)}%` }}
               />
-              {/* DAT segment - scale up for visibility */}
+              {/* DAT segment */}
               <div
                 className="h-full bg-[#0D9488]"
-                style={{ width: `${Math.max((metrics?.datHoldingsPct ?? 0) * 10, 0.5)}%` }}
+                style={{ width: `${Math.max(metrics?.datHoldingsPct ?? 0, 0.5)}%` }}
               />
             </div>
 
@@ -535,9 +540,15 @@ export default function DashboardV2() {
                 </p>
                 {(() => {
                   const weeklyTotal = metrics?.etfFlowEthHistory?.reduce((sum, d) => sum + d.value, 0) ?? null;
+                  const formatFlow = (v: number) => {
+                    const abs = Math.abs(v);
+                    const sign = v >= 0 ? "+" : "-";
+                    if (abs >= 1000) return `${sign}$${(abs / 1000).toFixed(2)}B`;
+                    return `${sign}$${abs.toFixed(0)}M`;
+                  };
                   return (
                     <p className={`text-xl font-extrabold tabular-nums tracking-tight ${(weeklyTotal ?? 0) >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
-                      {weeklyTotal != null ? `${weeklyTotal >= 0 ? "+" : "-"}$${Math.abs(weeklyTotal).toFixed(0)}M` : "—"}
+                      {weeklyTotal != null ? formatFlow(weeklyTotal) : "—"}
                     </p>
                   );
                 })()}
@@ -590,9 +601,15 @@ export default function DashboardV2() {
                 </p>
                 {(() => {
                   const weeklyTotal = metrics?.etfFlowBtcHistory?.reduce((sum, d) => sum + d.value, 0) ?? null;
+                  const formatFlow = (v: number) => {
+                    const abs = Math.abs(v);
+                    const sign = v >= 0 ? "+" : "-";
+                    if (abs >= 1000) return `${sign}$${(abs / 1000).toFixed(2)}B`;
+                    return `${sign}$${abs.toFixed(0)}M`;
+                  };
                   return (
                     <p className={`text-xl font-extrabold tabular-nums tracking-tight ${(weeklyTotal ?? 0) >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
-                      {weeklyTotal != null ? `${weeklyTotal >= 0 ? "+" : "-"}$${Math.abs(weeklyTotal).toFixed(0)}M` : "—"}
+                      {weeklyTotal != null ? formatFlow(weeklyTotal) : "—"}
                     </p>
                   );
                 })()}

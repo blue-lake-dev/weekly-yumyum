@@ -4,7 +4,7 @@ import { fetchEthSupply } from "./etherscan";
 import { fetchEthBurnIssuance } from "./ultrasound";
 import { fetchEtfFlows } from "./farside";
 import { fetchEthEtfHoldings } from "./dune";
-import { fetchDatHoldings } from "./defillama-dat";
+import { fetchDatHoldingsScraper } from "./defillama-dat-scraper";
 import { fetchRwaByChain } from "./defillama-rwa";
 import { fetchAllCoinGeckoData } from "./coingecko";
 import { fetchFearGreed } from "./alternative";
@@ -116,7 +116,7 @@ export async function fetchAndStoreV2Metrics(): Promise<FetchResult> {
     if (etfHoldings.totalEth !== null) {
       metrics.push({
         date: today,
-        key: "etf_holdings_total",
+        key: "eth_etf_holdings_total",
         value: etfHoldings.totalEth,
         metadata: {
           usd: etfHoldings.totalUsd,
@@ -130,17 +130,18 @@ export async function fetchAndStoreV2Metrics(): Promise<FetchResult> {
     errors.push(`dune-holdings: ${e}`);
   }
 
-  // 5. DAT Holdings Total (DeFiLlama) - corporate treasuries ETH holdings
+  // 5. DAT Holdings Total (DeFiLlama scraper) - corporate treasuries ETH holdings
   try {
-    const datHoldings = await fetchDatHoldings(ethPriceValue ?? 0);
+    const datHoldings = await fetchDatHoldingsScraper();
     console.log("[v2-aggregator] 5. DeFiLlama DAT Holdings response:", JSON.stringify(datHoldings));
     if (datHoldings.totalEth !== null) {
       metrics.push({
         date: today,
-        key: "dat_holdings_total",
+        key: "eth_dat_holdings_total",
         value: datHoldings.totalEth,
         metadata: {
-          usd: datHoldings.totalEthUsd,
+          usd: datHoldings.totalUsd,
+          supplyPct: datHoldings.supplyPct,
           companies: datHoldings.companies,
         },
       });

@@ -1,4 +1,4 @@
-import puppeteer from "puppeteer";
+import { launchBrowser } from "./browser";
 
 // Parse flow value: "102.9" -> 102.9, "(107.7)" -> -107.7, "" -> 0
 function parseFlowValue(value: string): number {
@@ -27,10 +27,7 @@ async function scrapeFarsidePage(
   url: string,
   days: number = 7
 ): Promise<DailyFlow[]> {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  });
+  const browser = await launchBrowser();
 
   try {
     const page = await browser.newPage();
@@ -161,10 +158,7 @@ export interface EtfHoldingsData {
 }
 
 async function scrapeEtfHoldings(url: string): Promise<number | null> {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  });
+  const browser = await launchBrowser();
 
   try {
     const page = await browser.newPage();

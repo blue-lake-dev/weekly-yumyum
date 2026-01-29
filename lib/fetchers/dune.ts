@@ -86,7 +86,7 @@ export interface BtcEtfHoldingsData {
 }
 
 export async function fetchEthEtfHoldings(): Promise<EtfHoldingsData> {
-  const apiKey = process.env.DUNE_API_KEY || process.env.VITE_DUNE_API_KEY;
+  const apiKey = process.env.DUNE_API_KEY;
 
   if (!apiKey) {
     return {
@@ -154,7 +154,7 @@ export async function fetchEthEtfHoldings(): Promise<EtfHoldingsData> {
 }
 
 export async function fetchBtcEtfHoldings(): Promise<BtcEtfHoldingsData> {
-  const apiKey = process.env.DUNE_API_KEY || process.env.VITE_DUNE_API_KEY;
+  const apiKey = process.env.DUNE_API_KEY;
 
   if (!apiKey) {
     return {

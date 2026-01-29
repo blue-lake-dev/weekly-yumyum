@@ -19,8 +19,8 @@ const DASHBOARD_METRIC_KEYS = [
   "rwa_by_chain",
   "etf_flow_eth",
   "etf_flow_btc",
-  "etf_holdings_total",
-  "dat_holdings_total",
+  "eth_etf_holdings_total",
+  "eth_dat_holdings_total",
 ] as const;
 
 export type DashboardMetricKey = (typeof DASHBOARD_METRIC_KEYS)[number];
@@ -207,8 +207,8 @@ export function useV2Metrics(): UseV2MetricsResult {
         }));
 
         // Process ETH Holdings (ETF + DAT as % of supply)
-        const etfHoldingsTotalLatest = getLatest("etf_holdings_total");
-        const datHoldingsTotalLatest = getLatest("dat_holdings_total");
+        const etfHoldingsTotalLatest = getLatest("eth_etf_holdings_total");
+        const datHoldingsTotalLatest = getLatest("eth_dat_holdings_total");
 
         // Calculate percentages based on ETH supply
         const ethSupplyValue = ethSupplyLatest?.value ?? null;
