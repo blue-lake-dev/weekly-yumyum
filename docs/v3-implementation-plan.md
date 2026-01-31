@@ -108,13 +108,11 @@ export const METRIC_KEYS_V3 = {
   eth_price: "eth_price",
   sol_price: "sol_price",       // NEW
 
-  // ETH inflation
+  // ETH inflation (stored daily)
   eth_burn: "eth_burn",
   eth_issuance: "eth_issuance",
 
-  // SOL inflation (NEW)
-  sol_burn: "sol_burn",
-  sol_issuance: "sol_issuance",
+  // Note: SOL fees + inflation rate are fetched LIVE, not stored
 
   // ETF Flows (for 7d charts)
   etf_flow_btc: "etf_flow_btc",
@@ -344,7 +342,8 @@ Rules: Factual, concise, no emojis, no price predictions, casual tone (반말 OK
 
 #### SOL Tab Content:
 - Similar structure to ETH
-- Inflation: Uses `sol_burn` + `sol_issuance` from Solana.FM
+- Shows: 24h Fees (Solana.FM) + Inflation Rate (Solana RPC)
+- Note: SOL is always inflationary (issuance >> burn), so no burn/issuance display
 
 #### BTC Tab Content:
 - No inflation section (fixed supply)
@@ -358,7 +357,7 @@ Rules: Factual, concise, no emojis, no price predictions, casual tone (반말 OK
 | Supply | Etherscan | Solana RPC | CoinGecko |
 | Staking | Beacon | Solana RPC | N/A |
 | TVL | DeFiLlama | DeFiLlama | N/A |
-| Inflation | ultrasound.money | Solana.FM | N/A |
+| Inflation | ultrasound.money (burn/issuance) | Solana RPC (rate) + Solana.FM (fees) | N/A |
 | Stablecoins | DeFiLlama | DeFiLlama | N/A |
 | ETF Flow | Supabase (7d) | Supabase (7d) | Supabase (7d) |
 | Holdings | Farside + DeFiLlama | Farside + DeFiLlama | Farside + DeFiLlama |
@@ -445,32 +444,35 @@ Rules: Factual, concise, no emojis, no price predictions, casual tone (반말 OK
 | ETF Holdings | Farside | ✅ `farside.ts` |
 | DAT Holdings | DeFiLlama | ✅ `defillama-dat-scraper.ts` |
 
-#### ✅ STORAGE - Daily Store (Supabase)
+#### ✅ STORAGE - Daily Store (Supabase) - 9 metrics/day
 | Key | Source | Fetcher | Status |
 |-----|--------|---------|--------|
 | `btc_price` | CoinGecko | ✅ `coingecko.ts` | Keep |
 | `eth_price` | CoinGecko | ✅ `coingecko.ts` | Keep |
-| `sol_price` | CoinGecko | `coingecko.ts` (ADD) | NEW |
+| `sol_price` | CoinGecko | ✅ `coingecko.ts` | Done |
 | `eth_burn` | ultrasound.money | ✅ `ultrasound.ts` | Keep |
 | `eth_issuance` | ultrasound.money | ✅ `ultrasound.ts` | Keep |
-| `sol_burn` | Solana.FM | `solana-fm.ts` (NEW) | NEW |
-| `sol_issuance` | Calculated | `solana-fm.ts` (NEW) | NEW |
 | `etf_flow_btc` | Farside | ✅ `farside.ts` | Keep |
 | `etf_flow_eth` | Farside | ✅ `farside.ts` | Keep |
-| `etf_flow_sol` | Farside | `farside.ts` (ADD) | NEW |
-| `daily_summary` | Claude API | `claude-summary.ts` (NEW) | NEW |
+| `etf_flow_sol` | Farside | ✅ `farside.ts` | Done |
+| `daily_summary` | Claude API | `claude-summary.ts` (DEFERRED) | Needs credits |
+
+#### ❌ NO STORAGE - SOL Live Data
+| Data | Source | Fetcher |
+|------|--------|---------|
+| SOL Daily Fees | Dune API (query 6625740) | ✅ `solana.ts` |
+| SOL Inflation Rate | Solana RPC | ✅ `solana.ts` |
 
 ---
 
 ### 9.2 New Fetchers to Create
 
-| File | Purpose | API |
-|------|---------|-----|
-| `lib/fetchers/binance-ws.ts` | Real-time prices | `wss://stream.binance.com` |
-| `lib/fetchers/binance-futures.ts` | Long/Short, Funding | Binance Futures REST |
-| `lib/fetchers/solana.ts` | SOL supply, staking | Solana RPC |
-| `lib/fetchers/solana-fm.ts` | SOL fees → burn calc | Solana.FM API |
-| `lib/fetchers/claude-summary.ts` | Daily AI summary | Anthropic API |
+| File | Purpose | API | Status |
+|------|---------|-----|--------|
+| `lib/fetchers/binance-ws.ts` | Real-time prices | `wss://stream.binance.com` | TODO |
+| `lib/fetchers/binance-futures.ts` | Long/Short, Funding | Binance Futures REST | ✅ Done |
+| `lib/fetchers/solana.ts` | SOL supply, staking, fees, inflation | Solana RPC + Solana.FM | ✅ Done |
+| `lib/fetchers/claude-summary.ts` | Daily AI summary | Anthropic API | ⏸️ Deferred |
 
 ### 9.3 Existing Fetchers to Update
 
@@ -495,29 +497,25 @@ Rules: Factual, concise, no emojis, no price predictions, casual tone (반말 OK
 
 **File: `lib/fetchers/v3-aggregator.ts`** (NEW - replaces v2-aggregator)
 
-Stores only 11 metrics/day:
+Stores only 9 metrics/day (SOL fees/inflation fetched live):
 ```typescript
 async function fetchAndStoreV3Metrics() {
   // Prices (CoinGecko)
   await store('btc_price', ...);
   await store('eth_price', ...);
-  await store('sol_price', ...);  // NEW
+  await store('sol_price', ...);
 
   // ETH inflation (ultrasound.money)
   await store('eth_burn', ...);
   await store('eth_issuance', ...);
 
-  // SOL inflation (Solana.FM) - NEW
-  await store('sol_burn', ...);
-  await store('sol_issuance', ...);
-
   // ETF flows (Farside)
   await store('etf_flow_btc', ...);
   await store('etf_flow_eth', ...);
-  await store('etf_flow_sol', ...);  // NEW
+  await store('etf_flow_sol', ...);
 
-  // AI summary (Claude) - NEW
-  await storeSummary(summary);
+  // AI summary (Claude) - DEFERRED until credits added
+  // await storeSummary(summary);
 }
 ```
 
@@ -535,20 +533,20 @@ async function fetchAndStoreV3Metrics() {
 
 ### 9.7 API Sources & Costs
 
-| Source | Data | Cost |
-|--------|------|------|
-| Binance WebSocket | Live prices (top 10) | Free |
-| Binance Futures | Long/Short, Funding | Free |
-| CoinGecko | BTC.D, markets | Free |
-| Alternative.me | Fear & Greed | Free |
-| DeFiLlama | TVL, Stables, RWA, DAT | Free |
-| Etherscan | ETH supply | Free |
-| ultrasound.money | ETH burn/issuance | Free |
-| Solana RPC | SOL supply, staking | Free |
-| Solana.FM | SOL daily fees | Free |
-| Farside | ETF data | Free (scraper) |
-| Claude API | AI summary | ~$0.01/day |
-| rwa.xyz | RWA by category | Free (CSV) |
+| Source | Data | Cost | Status |
+|--------|------|------|--------|
+| Binance WebSocket | Live prices (top 10) | Free | TODO |
+| Binance Futures | Long/Short, Funding | Free | ✅ Done |
+| CoinGecko | BTC.D, markets, prices | Free | ✅ Done |
+| Alternative.me | Fear & Greed | Free | ✅ Done |
+| DeFiLlama | TVL, Stables, RWA, DAT | Free | ✅ Done |
+| Etherscan | ETH supply | Free | ✅ Done |
+| ultrasound.money | ETH burn/issuance | Free | ✅ Done |
+| Solana RPC | SOL supply, staking, inflation rate | Free | ✅ Done |
+| Dune API | SOL daily fees (query 6625740) | Free (with key) | ✅ Done |
+| Farside | ETF data (BTC, ETH, SOL) | Free (scraper) | ✅ Done |
+| Claude API | AI summary | ~$0.01/day | ⏸️ Deferred |
+| rwa.xyz | RWA by category | Free (CSV) | TODO |
 
 ### 9.8 Backfill (Run Once)
 
@@ -565,18 +563,17 @@ async function backfillOnce() {
 ## 10. Implementation Checklist
 
 ### Phase 0: Database Migration
-- [ ] 1. Run `daily_summaries` table creation SQL
-- [ ] 2. Run cleanup SQL to delete deprecated metrics
-- [ ] 3. Update `database.types.ts` with V3 keys
+- [x] 1. Run `daily_summaries` table creation SQL
+- [x] 2. Run cleanup SQL to delete deprecated metrics
+- [x] 3. Update `database.types.ts` with V3 keys
 
 ### Phase 1: Backend - Core Infrastructure
-- [ ] 4. Update `farside.ts` - Add SOL ETF scraping
-- [ ] 5. Update `coingecko.ts` - Add SOL price, gainers/losers
-- [ ] 6. Create `solana.ts` - SOL supply/staking fetcher
-- [ ] 7. Create `solana-fm.ts` - SOL burn/issuance fetcher
-- [ ] 8. Create `binance-futures.ts` - Long/Short, Funding
-- [ ] 9. Create `claude-summary.ts` - AI summary generator
-- [ ] 10. Create `v3-aggregator.ts` - New cron job (11 metrics/day)
+- [x] 4. Update `farside.ts` - Add SOL ETF scraping
+- [x] 5. Update `coingecko.ts` - Add SOL price, gainers/losers
+- [x] 6. Create `solana.ts` - SOL supply/staking/fees/inflation fetcher
+- [x] 7. Create `binance-futures.ts` - Long/Short, Funding
+- [ ] 8. Create `claude-summary.ts` - AI summary generator (DEFERRED)
+- [x] 9. Create `v3-aggregator.ts` - New cron job (9 metrics/day)
 
 ### Phase 2: Backend - API Routes
 - [ ] 11. Create `/api/v3/quick-stats/route.ts`
@@ -618,19 +615,19 @@ async function backfillOnce() {
 ## Files Checklist
 
 ### Database & Types
-- [ ] Create `supabase/migrations/YYYYMMDD_v3_schema.sql`
-- [ ] Update `lib/database.types.ts`
+- [x] Create `supabase/migrations/20260131000000_v3_schema.sql`
+- [x] Update `lib/database.types.ts`
 
 ### Fetchers (Backend)
-- [ ] Update `lib/fetchers/farside.ts` - Add SOL ETF
-- [ ] Update `lib/fetchers/coingecko.ts` - Add SOL price, gainers/losers
+- [x] Update `lib/fetchers/farside.ts` - Add SOL ETF
+- [x] Update `lib/fetchers/coingecko.ts` - Add SOL price, gainers/losers
 - [ ] Update `lib/fetchers/etherscan.ts` - Add ETH staking
-- [ ] Create `lib/fetchers/solana.ts` - SOL supply/staking
-- [ ] Create `lib/fetchers/solana-fm.ts` - SOL burn/issuance
-- [ ] Create `lib/fetchers/binance-futures.ts` - Derivatives data
+- [x] Create `lib/fetchers/solana.ts` - SOL supply/staking/fees (Dune)/inflation
+- [x] Create `lib/fetchers/binance-futures.ts` - Derivatives data
 - [ ] Create `lib/fetchers/binance-ws.ts` - Real-time prices
-- [ ] Create `lib/fetchers/claude-summary.ts` - AI summary
-- [ ] Create `lib/fetchers/v3-aggregator.ts` - V3 cron job
+- [ ] Create `lib/fetchers/claude-summary.ts` - AI summary (DEFERRED)
+- [x] Create `lib/fetchers/v3-aggregator.ts` - V3 cron job
+- [x] Delete `lib/fetchers/solana-fm.ts` - Merged into solana.ts
 
 ### API Routes
 - [ ] Create `app/api/v3/quick-stats/route.ts`
@@ -672,7 +669,7 @@ async function backfillOnce() {
 ### Database
 - [ ] Verify `daily_summaries` table exists
 - [ ] Verify old metrics deleted (only V3 keys remain)
-- [ ] Verify cron stores 11 metrics/day
+- [ ] Verify cron stores 9 metrics/day (8 without AI summary)
 
 ### Backend APIs
 - [ ] `curl /api/v3/ticker` - returns top 10 prices
@@ -701,5 +698,7 @@ async function backfillOnce() {
 
 ## Changelog
 
+- **2026-01-31**: Switched SOL fees from Solana.FM (down) to Dune API (query 6625740)
+- **2026-01-31**: Removed sol_burn/sol_issuance (fetch live instead), merged solana-fm.ts into solana.ts
 - **2026-01-31**: Merged v3-plan-final.md into implementation plan
 - **2026-01-30**: V3 Final spec created

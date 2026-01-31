@@ -20,6 +20,7 @@ export interface DailyFlow {
 export interface EtfFlowsData {
   eth: DailyFlow[] | null;
   btc: DailyFlow[] | null;
+  sol: DailyFlow[] | null;
   error?: string;
 }
 
@@ -54,15 +55,26 @@ async function scrapeFarsidePage(
             (c) => c.textContent?.trim() || ""
           );
 
-          // Header row detection
+          // Header row detection - look for known ETF tickers
           if (
             i <= 1 &&
             cellValues.some(
               (v) =>
+                // ETH ETFs
                 v.includes("ETHA") ||
-                v.includes("IBIT") ||
                 v.includes("FETH") ||
-                v.includes("FBTC")
+                v.includes("ETHW") ||
+                // BTC ETFs
+                v.includes("IBIT") ||
+                v.includes("FBTC") ||
+                v.includes("GBTC") ||
+                // SOL ETFs
+                v.includes("SOLS") ||
+                v.includes("SOLZ") ||
+                v.includes("GSOL") ||
+                v.includes("FSOL") ||
+                // Generic: header usually has "Total" column
+                v === "Total"
             )
           ) {
             headers.push(...cellValues);
@@ -153,7 +165,8 @@ async function scrapeFarsidePage(
 
 export interface EtfHoldingsData {
   ethTotal: number | null; // Total ETH held by all ETFs
-  btcTotal: number | null; // Total BTC held by all ETFs (for reference)
+  btcTotal: number | null; // Total BTC held by all ETFs
+  solTotal: number | null; // Total SOL held by all ETFs
   error?: string;
 }
 
@@ -200,22 +213,24 @@ async function scrapeEtfHoldings(url: string): Promise<number | null> {
 }
 
 /**
- * Fetch total ETF holdings (ETH and BTC) from Farside
+ * Fetch total ETF holdings (ETH, BTC, SOL) from Farside
  * This extracts the "Total" row which shows cumulative holdings
  */
 export async function fetchEtfHoldings(): Promise<EtfHoldingsData> {
   try {
-    const [ethTotal, btcTotal] = await Promise.all([
+    const [ethTotal, btcTotal, solTotal] = await Promise.all([
       scrapeEtfHoldings("https://farside.co.uk/eth/"),
       scrapeEtfHoldings("https://farside.co.uk/btc/"),
+      scrapeEtfHoldings("https://farside.co.uk/sol/"),
     ]);
 
-    return { ethTotal, btcTotal };
+    return { ethTotal, btcTotal, solTotal };
   } catch (error) {
     console.error("fetchEtfHoldings error:", error);
     return {
       ethTotal: null,
       btcTotal: null,
+      solTotal: null,
       error: error instanceof Error ? error.message : "Unknown error",
     };
   }
@@ -223,17 +238,19 @@ export async function fetchEtfHoldings(): Promise<EtfHoldingsData> {
 
 export async function fetchEtfFlows(days: number = 7): Promise<EtfFlowsData> {
   try {
-    const [eth, btc] = await Promise.all([
+    const [eth, btc, sol] = await Promise.all([
       scrapeFarsidePage("https://farside.co.uk/eth/", days),
       scrapeFarsidePage("https://farside.co.uk/btc/", days),
+      scrapeFarsidePage("https://farside.co.uk/sol/", days),
     ]);
 
-    return { eth, btc };
+    return { eth, btc, sol };
   } catch (error) {
     console.error("fetchEtfFlows error:", error);
     return {
       eth: null,
       btc: null,
+      sol: null,
       error: error instanceof Error ? error.message : "Unknown error",
     };
   }
