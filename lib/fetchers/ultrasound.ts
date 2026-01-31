@@ -39,18 +39,17 @@ async function fetchWithTimeout<T>(url: string, timeout = 15000): Promise<T> {
 }
 
 export interface EthBurnIssuanceData {
-  // Daily values (calculated from annualized rates)
-  dailyBurn: number | null; // ETH burned per day
-  dailyIssuance: number | null; // ETH issued per day (PoS rewards)
-  dailyNetSupplyChange: number | null; // issuance - burn
+  // Actual burn amounts (from burn-sums)
+  burn24h: number | null; // ETH burned in last 24h
+  burn7d: number | null; // ETH burned in last 7 days
+  burnSinceMerge: number | null; // Total burned since merge
 
-  // Cumulative totals
-  totalBurnedSinceMerge: number | null;
-  totalBurnedSinceEIP1559: number | null;
+  // Supply growth rate (from gauge-rates)
+  supplyGrowthRateYearly: number | null; // e.g., 0.0079 = 0.79%
+  isDeflationary: boolean;
 
   // Metadata
   timestamp: string | null;
-  blockNumber: number | null;
   error?: string;
 }
 
@@ -67,34 +66,35 @@ export async function fetchEthBurnIssuance(): Promise<EthBurnIssuanceData> {
       throw new Error("Missing d1 timeframe data");
     }
 
-    // Convert annualized rates to daily values
-    const dailyBurn = d1.burn_rate_yearly.eth / 365;
-    const dailyIssuance = d1.issuance_rate_yearly.eth / 365;
-    const dailyNetSupplyChange = dailyIssuance - dailyBurn;
+    // Actual burn amounts
+    const burn24h = burnSums.d1?.sum.eth ?? null;
+    const burn7d = burnSums.d7?.sum.eth ?? null;
+    const burnSinceMerge = burnSums.since_merge?.sum.eth ?? null;
 
-    // Get cumulative burn totals
-    const totalBurnedSinceMerge = burnSums.since_merge?.sum.eth ?? null;
-    const totalBurnedSinceEIP1559 = burnSums.since_burn?.sum.eth ?? null;
+    // Supply growth rate (negative = deflationary)
+    const supplyGrowthRateYearly = d1.supply_growth_rate_yearly;
+    const isDeflationary = supplyGrowthRateYearly < 0;
+
+    console.log(`[ultrasound] ETH burn 24h: ${burn24h?.toFixed(2)} ETH, 7d: ${burn7d?.toFixed(2)} ETH`);
+    console.log(`[ultrasound] Supply growth: ${(supplyGrowthRateYearly * 100).toFixed(2)}%/year (${isDeflationary ? 'deflationary' : 'inflationary'})`);
 
     return {
-      dailyBurn,
-      dailyIssuance,
-      dailyNetSupplyChange,
-      totalBurnedSinceMerge,
-      totalBurnedSinceEIP1559,
+      burn24h,
+      burn7d,
+      burnSinceMerge,
+      supplyGrowthRateYearly,
+      isDeflationary,
       timestamp: d1.timestamp,
-      blockNumber: d1.block_number,
     };
   } catch (error) {
     console.error("fetchEthBurnIssuance error:", error);
     return {
-      dailyBurn: null,
-      dailyIssuance: null,
-      dailyNetSupplyChange: null,
-      totalBurnedSinceMerge: null,
-      totalBurnedSinceEIP1559: null,
+      burn24h: null,
+      burn7d: null,
+      burnSinceMerge: null,
+      supplyGrowthRateYearly: null,
+      isDeflationary: false,
       timestamp: null,
-      blockNumber: null,
       error: error instanceof Error ? error.message : "Unknown error",
     };
   }

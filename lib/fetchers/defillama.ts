@@ -145,6 +145,58 @@ export async function fetchStablecoinByChain(chain: string): Promise<MetricValue
   }
 }
 
+export interface StablecoinSparklineData {
+  current: number | null; // in billions
+  change7d: number | null; // percentage
+  sparkline: number[]; // 7 daily values in billions
+  error?: string;
+}
+
+/**
+ * Fetch stablecoin by chain with 7d sparkline
+ * @param chain - Chain name (e.g., "Ethereum", "Solana")
+ */
+export async function fetchStablecoinWithSparkline(chain: string): Promise<StablecoinSparklineData> {
+  try {
+    const data = await fetchWithTimeout<StablecoinChainChartEntry[]>(
+      `${STABLECOINS_API}/stablecoincharts/${chain}`
+    );
+
+    if (!data || data.length === 0) {
+      throw new Error(`No stablecoin data for ${chain}`);
+    }
+
+    // Get last 8 days (need 8 to calculate 7d change)
+    const recentData = data.slice(-8);
+
+    // Current value (latest)
+    const current = recentData[recentData.length - 1].totalCirculating.peggedUSD / 1e9;
+
+    // 7 days ago value (first of 8)
+    const previous = recentData[0].totalCirculating.peggedUSD / 1e9;
+
+    // Calculate 7d change
+    const change7d = previous > 0 ? ((current - previous) / previous) * 100 : null;
+
+    // Sparkline: last 7 days
+    const sparkline = recentData.slice(-7).map(d => d.totalCirculating.peggedUSD / 1e9);
+
+    return {
+      current,
+      change7d,
+      sparkline,
+    };
+  } catch (error) {
+    console.error(`fetchStablecoinWithSparkline(${chain}) error:`, error);
+    return {
+      current: null,
+      change7d: null,
+      sparkline: [],
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
 // Lending protocols to track (sorted by typical borrow volume)
 const LENDING_PROTOCOLS = [
   { slug: "aave-v3", name: "Aave" },
@@ -323,5 +375,63 @@ export async function fetchEthTvl(): Promise<MetricValue> {
   } catch (error) {
     console.error("fetchEthTvl error:", error);
     return { current: null, error: "Failed to fetch ETH TVL", source: "defillama" };
+  }
+}
+
+// Historical TVL entry from DeFiLlama
+interface HistoricalTvlEntry {
+  date: number; // Unix timestamp in seconds
+  tvl: number;
+}
+
+export interface TvlSparklineData {
+  current: number | null; // in billions
+  change7d: number | null; // percentage
+  sparkline: number[]; // 7 daily values in billions
+  error?: string;
+}
+
+/**
+ * Fetch chain TVL with 7d sparkline
+ * @param chain - Chain name (e.g., "Ethereum", "Solana")
+ */
+export async function fetchChainTvlWithSparkline(chain: string): Promise<TvlSparklineData> {
+  try {
+    const data = await fetchWithTimeout<HistoricalTvlEntry[]>(
+      `${DEFILLAMA_API}/v2/historicalChainTvl/${chain}`
+    );
+
+    if (!data || data.length === 0) {
+      throw new Error(`No TVL data for ${chain}`);
+    }
+
+    // Get last 8 days (need 8 to calculate 7d change)
+    const recentData = data.slice(-8);
+
+    // Current value (latest)
+    const current = recentData[recentData.length - 1].tvl / 1e9;
+
+    // 7 days ago value (first of 8)
+    const previous = recentData[0].tvl / 1e9;
+
+    // Calculate 7d change
+    const change7d = previous > 0 ? ((current - previous) / previous) * 100 : null;
+
+    // Sparkline: last 7 days (skip first, take last 7)
+    const sparkline = recentData.slice(-7).map(d => d.tvl / 1e9);
+
+    return {
+      current,
+      change7d,
+      sparkline,
+    };
+  } catch (error) {
+    console.error(`fetchChainTvlWithSparkline(${chain}) error:`, error);
+    return {
+      current: null,
+      change7d: null,
+      sparkline: [],
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
   }
 }

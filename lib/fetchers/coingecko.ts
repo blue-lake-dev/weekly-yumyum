@@ -38,6 +38,108 @@ function calcChangePct(current: number | null, previous: number | null): number 
   return ((current - previous) / previous) * 100;
 }
 
+/**
+ * Simple price data with 24h change - single API call for all coins
+ * Much more efficient than fetching market_chart for each coin
+ */
+interface SimplePriceResponse {
+  [coinId: string]: {
+    usd: number;
+    usd_24h_change: number;
+  };
+}
+
+export interface TickerData {
+  symbol: string;
+  price: number | null;
+  change24h: number | null;
+}
+
+/**
+ * Fetch ticker prices for BTC, ETH, SOL with 24h change
+ * Uses /simple/price endpoint - single call, rate-limit friendly
+ */
+/**
+ * Fetch 7-day price sparkline for a coin
+ * Returns array of daily prices + 7d change percentage
+ */
+export interface SparklineData {
+  change7d: number | null;
+  sparkline: number[]; // 7 daily price points
+  error?: string;
+}
+
+export async function fetchPriceSparkline(coinId: string): Promise<SparklineData> {
+  try {
+    const data = await fetchWithTimeout<MarketChartResponse>(
+      `${COINGECKO_API}/coins/${coinId}/market_chart?vs_currency=usd&days=7&interval=daily`
+    );
+
+    if (!data.prices || data.prices.length < 2) {
+      throw new Error("Not enough price data");
+    }
+
+    // Extract prices (index 1 of each [timestamp, price] tuple)
+    const prices = data.prices.map(p => p[1]);
+
+    // Calculate 7d change
+    const firstPrice = prices[0];
+    const lastPrice = prices[prices.length - 1];
+    const change7d = firstPrice > 0 ? ((lastPrice - firstPrice) / firstPrice) * 100 : null;
+
+    console.log(`[coingecko] ${coinId} sparkline: ${prices.length} points, 7d change: ${change7d?.toFixed(2)}%`);
+
+    return {
+      change7d,
+      sparkline: prices,
+    };
+  } catch (error) {
+    console.error(`[coingecko] fetchPriceSparkline(${coinId}) error:`, error);
+    return {
+      change7d: null,
+      sparkline: [],
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+export async function fetchTickerPrices(): Promise<TickerData[]> {
+  try {
+    const data = await fetchWithTimeout<SimplePriceResponse>(
+      `${COINGECKO_API}/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true`
+    );
+
+    const tickers: TickerData[] = [
+      {
+        symbol: "BTC",
+        price: data.bitcoin?.usd ?? null,
+        change24h: data.bitcoin?.usd_24h_change ?? null,
+      },
+      {
+        symbol: "ETH",
+        price: data.ethereum?.usd ?? null,
+        change24h: data.ethereum?.usd_24h_change ?? null,
+      },
+      {
+        symbol: "SOL",
+        price: data.solana?.usd ?? null,
+        change24h: data.solana?.usd_24h_change ?? null,
+      },
+    ];
+
+    console.log("[coingecko] Ticker prices fetched:", tickers.map(t => `${t.symbol}: $${t.price?.toFixed(2)} (${t.change24h?.toFixed(2)}%)`).join(", "));
+
+    return tickers;
+  } catch (error) {
+    console.error("[coingecko] fetchTickerPrices error:", error);
+    return [
+      { symbol: "BTC", price: null, change24h: null },
+      { symbol: "ETH", price: null, change24h: null },
+      { symbol: "SOL", price: null, change24h: null },
+    ];
+  }
+}
+
 // Extract current (latest) and previous (7 days ago) from market chart data
 function extractPricesWithTimestamps(data: MarketChartResponse): {
   current: number | null;
@@ -234,6 +336,55 @@ export async function fetchGainersLosers(limit: number = 10): Promise<GainersLos
     return {
       gainers: [],
       losers: [],
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+/**
+ * Coin supply data from CoinGecko
+ */
+export interface CoinSupplyData {
+  circulatingSupply: number | null;
+  totalSupply: number | null;
+  maxSupply: number | null;
+  error?: string;
+}
+
+interface CoinDetailResponse {
+  market_data: {
+    circulating_supply: number;
+    total_supply: number;
+    max_supply: number | null;
+  };
+}
+
+/**
+ * Fetch supply data for a specific coin
+ * @param coinId - CoinGecko coin ID (e.g., "bitcoin", "ethereum", "solana")
+ */
+export async function fetchCoinSupply(coinId: string): Promise<CoinSupplyData> {
+  try {
+    const data = await fetchWithTimeout<CoinDetailResponse>(
+      `${COINGECKO_API}/coins/${coinId}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`
+    );
+
+    const marketData = data.market_data;
+
+    console.log(`[coingecko] ${coinId} circulating:`, marketData.circulating_supply?.toLocaleString());
+    console.log(`[coingecko] ${coinId} max supply:`, marketData.max_supply?.toLocaleString() || "unlimited");
+
+    return {
+      circulatingSupply: marketData.circulating_supply,
+      totalSupply: marketData.total_supply,
+      maxSupply: marketData.max_supply,
+    };
+  } catch (error) {
+    console.error(`[coingecko] fetchCoinSupply(${coinId}) error:`, error);
+    return {
+      circulatingSupply: null,
+      totalSupply: null,
+      maxSupply: null,
       error: error instanceof Error ? error.message : "Unknown error",
     };
   }

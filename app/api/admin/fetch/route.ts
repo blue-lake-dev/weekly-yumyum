@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
-import { fetchAndStoreV2Metrics } from "@/lib/fetchers/v2-aggregator";
+import { fetchAndStoreV3Metrics } from "@/lib/fetchers/v3-aggregator";
 // import { extractToken, verifyJwt } from "@/lib/auth";
 
 // Manual trigger for admin to fetch all metrics
 // Protected by JWT auth (Telegram OTP login)
+//
+// V3 stores only 3 metrics daily (ETF flows for BTC, ETH, SOL)
+// Everything else is fetched live via API routes
 
 export async function POST(request: Request) {
   // TODO: Re-enable JWT verification once Telegram admin UI is ready
@@ -25,10 +28,10 @@ export async function POST(request: Request) {
   // Suppress unused parameter warning
   void request;
 
-  console.log("[admin/fetch] POST request received");
+  console.log("[admin/fetch] POST request received (V3)");
 
   try {
-    const result = await fetchAndStoreV2Metrics();
+    const result = await fetchAndStoreV3Metrics();
     console.log("[admin/fetch] Result:", result);
 
     return NextResponse.json({

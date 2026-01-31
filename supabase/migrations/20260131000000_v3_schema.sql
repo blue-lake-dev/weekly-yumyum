@@ -26,6 +26,15 @@ CREATE POLICY "Service write summaries"
 -- 2. Delete deprecated metric keys (V2 → V3 migration)
 -- These are no longer stored in V3 (fetched live or not needed)
 DELETE FROM metrics WHERE key IN (
+  -- Prices (now from ticker API, not stored)
+  'btc_price',
+  'eth_price',
+  'sol_price',
+
+  -- ETH burn/issuance (now fetched live from ultrasound.money)
+  'eth_burn',
+  'eth_issuance',
+
   -- V2 stored, V3 fetches live (15 min cache)
   'fear_greed',
   'btc_dominance',
@@ -57,6 +66,6 @@ DELETE FROM metrics WHERE key IN (
   'us_10y'
 );
 
--- Verify: Only V3 keys should remain
+-- Verify: Only V3 keys should remain (3 metrics)
 -- SELECT DISTINCT key FROM metrics ORDER BY key;
--- Expected: btc_price, eth_price, eth_burn, eth_issuance, etf_flow_btc, etf_flow_eth
+-- Expected: etf_flow_btc, etf_flow_eth, etf_flow_sol

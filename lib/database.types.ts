@@ -77,19 +77,10 @@ export interface Database {
   };
 }
 
-// Metric keys for V3 (9 metrics/day stored in Supabase)
-// Note: SOL fees + inflation rate are fetched live, not stored
+// Metric keys for V3 (3 metrics/day stored in Supabase)
+// Everything else fetched live - no storage needed
 export const METRIC_KEYS = {
-  // Prices (for 7d charts)
-  btc_price: "btc_price",
-  eth_price: "eth_price",
-  sol_price: "sol_price",
-
-  // ETH inflation (stored daily)
-  eth_burn: "eth_burn",
-  eth_issuance: "eth_issuance",
-
-  // ETF Flows (for 7d charts)
+  // ETF Flows (stored daily for 7d charts)
   etf_flow_btc: "etf_flow_btc",
   etf_flow_eth: "etf_flow_eth",
   etf_flow_sol: "etf_flow_sol",

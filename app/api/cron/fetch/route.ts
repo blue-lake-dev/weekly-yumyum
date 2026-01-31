@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
-import { fetchAndStoreV2Metrics } from "@/lib/fetchers/v2-aggregator";
+import { fetchAndStoreV3Metrics } from "@/lib/fetchers/v3-aggregator";
 
 // Vercel Cron: runs daily at 09:00 KST (00:00 UTC)
 // Configure in vercel.json: { "crons": [{ "path": "/api/cron/fetch", "schedule": "0 0 * * *" }] }
+//
+// V3 stores only 3 metrics daily (ETF flows for BTC, ETH, SOL)
+// Everything else is fetched live via API routes
 
 export async function GET(request: Request) {
   // Verify cron secret (Vercel sets this header for cron jobs)
@@ -15,7 +18,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const result = await fetchAndStoreV2Metrics();
+    const result = await fetchAndStoreV3Metrics();
 
     return NextResponse.json({
       success: result.success,

@@ -302,9 +302,9 @@ export async function fetchAndStoreV2Metrics(): Promise<FetchResult> {
       const supabase = createServerClient();
 
       // Upsert metrics (update if date+key exists, insert if not)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error: upsertError } = await supabase
         .from("metrics")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .upsert(metrics as any, { onConflict: "date,key" })
         .select();
 
