@@ -501,17 +501,52 @@ async function fetchAndStoreMetrics() {
 }
 ```
 
-### 9.6 Frontend Hooks (TODO)
+### 9.6 Frontend Data Fetching (Streaming Hydration)
 
-| Hook | Section | Data |
-|------|---------|------|
-| `use-ticker.ts` | ❶ Ticker | Prices from `/api/v1/ticker` |
-| `use-quick-stats.ts` | ❷ Quick Stats | F&G, BTC.D, Stables, ETF flows |
-| `use-gainers-losers.ts` | ❸ 오늘의 코인 | Top movers |
-| `use-summary.ts` | ❹ 얌얌의 한마디 | AI daily summary |
-| `use-chain-data.ts` | ❺ Chain Tabs | Chain-specific metrics |
-| `use-derivatives.ts` | ❻ 파생상품 | Long/Short, Funding |
-| `use-rwa.ts` | ❻ RWA | RWA by chain/category |
+**Pattern:** TanStack Query v5 + Next.js App Router + Suspense
+
+```
+Server (page.tsx)                    Client (Dashboard.tsx)
+─────────────────                    ─────────────────────
+await prefetch(critical)      →      useQuery() → instant data
+prefetch(non-critical)        →      useSuspenseQuery() → suspend/stream
+dehydrate(queryClient)        →      HydrationBoundary
+```
+
+**Blocking (await) — Above the Fold:**
+| Hook | Section | Query Type |
+|------|---------|------------|
+| `use-ticker.ts` | ❶ Ticker | `useQuery` |
+| `use-quick-stats.ts` | ❷ Quick Stats | `useQuery` |
+
+**Streaming (no await) — Progressive Load:**
+| Hook | Section | Query Type |
+|------|---------|------------|
+| `use-gainers-losers.ts` | ❸ 오늘의 코인 | `useSuspenseQuery` |
+| `use-summary.ts` | ❹ 얌얌의 한마디 | `useSuspenseQuery` |
+| `use-chain-data.ts` | ❺ Chain Tabs | `useSuspenseQuery` |
+| `use-derivatives.ts` | ❻ 파생상품 | `useSuspenseQuery` |
+| `use-rwa.ts` | ❻ RWA | `useSuspenseQuery` |
+
+**Auto-Refresh (Polling):**
+
+Hooks use `refetchInterval` to auto-refresh data while the page is open:
+
+| Hook | `staleTime` | `refetchInterval` | Notes |
+|------|-------------|-------------------|-------|
+| `use-ticker.ts` | 1 min | 1 min | Prices change constantly |
+| `use-quick-stats.ts` | 15 min | 30 min | F&G updates ~8h, ETF flows daily |
+| `use-gainers-losers.ts` | 15 min | 15 min | Top movers shift throughout day |
+| `use-derivatives.ts` | 5 min | 5 min | L/S ratio changes frequently |
+| `use-summary.ts` | 1 hour | - | Daily summary, no polling |
+| `use-chain-data.ts` | 15 min | - | No polling (manual tab switch) |
+| `use-rwa.ts` | 15 min | - | Disabled until endpoint ready |
+
+**Key Files:**
+- `lib/get-query-client.ts` — Server singleton with React `cache()`
+- `lib/api/fetchers.ts` — Shared fetch functions + query keys
+- `components/providers/QueryProvider.tsx` — Client singleton
+- `components/ErrorBoundary.tsx` — Error handling for Suspense
 
 ### 9.7 API Sources & Costs
 
@@ -579,40 +614,40 @@ lib/hooks/         # Data fetching hooks
 ```
 
 **Cleanup (delete legacy V1 components):**
-- [ ] 18. Delete `components/Header.tsx`
-- [ ] 19. Delete `components/ui/ChangeIndicator.tsx`
-- [ ] 20. Delete `components/ui/DataTable.tsx`
-- [ ] 21. Delete `components/ui/SectionHeader.tsx`
-- [ ] 22. Delete `components/ui/ActionButtons.tsx`
+- [x] 18. Delete `components/Header.tsx`
+- [x] 19. Delete `components/ui/ChangeIndicator.tsx`
+- [x] 20. Delete `components/ui/DataTable.tsx`
+- [x] 21. Delete `components/ui/SectionHeader.tsx`
+- [x] 22. Delete `components/ui/ActionButtons.tsx`
 
 **Components:**
-- [ ] 23. Create `components/ui/StatPill.tsx` - pill component (per v3-ref-1.png)
-- [ ] 24. Create `components/ui/Skeleton.tsx` - loading placeholder
-- [ ] 25. Create `components/layout/Header.tsx` - logo + nav + social
-- [ ] 26. Create `components/layout/Footer.tsx` - credits + timestamp
-- [ ] 27. Create `components/sections/Ticker.tsx` - ❶ prices
-- [ ] 28. Create `components/sections/QuickStats.tsx` - ❷ pill-style stats
-- [ ] 29. Create `components/sections/TodaysCoin.tsx` - ❸ gainers/losers
-- [ ] 30. Create `components/sections/YumyumComment.tsx` - ❹ AI summary
-- [ ] 31. Create `components/sections/ChainTabs.tsx` - ❺ BTC/ETH/SOL tabs
-- [ ] 32. Create `components/sections/MoreTabs.tsx` - ❻ 더보기 container
-- [ ] 33. Create `components/sections/Derivatives.tsx` - ❻ 파생상품
-- [ ] 34. Create `components/sections/RwaSection.tsx` - ❻ RWA
+- [x] 23. Create `components/ui/StatPill.tsx` - pill component (per v3-ref-1.png)
+- [x] 24. Create `components/ui/Skeleton.tsx` - loading placeholder
+- [x] 25. Create `components/layout/Header.tsx` - logo + nav + social
+- [x] 26. Create `components/layout/Footer.tsx` - credits + timestamp
+- [x] 27. Create `components/sections/Ticker.tsx` - ❶ prices
+- [x] 28. Create `components/sections/QuickStats.tsx` - ❷ pill-style stats
+- [x] 29. Create `components/sections/TodaysCoin.tsx` - ❸ gainers/losers
+- [x] 30. Create `components/sections/YumyumComment.tsx` - ❹ AI summary
+- [x] 31. Create `components/sections/ChainTabs.tsx` - ❺ BTC/ETH/SOL tabs
+- [x] 32. Create `components/sections/MoreTabs.tsx` - ❻ 더보기 container
+- [x] 33. Create `components/sections/Derivatives.tsx` - ❻ 파생상품
+- [x] 34. Create `components/sections/RwaSection.tsx` - ❻ RWA
 
 ### Phase 4: Frontend - Hooks & Page
-- [ ] 35. Create `lib/hooks/use-ticker.ts` - ❶
-- [ ] 36. Create `lib/hooks/use-quick-stats.ts` - ❷
-- [ ] 37. Create `lib/hooks/use-gainers-losers.ts` - ❸
-- [ ] 38. Create `lib/hooks/use-summary.ts` - ❹
-- [ ] 39. Create `lib/hooks/use-chain-data.ts` - ❺
-- [ ] 40. Create `lib/hooks/use-derivatives.ts` - ❻
-- [ ] 41. Create `lib/hooks/use-rwa.ts` - ❻
-- [ ] 42. Update `app/page.tsx` - assemble all sections (home = dashboard)
+- [x] 35. Create `lib/hooks/use-ticker.ts` - ❶
+- [x] 36. Create `lib/hooks/use-quick-stats.ts` - ❷
+- [x] 37. Create `lib/hooks/use-gainers-losers.ts` - ❸
+- [x] 38. Create `lib/hooks/use-summary.ts` - ❹
+- [x] 39. Create `lib/hooks/use-chain-data.ts` - ❺
+- [x] 40. Create `lib/hooks/use-derivatives.ts` - ❻
+- [x] 41. Create `lib/hooks/use-rwa.ts` - ❻
+- [x] 42. Update `app/page.tsx` - assemble all sections (home = dashboard)
 
 ### Phase 5: Polish
-- [ ] 43. Style refinement based on feedback
+- [x] 43. Style refinement based on feedback
 - [ ] 44. Responsive testing
-- [ ] 45. Error states & loading skeletons
+- [x] 45. Error states & loading skeletons
 
 ---
 
@@ -647,35 +682,35 @@ lib/hooks/         # Data fetching hooks
 - [x] `app/api/admin/fetch/route.ts`
 - [x] `app/api/admin/backfill/route.ts`
 
-### Hooks (TODO)
-- [ ] `lib/hooks/use-ticker.ts` - ❶ Ticker
-- [ ] `lib/hooks/use-quick-stats.ts` - ❷ Quick Stats
-- [ ] `lib/hooks/use-gainers-losers.ts` - ❸ 오늘의 코인
-- [ ] `lib/hooks/use-summary.ts` - ❹ 얌얌의 한마디
-- [ ] `lib/hooks/use-chain-data.ts` - ❺ Chain Tabs
-- [ ] `lib/hooks/use-derivatives.ts` - ❻ 파생상품
-- [ ] `lib/hooks/use-rwa.ts` - ❻ RWA
+### Hooks
+- [x] `lib/hooks/use-ticker.ts` - ❶ Ticker
+- [x] `lib/hooks/use-quick-stats.ts` - ❷ Quick Stats
+- [x] `lib/hooks/use-gainers-losers.ts` - ❸ 오늘의 코인
+- [x] `lib/hooks/use-summary.ts` - ❹ 얌얌의 한마디
+- [x] `lib/hooks/use-chain-data.ts` - ❺ Chain Tabs
+- [x] `lib/hooks/use-derivatives.ts` - ❻ 파생상품
+- [x] `lib/hooks/use-rwa.ts` - ❻ RWA
 
 ### Components - UI (Primitives)
-- [ ] `components/ui/StatPill.tsx` - Reusable pill (per v3-ref-1.png)
-- [ ] `components/ui/Skeleton.tsx` - Loading placeholder
+- [x] `components/ui/StatPill.tsx` - Reusable pill (per v3-ref-1.png)
+- [x] `components/ui/Skeleton.tsx` - Loading placeholder
 
 ### Components - Layout
-- [ ] `components/layout/Header.tsx` - Logo + nav + social
-- [ ] `components/layout/Footer.tsx` - Credits + timestamp
+- [x] `components/layout/Header.tsx` - Logo + nav + social
+- [x] `components/layout/Footer.tsx` - Credits + timestamp
 
 ### Components - Sections (per v3-design-cand-1.png)
-- [ ] `components/sections/Ticker.tsx` - ❶ Ticker
-- [ ] `components/sections/QuickStats.tsx` - ❷ Quick Stats
-- [ ] `components/sections/TodaysCoin.tsx` - ❸ 오늘의 코인
-- [ ] `components/sections/YumyumComment.tsx` - ❹ 얌얌의 한마디
-- [ ] `components/sections/ChainTabs.tsx` - ❺ Chain Tabs
-- [ ] `components/sections/MoreTabs.tsx` - ❻ 더보기 container
-- [ ] `components/sections/Derivatives.tsx` - ❻ 파생상품
-- [ ] `components/sections/RwaSection.tsx` - ❻ RWA
+- [x] `components/sections/Ticker.tsx` - ❶ Ticker
+- [x] `components/sections/QuickStats.tsx` - ❷ Quick Stats
+- [x] `components/sections/TodaysCoin.tsx` - ❸ 오늘의 코인
+- [x] `components/sections/YumyumComment.tsx` - ❹ 얌얌의 한마디
+- [x] `components/sections/ChainTabs.tsx` - ❺ Chain Tabs
+- [x] `components/sections/MoreTabs.tsx` - ❻ 더보기 container
+- [x] `components/sections/Derivatives.tsx` - ❻ 파생상품
+- [x] `components/sections/RwaSection.tsx` - ❻ RWA
 
 ### Pages
-- [ ] `app/page.tsx` - Home = Dashboard (no separate route)
+- [x] `app/page.tsx` - Home = Dashboard (no separate route)
 
 ---
 
@@ -713,6 +748,13 @@ lib/hooks/         # Data fetching hooks
 
 ## Changelog
 
+- **2026-02-01**: Added auto-refresh polling (`refetchInterval`) to ticker (1m), gainers/losers (15m), quick stats (30m), derivatives (5m)
+- **2026-02-01**: Completed all frontend components and hooks (Phase 3 & 4)
+- **2026-02-01**: Adopted streaming hydration pattern (TanStack Query v5 + Suspense)
+- **2026-02-01**: Split data fetching: blocking (Ticker, QuickStats) vs streaming (rest)
+- **2026-02-01**: Added `lib/api/fetchers.ts` for shared fetch functions + query keys
+- **2026-02-01**: Added `lib/get-query-client.ts` for server-side QueryClient singleton
+- **2026-02-01**: Updated `docs/architecture.md` with frontend data fetching architecture
 - **2026-02-01**: Frontend architecture decision - grouped by type (`ui/`, `sections/`, `layout/`)
 - **2026-02-01**: Changed dashboard route from `/dashboard-v3` to `/` (home = dashboard)
 - **2026-02-01**: Added legacy component cleanup to Phase 3

@@ -1,6 +1,6 @@
 # Architecture Guide
 
-> Backend architecture decisions and best practices for YUMYUM Dashboard
+> Architecture decisions and best practices for YUMYUM Dashboard
 
 ---
 
@@ -29,9 +29,112 @@ lib/
 
 ---
 
-## Design Principles
+## Frontend Architecture
 
-### 1. Fetchers = Service Layer
+### Component Structure (Grouped by Type)
+
+```
+components/
+  ui/                 ← Reusable primitives
+    StatPill.tsx
+    Skeleton.tsx
+  sections/           ← Dashboard sections
+    Ticker.tsx
+    QuickStats.tsx
+    TodaysCoin.tsx
+    YumyumComment.tsx
+    ChainTabs.tsx
+    MoreTabs.tsx
+    Derivatives.tsx
+    RwaSection.tsx
+  layout/             ← Page chrome
+    Header.tsx
+    Footer.tsx
+  providers/          ← React context providers
+    QueryProvider.tsx
+  ErrorBoundary.tsx   ← Error handling for Suspense
+
+lib/
+  api/
+    fetchers.ts       ← Shared fetch functions + query keys
+  hooks/              ← TanStack Query hooks
+    use-ticker.ts
+    use-quick-stats.ts
+    use-chain-data.ts
+    ...
+  get-query-client.ts ← Server-side QueryClient singleton
+```
+
+### Data Fetching: Streaming Hydration Pattern
+
+We use **TanStack Query v5** with Next.js App Router for optimal performance:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ Server (app/page.tsx)                                           │
+│                                                                 │
+│  1. getQueryClient() ← Singleton per request (React cache)      │
+│  2. await prefetch(critical) ← Ticker, QuickStats (blocking)    │
+│  3. prefetch(non-critical) ← ChainTabs, etc. (non-blocking)     │
+│  4. dehydrate() → serialize state (resolved + pending)          │
+│  5. Send HTML with HydrationBoundary                            │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ Client (components/Dashboard.tsx)                               │
+│                                                                 │
+│  Critical sections: useQuery() → instant data (hydrated)        │
+│  Streaming sections: useSuspenseQuery() → suspend until ready   │
+│  Suspense boundaries: show Skeleton while pending               │
+│  ErrorBoundary: catch and display errors gracefully             │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Blocking vs Streaming Data
+
+| Type | Sections | Behavior |
+|------|----------|----------|
+| **Blocking** | Ticker, QuickStats | `await prefetch()` — Page waits, data instant |
+| **Streaming** | TodaysCoin, YumyumComment, ChainTabs, MoreTabs | `prefetch()` (no await) — Shows skeleton, streams in |
+
+### QueryClient Configuration
+
+**Server-side** (`lib/get-query-client.ts`):
+- Uses React `cache()` for request-level deduplication
+- New client per request (prevents memory leaks)
+- Supports dehydrating pending queries
+
+**Client-side** (`components/providers/QueryProvider.tsx`):
+- Singleton pattern (reuses same client across renders)
+- `staleTime: 60s` prevents immediate refetch after hydration
+
+### Suspense + Error Boundaries
+
+```tsx
+<ErrorBoundary fallback={<ErrorMessage />}>
+  <Suspense fallback={<Skeleton />}>
+    <ChainTabs />  {/* Uses useSuspenseQuery */}
+  </Suspense>
+</ErrorBoundary>
+```
+
+- `useSuspenseQuery` — Suspends component until data ready
+- `<Suspense>` — Shows fallback while suspended
+- `<ErrorBoundary>` — Catches errors, prevents crash
+
+### Why This Pattern?
+
+| Approach | First Paint | UX | Complexity |
+|----------|-------------|-----|------------|
+| Await all (blocking) | 🔴 Slow | 🔴 Wait for slowest API | Low |
+| Client-only fetch | 🟢 Fast | 🟡 Layout shift, spinners | Low |
+| **Streaming hydration** | 🟢 Fast | 🟢 Smooth, progressive | Medium |
+
+---
+
+## Backend Design Principles
+
+### 1. Fetchers = Service Layer (External APIs)
 
 Each fetcher file groups all functions for a single data source:
 - Shared auth/headers
