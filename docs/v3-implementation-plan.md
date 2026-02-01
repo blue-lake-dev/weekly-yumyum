@@ -567,28 +567,52 @@ async function backfillOnce() {
 - [x] 16. Create `/api/v1/summary/route.ts`
 - [x] 17. Update `/api/cron/fetch/route.ts` - Uses aggregator
 
-### Phase 3: Frontend - Components (by section)
-- [ ] 18. Create `StatPill.tsx` - reusable pill component
-- [ ] 19. Create `Ticker.tsx` - ❶ prices
-- [ ] 20. Create `QuickStats.tsx` - ❷ pill-style stats
-- [ ] 21. Create `TodaysCoin.tsx` - ❸ gainers/losers
-- [ ] 22. Create `YumyumComment.tsx` - ❹ AI summary
-- [ ] 23. Create `ChainTabs.tsx` - ❺ BTC/ETH/SOL tabs
-- [ ] 24. Create `MoreTabs.tsx` + `Derivatives.tsx` + `RwaSection.tsx` - ❻ 더보기
+### Phase 3: Frontend - Cleanup & Components
+
+**Frontend Architecture: Grouped by Type**
+```
+components/
+  ui/              # Reusable primitives
+  sections/        # Dashboard sections
+  layout/          # Page chrome (Header, Footer)
+lib/hooks/         # Data fetching hooks
+```
+
+**Cleanup (delete legacy V1 components):**
+- [ ] 18. Delete `components/Header.tsx`
+- [ ] 19. Delete `components/ui/ChangeIndicator.tsx`
+- [ ] 20. Delete `components/ui/DataTable.tsx`
+- [ ] 21. Delete `components/ui/SectionHeader.tsx`
+- [ ] 22. Delete `components/ui/ActionButtons.tsx`
+
+**Components:**
+- [ ] 23. Create `components/ui/StatPill.tsx` - pill component (per v3-ref-1.png)
+- [ ] 24. Create `components/ui/Skeleton.tsx` - loading placeholder
+- [ ] 25. Create `components/layout/Header.tsx` - logo + nav + social
+- [ ] 26. Create `components/layout/Footer.tsx` - credits + timestamp
+- [ ] 27. Create `components/sections/Ticker.tsx` - ❶ prices
+- [ ] 28. Create `components/sections/QuickStats.tsx` - ❷ pill-style stats
+- [ ] 29. Create `components/sections/TodaysCoin.tsx` - ❸ gainers/losers
+- [ ] 30. Create `components/sections/YumyumComment.tsx` - ❹ AI summary
+- [ ] 31. Create `components/sections/ChainTabs.tsx` - ❺ BTC/ETH/SOL tabs
+- [ ] 32. Create `components/sections/MoreTabs.tsx` - ❻ 더보기 container
+- [ ] 33. Create `components/sections/Derivatives.tsx` - ❻ 파생상품
+- [ ] 34. Create `components/sections/RwaSection.tsx` - ❻ RWA
 
 ### Phase 4: Frontend - Hooks & Page
-- [ ] 25. Create `use-ticker.ts` - ❶
-- [ ] 26. Create `use-quick-stats.ts` - ❷
-- [ ] 27. Create `use-gainers-losers.ts` - ❸
-- [ ] 28. Create `use-summary.ts` - ❹
-- [ ] 29. Create `use-chain-data.ts` - ❺
-- [ ] 30. Create `use-derivatives.ts` + `use-rwa.ts` - ❻
-- [ ] 31. Create `/app/dashboard-v3/page.tsx` - assemble all sections
+- [ ] 35. Create `lib/hooks/use-ticker.ts` - ❶
+- [ ] 36. Create `lib/hooks/use-quick-stats.ts` - ❷
+- [ ] 37. Create `lib/hooks/use-gainers-losers.ts` - ❸
+- [ ] 38. Create `lib/hooks/use-summary.ts` - ❹
+- [ ] 39. Create `lib/hooks/use-chain-data.ts` - ❺
+- [ ] 40. Create `lib/hooks/use-derivatives.ts` - ❻
+- [ ] 41. Create `lib/hooks/use-rwa.ts` - ❻
+- [ ] 42. Update `app/page.tsx` - assemble all sections (home = dashboard)
 
 ### Phase 5: Polish
-- [ ] 32. Style refinement based on feedback
-- [ ] 33. Responsive testing
-- [ ] 34. Error states & loading skeletons
+- [ ] 43. Style refinement based on feedback
+- [ ] 44. Responsive testing
+- [ ] 45. Error states & loading skeletons
 
 ---
 
@@ -632,19 +656,26 @@ async function backfillOnce() {
 - [ ] `lib/hooks/use-derivatives.ts` - ❻ 파생상품
 - [ ] `lib/hooks/use-rwa.ts` - ❻ RWA
 
-### Components (TODO)
-- [ ] `components/ui/StatPill.tsx` - Reusable pill
-- [ ] `components/v3/Ticker.tsx` - ❶ Ticker
-- [ ] `components/v3/QuickStats.tsx` - ❷ Quick Stats
-- [ ] `components/v3/TodaysCoin.tsx` - ❸ 오늘의 코인
-- [ ] `components/v3/YumyumComment.tsx` - ❹ 얌얌의 한마디
-- [ ] `components/v3/ChainTabs.tsx` - ❺ Chain Tabs
-- [ ] `components/v3/MoreTabs.tsx` - ❻ 더보기 container
-- [ ] `components/v3/Derivatives.tsx` - ❻ 파생상품
-- [ ] `components/v3/RwaSection.tsx` - ❻ RWA
+### Components - UI (Primitives)
+- [ ] `components/ui/StatPill.tsx` - Reusable pill (per v3-ref-1.png)
+- [ ] `components/ui/Skeleton.tsx` - Loading placeholder
 
-### Pages (TODO)
-- [ ] `app/dashboard-v3/page.tsx`
+### Components - Layout
+- [ ] `components/layout/Header.tsx` - Logo + nav + social
+- [ ] `components/layout/Footer.tsx` - Credits + timestamp
+
+### Components - Sections (per v3-design-cand-1.png)
+- [ ] `components/sections/Ticker.tsx` - ❶ Ticker
+- [ ] `components/sections/QuickStats.tsx` - ❷ Quick Stats
+- [ ] `components/sections/TodaysCoin.tsx` - ❸ 오늘의 코인
+- [ ] `components/sections/YumyumComment.tsx` - ❹ 얌얌의 한마디
+- [ ] `components/sections/ChainTabs.tsx` - ❺ Chain Tabs
+- [ ] `components/sections/MoreTabs.tsx` - ❻ 더보기 container
+- [ ] `components/sections/Derivatives.tsx` - ❻ 파생상품
+- [ ] `components/sections/RwaSection.tsx` - ❻ RWA
+
+### Pages
+- [ ] `app/page.tsx` - Home = Dashboard (no separate route)
 
 ---
 
@@ -682,6 +713,9 @@ async function backfillOnce() {
 
 ## Changelog
 
+- **2026-02-01**: Frontend architecture decision - grouped by type (`ui/`, `sections/`, `layout/`)
+- **2026-02-01**: Changed dashboard route from `/dashboard-v3` to `/` (home = dashboard)
+- **2026-02-01**: Added legacy component cleanup to Phase 3
 - **2026-02-01**: Renamed fetchers to source-based naming (`{source}.ts`)
 - **2026-02-01**: Renamed `v3-aggregator.ts` → `aggregator.ts`, function to `fetchAndStoreMetrics()`
 - **2026-02-01**: Merged `defillama-rwa.ts` into `defillama.ts`
