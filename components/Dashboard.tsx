@@ -64,7 +64,7 @@ export function Dashboard() {
         </ErrorBoundary>
       </main>
 
-      <Footer lastUpdated={new Date().toLocaleString("ko-KR")} />
+      <Footer />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { StatPill } from "@/components/ui/StatPill";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useQuickStats } from "@/lib/hooks/use-quick-stats";
+import { formatFlow } from "@/lib/utils/format";
 
 function getFearGreedEmoji(value: number | null): string {
   if (value === null) return "😐";
@@ -11,17 +12,6 @@ function getFearGreedEmoji(value: number | null): string {
   if (value <= 55) return "😐";
   if (value <= 75) return "😊";
   return "🤑";
-}
-
-function formatBillions(value: number | null): string {
-  if (value === null) return "—";
-  return `$${(value / 1e9).toFixed(0)}B`;
-}
-
-function formatFlow(value: number | null): string {
-  if (value === null) return "—";
-  const sign = value >= 0 ? "+" : "";
-  return `${sign}$${Math.abs(value).toFixed(1)}M`;
 }
 
 export function QuickStats() {
@@ -61,34 +51,31 @@ export function QuickStats() {
         <StatPill
           icon="💵"
           label="Stables"
-          value={formatBillions(data.stablecoins.total)}
+          value={data.stablecoins.total !== null ? `$${data.stablecoins.total.toFixed(2)}B` : "—"}
         />
 
         {/* BTC ETF Flow */}
         <StatPill
           icon="₿"
-          label="BTC ETF"
+          label="ETF BTC"
           value={formatFlow(data.etfFlows.btc)}
-          change={data.etfFlows.btc}
-          changeType="flow"
+          valueColor={data.etfFlows.btc === null ? "neutral" : data.etfFlows.btc >= 0 ? "positive" : "negative"}
         />
 
         {/* ETH ETF Flow */}
         <StatPill
           icon="Ξ"
-          label="ETH ETF"
+          label="ETF ETH"
           value={formatFlow(data.etfFlows.eth)}
-          change={data.etfFlows.eth}
-          changeType="flow"
+          valueColor={data.etfFlows.eth === null ? "neutral" : data.etfFlows.eth >= 0 ? "positive" : "negative"}
         />
 
         {/* SOL ETF Flow */}
         <StatPill
           icon="◎"
-          label="SOL ETF"
+          label="ETF SOL"
           value={formatFlow(data.etfFlows.sol)}
-          change={data.etfFlows.sol}
-          changeType="flow"
+          valueColor={data.etfFlows.sol === null ? "neutral" : data.etfFlows.sol >= 0 ? "positive" : "negative"}
         />
       </div>
     </section>

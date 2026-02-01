@@ -60,11 +60,6 @@ const chainIcons: Record<Chain, string> = {
   sol: "◎",
 };
 
-function formatNumber(value: number | null, decimals = 2): string {
-  if (value === null) return "—";
-  return value.toLocaleString("en-US", { maximumFractionDigits: decimals });
-}
-
 function formatBillions(value: number | null): string {
   if (value === null) return "—";
   return `$${(value / 1e9).toFixed(2)}B`;

@@ -6,11 +6,12 @@ import { Skeleton } from "@/components/ui/Skeleton";
 
 function formatPrice(price: number | null): string {
   if (price === null) return "—";
+  const decimals = price >= 1000 ? 0 : price >= 1 ? 2 : 4;
   return price.toLocaleString("en-US", {
     style: "currency",
     currency: "USD",
-    minimumFractionDigits: price < 10 ? 2 : 0,
-    maximumFractionDigits: price < 10 ? 2 : 0,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
   });
 }
 

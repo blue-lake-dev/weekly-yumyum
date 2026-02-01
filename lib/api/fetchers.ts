@@ -3,8 +3,6 @@
  * These functions can run on server or client
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "";
-
 // Helper to build full URL for server-side fetching
 function getUrl(path: string): string {
   // On server, we need full URL; on client, relative path works
@@ -114,9 +112,18 @@ export async function fetchQuickStats(): Promise<QuickStatsData> {
 }
 
 export async function fetchGainersLosers(): Promise<GainersLosersData> {
-  const res = await fetch(getUrl("/api/v1/gainers-losers"));
-  if (!res.ok) throw new Error("Failed to fetch gainers/losers");
-  return res.json();
+  try {
+    const res = await fetch(getUrl("/api/v1/gainers-losers"));
+    const json = await res.json();
+    // Return data even if API returned error status (with empty arrays)
+    return {
+      gainers: json.gainers || [],
+      losers: json.losers || [],
+    };
+  } catch {
+    // Network error - return empty data
+    return { gainers: [], losers: [] };
+  }
 }
 
 export async function fetchSummary(): Promise<SummaryData> {

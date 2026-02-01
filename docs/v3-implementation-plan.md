@@ -748,6 +748,13 @@ lib/hooks/         # Data fetching hooks
 
 ## Changelog
 
+- **2026-02-02**: Header polish - added pixel mascots (doge, pepe, robot), Admin button, fixed YouTube URL
+- **2026-02-02**: QuickStats polish - simplified StatPill component, added valueColor prop for ETF flows
+- **2026-02-02**: Fixed ETF flows to fetch latest available data (not just today) for weekends
+- **2026-02-02**: Fixed number formatting - ticker prices (0/2/4 decimals by range), stablecoins ($XXX.XXB), ETF flows (sign + color)
+- **2026-02-02**: Fixed hydration mismatch in Footer (suppressHydrationWarning)
+- **2026-02-02**: Fixed gainers/losers API error handling (return empty arrays instead of throwing)
+- **2026-02-02**: Cleanup - removed unused formatNumber, BASE_URL; use shared formatters from utils/format.ts
 - **2026-02-01**: Added auto-refresh polling (`refetchInterval`) to ticker (1m), gainers/losers (15m), quick stats (30m), derivatives (5m)
 - **2026-02-01**: Completed all frontend components and hooks (Phase 3 & 4)
 - **2026-02-01**: Adopted streaming hydration pattern (TanStack Query v5 + Suspense)

@@ -28,7 +28,7 @@ export async function GET() {
         errors.push(`stablecoins: ${e}`);
         return { current: null, error: String(e) };
       }),
-      fetchTodayEtfFlows().catch((e) => {
+      fetchLatestEtfFlows().catch((e) => {
         errors.push(`etfFlows: ${e}`);
         return { btc: null, eth: null, sol: null };
       }),
@@ -63,40 +63,43 @@ export async function GET() {
 }
 
 /**
- * Fetch today's ETF flows from Supabase
+ * Fetch latest available ETF flows from Supabase
+ * (ETFs only trade on weekdays, so we fetch most recent data, not just today)
  */
-async function fetchTodayEtfFlows(): Promise<{
+async function fetchLatestEtfFlows(): Promise<{
   btc: number | null;
   eth: number | null;
   sol: number | null;
 }> {
   const supabase = createServerClient();
-  const today = new Date().toISOString().split("T")[0];
 
-  const { data, error } = await supabase
-    .from("metrics")
-    .select("key, value")
-    .eq("date", today)
-    .in("key", ["etf_flow_btc", "etf_flow_eth", "etf_flow_sol"]);
+  // Fetch the most recent record for each ETF flow key
+  const [btcResult, ethResult, solResult] = await Promise.all([
+    supabase
+      .from("metrics")
+      .select("value")
+      .eq("key", "etf_flow_btc")
+      .order("date", { ascending: false })
+      .limit(1),
+    supabase
+      .from("metrics")
+      .select("value")
+      .eq("key", "etf_flow_eth")
+      .order("date", { ascending: false })
+      .limit(1),
+    supabase
+      .from("metrics")
+      .select("value")
+      .eq("key", "etf_flow_sol")
+      .order("date", { ascending: false })
+      .limit(1),
+  ]);
 
-  if (error) {
-    console.error("[quick-stats] Supabase error:", error);
-    throw error;
-  }
-
-  const flows = {
-    btc: null as number | null,
-    eth: null as number | null,
-    sol: null as number | null,
+  return {
+    btc: (btcResult.data?.[0] as { value: number } | undefined)?.value ?? null,
+    eth: (ethResult.data?.[0] as { value: number } | undefined)?.value ?? null,
+    sol: (solResult.data?.[0] as { value: number } | undefined)?.value ?? null,
   };
-
-  for (const row of (data as Array<{ key: string; value: number | null }>) || []) {
-    if (row.key === "etf_flow_btc") flows.btc = row.value;
-    if (row.key === "etf_flow_eth") flows.eth = row.value;
-    if (row.key === "etf_flow_sol") flows.sol = row.value;
-  }
-
-  return flows;
 }
 
 /**
