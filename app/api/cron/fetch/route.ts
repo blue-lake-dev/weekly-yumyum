@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fetchAndStoreV3Metrics } from "@/lib/fetchers/v3-aggregator";
+import { fetchAndStoreMetrics } from "@/lib/fetchers/aggregator";
 
 // Vercel Cron: runs daily at 09:00 KST (00:00 UTC)
 // Configure in vercel.json: { "crons": [{ "path": "/api/cron/fetch", "schedule": "0 0 * * *" }] }
@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const result = await fetchAndStoreV3Metrics();
+    const result = await fetchAndStoreMetrics();
 
     return NextResponse.json({
       success: result.success,

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fetchAndStoreV3Metrics } from "@/lib/fetchers/v3-aggregator";
+import { fetchAndStoreMetrics } from "@/lib/fetchers/aggregator";
 // import { extractToken, verifyJwt } from "@/lib/auth";
 
 // Manual trigger for admin to fetch all metrics
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   console.log("[admin/fetch] POST request received (V3)");
 
   try {
-    const result = await fetchAndStoreV3Metrics();
+    const result = await fetchAndStoreMetrics();
     console.log("[admin/fetch] Result:", result);
 
     return NextResponse.json({

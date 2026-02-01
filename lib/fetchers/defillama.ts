@@ -1,4 +1,4 @@
-import type { MetricValue, LendingProtocol } from "../types";
+import type { MetricValue } from "../types";
 import { formatTimestamp } from "../utils";
 
 const DEFILLAMA_API = "https://api.llama.fi";
@@ -16,15 +16,6 @@ interface StablecoinChainChartEntry {
   date: string;
   totalCirculating: { peggedUSD: number };
   totalCirculatingUSD: { peggedUSD: number };
-}
-
-interface ProtocolData {
-  name: string;
-  slug: string;
-  chainTvls?: Record<string, {
-    tvl: Array<{ date: number; totalLiquidityUSD: number }>;
-  }>;
-  currentChainTvls?: Record<string, number>;
 }
 
 async function fetchWithTimeout<T>(url: string, timeout = 15000): Promise<T> {
@@ -197,148 +188,6 @@ export async function fetchStablecoinWithSparkline(chain: string): Promise<Stabl
   }
 }
 
-// Lending protocols to track (sorted by typical borrow volume)
-const LENDING_PROTOCOLS = [
-  { slug: "aave-v3", name: "Aave" },
-  { slug: "morpho-blue", name: "Morpho" },
-  { slug: "spark", name: "Spark" },
-  { slug: "compound-v3", name: "Compound" },
-  { slug: "justlend", name: "JustLend" },
-];
-
-// Fetch single protocol borrowed amount with historical data
-async function fetchProtocolBorrowed(slug: string): Promise<{
-  current: number | null;
-  current_at: string | undefined;
-  previous: number | null;
-  previous_at: string | undefined;
-}> {
-  try {
-    const data = await fetchWithTimeout<ProtocolData>(
-      `${DEFILLAMA_API}/protocol/${slug}`
-    );
-
-    if (!data.chainTvls) {
-      return { current: null, current_at: undefined, previous: null, previous_at: undefined };
-    }
-
-    let totalCurrent = 0;
-    let totalPrevious = 0;
-    let latestTimestamp = 0;
-    let previousTimestamp = 0;
-
-    const now = Math.floor(Date.now() / 1000);
-    const sevenDaysAgo = now - SEVEN_DAYS_SEC;
-
-    // Sum all borrowed amounts from chainTvls (keys ending with "-borrowed")
-    for (const [key, chainData] of Object.entries(data.chainTvls)) {
-      if (key.endsWith("-borrowed") && chainData.tvl && chainData.tvl.length > 0) {
-        // Current: latest entry
-        const latestEntry = chainData.tvl[chainData.tvl.length - 1];
-        totalCurrent += latestEntry.totalLiquidityUSD || 0;
-        if (latestEntry.date > latestTimestamp) {
-          latestTimestamp = latestEntry.date;
-        }
-
-        // Previous: find entry closest to 7 days ago
-        const { entry: prevEntry, timestamp: prevTs } = findEntryAtDate(chainData.tvl, sevenDaysAgo);
-        if (prevEntry) {
-          totalPrevious += prevEntry.totalLiquidityUSD || 0;
-          if (prevTs && prevTs > previousTimestamp) {
-            previousTimestamp = prevTs;
-          }
-        }
-      }
-    }
-
-    return {
-      current: totalCurrent > 0 ? totalCurrent : null,
-      current_at: latestTimestamp > 0 ? formatTimestamp(latestTimestamp, "UTC") : undefined,
-      previous: totalPrevious > 0 ? totalPrevious : null,
-      previous_at: previousTimestamp > 0 ? formatTimestamp(previousTimestamp, "UTC") : undefined,
-    };
-  } catch (error) {
-    console.error(`fetchProtocolBorrowed(${slug}) error:`, error);
-    return { current: null, current_at: undefined, previous: null, previous_at: undefined };
-  }
-}
-
-// Fetch top 3 lending protocols by borrowed amount with historical data
-export async function fetchTopLendingProtocols(): Promise<{
-  total: MetricValue;
-  protocols: LendingProtocol[];
-}> {
-  try {
-    const results = await Promise.all(
-      LENDING_PROTOCOLS.map(async (p) => {
-        const { current, current_at, previous, previous_at } = await fetchProtocolBorrowed(p.slug);
-        return { name: p.name, current, current_at, previous, previous_at };
-      })
-    );
-
-    // Filter out nulls and sort by current borrowed amount
-    const validResults = results
-      .filter((r) => r.current !== null)
-      .sort((a, b) => (b.current || 0) - (a.current || 0));
-
-    // Calculate totals
-    const totalCurrent = validResults.reduce((sum, r) => sum + (r.current || 0), 0);
-    const totalPrevious = validResults.reduce((sum, r) => sum + (r.previous || 0), 0);
-
-    // Use the most recent timestamp from results
-    const current_at = validResults[0]?.current_at;
-    const previous_at = validResults[0]?.previous_at;
-
-    // Get top 3
-    const top3 = validResults.slice(0, 3);
-
-    return {
-      total: {
-        current: totalCurrent / 1e9, // Billions
-        current_at,
-        previous: totalPrevious > 0 ? totalPrevious / 1e9 : null,
-        previous_at,
-        change_pct: calcChangePct(totalCurrent, totalPrevious),
-        source: "defillama",
-      },
-      protocols: top3.map((p) => ({
-        name: p.name,
-        borrow: {
-          current: (p.current || 0) / 1e9,
-          current_at: p.current_at,
-          previous: p.previous ? p.previous / 1e9 : null,
-          previous_at: p.previous_at,
-          change_pct: calcChangePct(p.current, p.previous),
-          source: "defillama" as const,
-        },
-      })),
-    };
-  } catch (error) {
-    console.error("fetchTopLendingProtocols error:", error);
-    return {
-      total: { current: null, error: "Failed to fetch lending data", source: "defillama" },
-      protocols: [],
-    };
-  }
-}
-
-// ETF Flow data - manual input
-export async function fetchBtcEtfFlow(): Promise<MetricValue> {
-  return {
-    current: null,
-    source: "manual",
-    isManual: true,
-  };
-}
-
-export async function fetchEthEtfFlow(): Promise<MetricValue> {
-  return {
-    current: null,
-    source: "manual",
-    isManual: true,
-  };
-}
-
 // Fetch Ethereum chain TVL from DeFiLlama
 interface ChainTvlEntry {
   gecko_id: string;
@@ -431,6 +280,102 @@ export async function fetchChainTvlWithSparkline(chain: string): Promise<TvlSpar
       current: null,
       change7d: null,
       sparkline: [],
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+// ============================================================================
+// RWA (Real World Assets) by Chain
+// ============================================================================
+
+// ETH + L2 chains to track for RWA
+const ETH_CHAINS = [
+  "Ethereum",
+  "Arbitrum",
+  "Optimism",
+  "Base",
+  "Polygon",
+  "zkSync Era",
+  "Linea",
+  "Scroll",
+  "Mantle",
+  "Blast",
+];
+
+interface DefiLlamaProtocol {
+  name: string;
+  category: string;
+  chains: string[];
+  chainTvls: Record<string, number>;
+  tvl: number;
+}
+
+export interface RwaByChainData {
+  total: number | null; // Total RWA TVL on ETH + L2s
+  byChain: Record<string, number> | null; // { Ethereum: 5000000000, Arbitrum: 100000000, ... }
+  topProtocols: Array<{ name: string; tvl: number; chains: string[] }> | null;
+  error?: string;
+}
+
+export async function fetchRwaByChain(): Promise<RwaByChainData> {
+  try {
+    const protocols = await fetchWithTimeout<DefiLlamaProtocol[]>(
+      `${DEFILLAMA_API}/protocols`
+    );
+
+    // Filter RWA category
+    const rwaProtocols = protocols.filter((p) => p.category === "RWA");
+
+    // Aggregate by chain
+    const byChain: Record<string, number> = {};
+    let total = 0;
+    const protocolsOnEth: Array<{ name: string; tvl: number; chains: string[] }> = [];
+
+    for (const protocol of rwaProtocols) {
+      const chainTvls = protocol.chainTvls || {};
+      let protocolEthTvl = 0;
+      const protocolChains: string[] = [];
+
+      for (const chain of ETH_CHAINS) {
+        if (chainTvls[chain]) {
+          const tvl = chainTvls[chain];
+          byChain[chain] = (byChain[chain] || 0) + tvl;
+          protocolEthTvl += tvl;
+          protocolChains.push(chain);
+        }
+      }
+
+      if (protocolEthTvl > 0) {
+        total += protocolEthTvl;
+        protocolsOnEth.push({
+          name: protocol.name,
+          tvl: protocolEthTvl,
+          chains: protocolChains,
+        });
+      }
+    }
+
+    // Sort protocols by TVL and get top 10
+    protocolsOnEth.sort((a, b) => b.tvl - a.tvl);
+    const topProtocols = protocolsOnEth.slice(0, 10);
+
+    // Sort byChain by TVL
+    const sortedByChain = Object.fromEntries(
+      Object.entries(byChain).sort((a, b) => b[1] - a[1])
+    );
+
+    return {
+      total,
+      byChain: sortedByChain,
+      topProtocols,
+    };
+  } catch (error) {
+    console.error("fetchRwaByChain error:", error);
+    return {
+      total: null,
+      byChain: null,
+      topProtocols: null,
       error: error instanceof Error ? error.message : "Unknown error",
     };
   }

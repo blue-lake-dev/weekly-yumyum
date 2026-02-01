@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fetchAllDerivatives } from "@/lib/fetchers/binance-futures";
+import { fetchAllDerivatives } from "@/lib/fetchers/binance";
 
 export const revalidate = 300; // 5 min cache
 

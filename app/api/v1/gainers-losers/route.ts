@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fetchGainersLosers } from "@/lib/fetchers/coingecko-market";
+import { fetchGainersLosers } from "@/lib/fetchers/coingecko";
 
 export const revalidate = 900; // 15 min cache
 

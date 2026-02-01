@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { fetchFearGreed } from "@/lib/fetchers/alternative-fng";
-import { fetchDominance } from "@/lib/fetchers/coinmarketcap-dominance";
-import { fetchStablecoinSupply } from "@/lib/fetchers/defillama-tvl";
+import { fetchFearGreed } from "@/lib/fetchers/alternative";
+import { fetchDominance } from "@/lib/fetchers/coinmarketcap";
+import { fetchStablecoinSupply } from "@/lib/fetchers/defillama";
 import { createServerClient } from "@/lib/supabase";
 
 export const revalidate = 900; // 15 min cache

@@ -1,6 +1,6 @@
 import { createServerClient } from "@/lib/supabase";
 import type { MetricInsert } from "@/lib/database.types";
-import { fetchEtfFlows } from "./farside-etf";
+import { fetchEtfFlows } from "./farside";
 
 // Get today's date in YYYY-MM-DD format
 function getToday(): string {
@@ -14,7 +14,7 @@ export interface FetchResult {
 }
 
 /**
- * V3 Aggregator - Stores only 3 ETF flow metrics daily
+ * Daily Aggregator - Stores only 3 ETF flow metrics daily
  * Everything else is fetched live (no storage needed)
  *
  * Stored metrics:
@@ -22,8 +22,8 @@ export interface FetchResult {
  * - etf_flow_eth
  * - etf_flow_sol
  */
-export async function fetchAndStoreV3Metrics(): Promise<FetchResult> {
-  console.log("[v3-aggregator] Starting fetch...");
+export async function fetchAndStoreMetrics(): Promise<FetchResult> {
+  console.log("[aggregator] Starting fetch...");
   const errors: string[] = [];
   const metrics: MetricInsert[] = [];
   const today = getToday();
@@ -31,7 +31,7 @@ export async function fetchAndStoreV3Metrics(): Promise<FetchResult> {
   // Fetch ETF Flows from Farside (BTC, ETH, SOL)
   try {
     const etfFlows = await fetchEtfFlows(1); // Fetch most recent day
-    console.log("[v3-aggregator] Farside ETF Flows response:", JSON.stringify(etfFlows));
+    console.log("[aggregator] Farside ETF Flows response:", JSON.stringify(etfFlows));
 
     // Check if data is from today
     const latestEthDate = etfFlows.eth?.[0]?.date;
@@ -42,7 +42,7 @@ export async function fetchAndStoreV3Metrics(): Promise<FetchResult> {
     const isBtcToday = latestBtcDate === today;
     const isSolToday = latestSolDate === today;
 
-    console.log(`[v3-aggregator] ETF dates - ETH: ${latestEthDate} (today: ${isEthToday}), BTC: ${latestBtcDate} (today: ${isBtcToday}), SOL: ${latestSolDate} (today: ${isSolToday})`);
+    console.log(`[aggregator] ETF dates - ETH: ${latestEthDate} (today: ${isEthToday}), BTC: ${latestBtcDate} (today: ${isBtcToday}), SOL: ${latestSolDate} (today: ${isSolToday})`);
 
     // Only store if data is from today (market has closed and Farside updated)
     if (isEthToday && etfFlows.eth?.[0]) {
@@ -76,7 +76,7 @@ export async function fetchAndStoreV3Metrics(): Promise<FetchResult> {
     }
 
     if (!isEthToday && !isBtcToday && !isSolToday) {
-      console.log("[v3-aggregator] Farside not updated yet for today, skipping ETF flows");
+      console.log("[aggregator] Farside not updated yet for today, skipping ETF flows");
     }
 
     if (etfFlows.error) errors.push(`farside: ${etfFlows.error}`);
@@ -86,7 +86,7 @@ export async function fetchAndStoreV3Metrics(): Promise<FetchResult> {
 
   // Store metrics in Supabase
   if (metrics.length > 0) {
-    console.log(`[v3-aggregator] Storing ${metrics.length} metrics:`, metrics.map(m => m.key));
+    console.log(`[aggregator] Storing ${metrics.length} metrics:`, metrics.map(m => m.key));
 
     try {
       const supabase = createServerClient();
@@ -98,18 +98,18 @@ export async function fetchAndStoreV3Metrics(): Promise<FetchResult> {
         .upsert(metrics as any, { onConflict: "date,key" })
         .select();
 
-      console.log("[v3-aggregator] Upsert result - data:", data?.length ?? 0, "rows, error:", upsertError);
+      console.log("[aggregator] Upsert result - data:", data?.length ?? 0, "rows, error:", upsertError);
 
       if (upsertError) {
-        console.error("[v3-aggregator] Supabase upsert error:", JSON.stringify(upsertError, null, 2));
+        console.error("[aggregator] Supabase upsert error:", JSON.stringify(upsertError, null, 2));
         errors.push(`supabase: ${upsertError.message || upsertError.code || JSON.stringify(upsertError)}`);
       }
     } catch (e) {
-      console.error("[v3-aggregator] Supabase exception:", e);
+      console.error("[aggregator] Supabase exception:", e);
       errors.push(`supabase: ${e}`);
     }
   } else {
-    console.log("[v3-aggregator] No metrics to store (Farside may not have today's data yet)");
+    console.log("[aggregator] No metrics to store (Farside may not have today's data yet)");
   }
 
   return {

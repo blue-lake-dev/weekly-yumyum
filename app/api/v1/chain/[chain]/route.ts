@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 
 // Import fetchers
-import { fetchCoinSupply, fetchPriceSparkline } from "@/lib/fetchers/coingecko-market";
-import { fetchEthBurnIssuance } from "@/lib/fetchers/ultrasound-burn";
-import { fetchEthSupply } from "@/lib/fetchers/etherscan-supply";
-import { fetchChainTvlWithSparkline, fetchStablecoinWithSparkline } from "@/lib/fetchers/defillama-tvl";
-import { fetchSolanaSupply, fetchSolanaInflation, fetchSolanaDailyFees } from "@/lib/fetchers/solana-chain";
+import { fetchCoinSupply, fetchPriceSparkline } from "@/lib/fetchers/coingecko";
+import { fetchEthBurnIssuance } from "@/lib/fetchers/ultrasound";
+import { fetchEthSupply } from "@/lib/fetchers/etherscan";
+import { fetchChainTvlWithSparkline, fetchStablecoinWithSparkline } from "@/lib/fetchers/defillama";
+import { fetchSolanaSupply, fetchSolanaInflation, fetchSolanaDailyFees } from "@/lib/fetchers/solana";
 
 export const revalidate = 900; // 15 min cache
 

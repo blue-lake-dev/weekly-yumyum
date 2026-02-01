@@ -168,8 +168,7 @@ export interface DailySummaryRow {
 - Toggle: [더보기 ▼] / [접기 ▲]
 
 **Data:**
-- Source: Binance WebSocket (real-time)
-- Fallback: REST API if WebSocket fails
+- Source: CoinGecko REST API (1 min cache)
 - No storage
 
 **Props:**
@@ -185,7 +184,7 @@ interface TickerProps {
 }
 ```
 
-**Hook:** `use-v3-ticker.ts` - manages WebSocket connection
+**Hook:** `use-ticker.ts` - fetches from `/api/v1/ticker`
 
 ---
 
@@ -232,7 +231,7 @@ flex items-center gap-2 shadow-sm
 - 56-75: 😊 "탐욕"
 - 76-100: 🤑 "극단적 탐욕"
 
-**Hook:** `use-v3-quick-stats.ts`
+**Hook:** `use-quick-stats.ts`
 
 ---
 
@@ -267,7 +266,7 @@ interface TodaysCoinProps {
 }
 ```
 
-**Hook:** `use-v3-gainers-losers.ts`
+**Hook:** `use-gainers-losers.ts`
 
 ---
 
@@ -297,7 +296,7 @@ interface YumyumCommentProps {
 }
 ```
 
-**Prompt Template (for claude-summary.ts):**
+**Prompt Template (for claude.ts):**
 ```
 Given today's crypto market data:
 - BTC: ${btc_price} (${btc_change}%), Dominance: ${btc_d}%
@@ -311,7 +310,7 @@ Write a 2-3 sentence Korean market summary for crypto traders.
 Rules: Factual, concise, no emojis, no price predictions, casual tone (반말 OK)
 ```
 
-**Hook:** `use-v3-summary.ts`
+**Hook:** `use-summary.ts`
 
 ---
 
@@ -362,7 +361,7 @@ Rules: Factual, concise, no emojis, no price predictions, casual tone (반말 OK
 | ETF Flow | Supabase (7d) | Supabase (7d) | Supabase (7d) |
 | Holdings | Farside + DeFiLlama | Farside + DeFiLlama | Farside + DeFiLlama |
 
-**Hook:** `use-v3-chain-data.ts`
+**Hook:** `use-chain-data.ts`
 
 ---
 
@@ -408,145 +407,128 @@ Rules: Factual, concise, no emojis, no price predictions, casual tone (반말 OK
 - RWA by Category: rwa.xyz CSV (manual upload)
 - No storage
 
-**Hook:** `use-v3-derivatives.ts`, `use-v3-rwa.ts`
+**Hook:** `use-derivatives.ts`, `use-rwa.ts`
 
 ---
 
 ## 9. Backend Integration
 
-### 9.1 Complete Data Strategy (v3-plan-final.md Section 4)
+### 9.1 Complete Data Strategy
 
-#### ❌ NO STORAGE - Real-time (WebSocket)
-| Data | Source | Fetcher |
-|------|--------|---------|
-| Top 10 Prices | Binance WebSocket | `binance-ws.ts` (NEW) |
-| 24h Change % | Binance WebSocket | `binance-ws.ts` (NEW) |
-
-#### ❌ NO STORAGE - Short Cache (5-15 min)
+#### ❌ NO STORAGE - Short Cache (1-15 min)
 | Data | Source | Cache | Fetcher |
 |------|--------|-------|---------|
+| Top 3 Prices | CoinGecko | 1 min | ✅ `coingecko.ts` |
 | Fear & Greed | Alternative.me | 15 min | ✅ `alternative.ts` |
-| BTC Dominance | CoinGecko `/global` | 15 min | ✅ `coingecko.ts` |
+| BTC Dominance | CoinMarketCap | 15 min | ✅ `coinmarketcap.ts` |
 | Stablecoin Total | DeFiLlama | 15 min | ✅ `defillama.ts` |
-| Long/Short Ratio | Binance Futures | 5 min | `binance-futures.ts` (NEW) |
-| Funding Rate | Binance Futures | 15 min | `binance-futures.ts` (NEW) |
-| Gainers/Losers | CoinGecko | 15 min | `coingecko.ts` (ADD) |
-| RWA by Chain | DeFiLlama | 15 min | ✅ `defillama-rwa.ts` |
+| Long/Short Ratio | Binance Futures | 5 min | ✅ `binance.ts` |
+| Funding Rate | Binance Futures | 15 min | ✅ `binance.ts` |
+| Gainers/Losers | CoinGecko | 15 min | ✅ `coingecko.ts` |
+| RWA by Chain | DeFiLlama | 15 min | ✅ `defillama.ts` |
 
 #### ❌ NO STORAGE - Daily Fetch Only
 | Data | Source | Fetcher |
 |------|--------|---------|
 | ETH Supply | Etherscan | ✅ `etherscan.ts` |
-| ETH Staking | Beacon | `etherscan.ts` (ADD) |
-| SOL Supply/Staking | Solana RPC | `solana.ts` (NEW) |
+| ETH Staking | Beacon | `etherscan.ts` (TODO) |
+| SOL Supply/Staking | Solana RPC | ✅ `solana.ts` |
 | BTC Circulating | CoinGecko | ✅ `coingecko.ts` |
 | ETH/SOL TVL | DeFiLlama | ✅ `defillama.ts` |
 | ETF Holdings | Farside | ✅ `farside.ts` |
-| DAT Holdings | DeFiLlama | ✅ `defillama-dat-scraper.ts` |
+| SOL Daily Fees | Dune API | ✅ `solana.ts` |
+| SOL Inflation Rate | Solana RPC | ✅ `solana.ts` |
 
-#### ✅ STORAGE - Daily Store (Supabase) - 9 metrics/day
+#### ✅ STORAGE - Daily Store (Supabase) - 3 metrics/day
 | Key | Source | Fetcher | Status |
 |-----|--------|---------|--------|
-| `btc_price` | CoinGecko | ✅ `coingecko.ts` | Keep |
-| `eth_price` | CoinGecko | ✅ `coingecko.ts` | Keep |
-| `sol_price` | CoinGecko | ✅ `coingecko.ts` | Done |
-| `eth_burn` | ultrasound.money | ✅ `ultrasound.ts` | Keep |
-| `eth_issuance` | ultrasound.money | ✅ `ultrasound.ts` | Keep |
-| `etf_flow_btc` | Farside | ✅ `farside.ts` | Keep |
-| `etf_flow_eth` | Farside | ✅ `farside.ts` | Keep |
-| `etf_flow_sol` | Farside | ✅ `farside.ts` | Done |
-| `daily_summary` | Claude API | `claude-summary.ts` (DEFERRED) | Needs credits |
+| `etf_flow_btc` | Farside | ✅ `farside.ts` | ✅ Done |
+| `etf_flow_eth` | Farside | ✅ `farside.ts` | ✅ Done |
+| `etf_flow_sol` | Farside | ✅ `farside.ts` | ✅ Done |
 
-#### ❌ NO STORAGE - SOL Live Data
-| Data | Source | Fetcher |
-|------|--------|---------|
-| SOL Daily Fees | Dune API (query 6625740) | ✅ `solana.ts` |
-| SOL Inflation Rate | Solana RPC | ✅ `solana.ts` |
+> **Note:** Prices, burn/issuance, and other metrics are fetched live. Only ETF flows are stored (Farside updates once daily after market close).
 
 ---
 
-### 9.2 New Fetchers to Create
+### 9.2 Fetcher Files (Source-Based Naming)
 
-| File | Purpose | API | Status |
-|------|---------|-----|--------|
-| `lib/fetchers/binance-ws.ts` | Real-time prices | `wss://stream.binance.com` | TODO |
-| `lib/fetchers/binance-futures.ts` | Long/Short, Funding | Binance Futures REST | ✅ Done |
-| `lib/fetchers/solana.ts` | SOL supply, staking, fees, inflation | Solana RPC + Solana.FM | ✅ Done |
-| `lib/fetchers/claude-summary.ts` | Daily AI summary | Anthropic API | ⏸️ Deferred |
+| File | Purpose | Status |
+|------|---------|--------|
+| `lib/fetchers/coingecko.ts` | Prices, dominance, gainers/losers, supply | ✅ Done |
+| `lib/fetchers/coinmarketcap.ts` | BTC/ETH dominance | ✅ Done |
+| `lib/fetchers/binance.ts` | Long/Short, Funding | ✅ Done |
+| `lib/fetchers/defillama.ts` | TVL, Stablecoins, RWA | ✅ Done |
+| `lib/fetchers/farside.ts` | ETF flows + holdings (BTC, ETH, SOL) | ✅ Done |
+| `lib/fetchers/solana.ts` | SOL supply, staking, fees, inflation | ✅ Done |
+| `lib/fetchers/etherscan.ts` | ETH supply | ✅ Done |
+| `lib/fetchers/ultrasound.ts` | ETH burn data | ✅ Done |
+| `lib/fetchers/alternative.ts` | Fear & Greed | ✅ Done |
+| `lib/fetchers/dune.ts` | ETF holdings (Dune queries) | ✅ Done |
+| `lib/fetchers/claude.ts` | AI summary | ⏸️ Deferred |
+| `lib/fetchers/aggregator.ts` | Daily cron orchestrator | ✅ Done |
 
-### 9.3 Existing Fetchers to Update
+### 9.3 Pending Fetcher Updates
 
-| File | Changes |
-|------|---------|
-| `coingecko.ts` | Add `fetchSolPrice()`, `fetchGainersLosers()` |
-| `farside.ts` | Add SOL ETF scraping (`/sol/` page) |
-| `etherscan.ts` | Add ETH staking (Beacon chain) |
+| File | Changes | Status |
+|------|---------|--------|
+| `etherscan.ts` | Add ETH staking (Beacon chain) | TODO |
 
-### 9.4 New API Routes
+### 9.4 API Routes
 
-| Route | Method | Purpose | Cache |
-|-------|--------|---------|-------|
-| `/api/v3/ticker` | GET | WebSocket proxy or REST fallback | Real-time |
-| `/api/v3/quick-stats` | GET | F&G, BTC.D, Stables, ETF flows | 15 min |
-| `/api/v3/gainers-losers` | GET | Top movers | 15 min |
-| `/api/v3/derivatives` | GET | Long/Short, Funding | 5 min |
-| `/api/v3/chain/[chain]` | GET | Chain-specific data (BTC/ETH/SOL) | Mixed |
-| `/api/v3/summary` | GET | Today's AI summary | Daily |
+| Route | Method | Purpose | Cache | Status |
+|-------|--------|---------|-------|--------|
+| `/api/v1/ticker` | GET | BTC/ETH/SOL prices | 1 min | ✅ Done |
+| `/api/v1/quick-stats` | GET | F&G, BTC.D, Stables, ETF flows | 15 min | ✅ Done |
+| `/api/v1/gainers-losers` | GET | Top movers | 15 min | ✅ Done |
+| `/api/v1/derivatives` | GET | Long/Short, Funding | 5 min | ✅ Done |
+| `/api/v1/chain/[chain]` | GET | Chain-specific data (BTC/ETH/SOL) | 15 min | ✅ Done |
+| `/api/v1/summary` | GET | Today's AI summary | Daily | ✅ Done (dummy) |
+| `/api/cron/fetch` | GET | Daily cron job | - | ✅ Done |
+| `/api/admin/fetch` | POST | Manual trigger | - | ✅ Done |
+| `/api/admin/backfill` | POST | Historical backfill | - | ✅ Done |
 
-### 9.5 V3 Aggregator (Cron Job)
+### 9.5 Aggregator (Cron Job)
 
-**File: `lib/fetchers/v3-aggregator.ts`** (NEW - replaces v2-aggregator)
+**File: `lib/fetchers/aggregator.ts`**
 
-Stores only 9 metrics/day (SOL fees/inflation fetched live):
+Stores only 3 ETF flow metrics daily. Everything else is fetched live:
 ```typescript
-async function fetchAndStoreV3Metrics() {
-  // Prices (CoinGecko)
-  await store('btc_price', ...);
-  await store('eth_price', ...);
-  await store('sol_price', ...);
-
-  // ETH inflation (ultrasound.money)
-  await store('eth_burn', ...);
-  await store('eth_issuance', ...);
-
-  // ETF flows (Farside)
+async function fetchAndStoreMetrics() {
+  // ETF flows (Farside) - only metrics stored
   await store('etf_flow_btc', ...);
   await store('etf_flow_eth', ...);
   await store('etf_flow_sol', ...);
-
-  // AI summary (Claude) - DEFERRED until credits added
-  // await storeSummary(summary);
 }
 ```
 
-### 9.6 New Hooks
+### 9.6 Frontend Hooks (TODO)
 
 | Hook | Section | Data |
 |------|---------|------|
-| `use-v3-ticker.ts` | ❶ Ticker | Real-time prices (WebSocket) |
-| `use-v3-quick-stats.ts` | ❷ Quick Stats | F&G, BTC.D, Stables, ETF flows |
-| `use-v3-gainers-losers.ts` | ❸ 오늘의 코인 | Top movers |
-| `use-v3-summary.ts` | ❹ 얌얌의 한마디 | AI daily summary |
-| `use-v3-chain-data.ts` | ❺ Chain Tabs | Chain-specific metrics |
-| `use-v3-derivatives.ts` | ❻ 파생상품 | Long/Short, Funding |
-| `use-v3-rwa.ts` | ❻ RWA | RWA by chain/category |
+| `use-ticker.ts` | ❶ Ticker | Prices from `/api/v1/ticker` |
+| `use-quick-stats.ts` | ❷ Quick Stats | F&G, BTC.D, Stables, ETF flows |
+| `use-gainers-losers.ts` | ❸ 오늘의 코인 | Top movers |
+| `use-summary.ts` | ❹ 얌얌의 한마디 | AI daily summary |
+| `use-chain-data.ts` | ❺ Chain Tabs | Chain-specific metrics |
+| `use-derivatives.ts` | ❻ 파생상품 | Long/Short, Funding |
+| `use-rwa.ts` | ❻ RWA | RWA by chain/category |
 
 ### 9.7 API Sources & Costs
 
 | Source | Data | Cost | Status |
 |--------|------|------|--------|
-| Binance WebSocket | Live prices (top 10) | Free | TODO |
+| CoinGecko | Prices, markets, supply | Free | ✅ Done |
+| CoinMarketCap | BTC/ETH dominance | Free | ✅ Done |
 | Binance Futures | Long/Short, Funding | Free | ✅ Done |
-| CoinGecko | BTC.D, markets, prices | Free | ✅ Done |
 | Alternative.me | Fear & Greed | Free | ✅ Done |
-| DeFiLlama | TVL, Stables, RWA, DAT | Free | ✅ Done |
+| DeFiLlama | TVL, Stables, RWA | Free | ✅ Done |
 | Etherscan | ETH supply | Free | ✅ Done |
-| ultrasound.money | ETH burn/issuance | Free | ✅ Done |
-| Solana RPC | SOL supply, staking, inflation rate | Free | ✅ Done |
-| Dune API | SOL daily fees (query 6625740) | Free (with key) | ✅ Done |
-| Farside | ETF data (BTC, ETH, SOL) | Free (scraper) | ✅ Done |
+| ultrasound.money | ETH burn | Free | ✅ Done |
+| Solana RPC | SOL supply, staking, inflation | Free | ✅ Done |
+| Dune API | SOL fees, ETF holdings | Free (with key) | ✅ Done |
+| Farside | ETF flows (scraper) | Free | ✅ Done |
 | Claude API | AI summary | ~$0.01/day | ⏸️ Deferred |
-| rwa.xyz | RWA by category | Free (CSV) | TODO |
+| rwa.xyz | RWA by category (CSV) | Free | TODO |
 
 ### 9.8 Backfill (Run Once)
 
@@ -567,48 +549,46 @@ async function backfillOnce() {
 - [x] 2. Run cleanup SQL to delete deprecated metrics
 - [x] 3. Update `database.types.ts` with V3 keys
 
-### Phase 1: Backend - Core Infrastructure
-- [x] 4. Update `farside.ts` - Add SOL ETF scraping
-- [x] 5. Update `coingecko.ts` - Add SOL price, gainers/losers
-- [x] 6. Create `solana.ts` - SOL supply/staking/fees/inflation fetcher
-- [x] 7. Create `binance-futures.ts` - Long/Short, Funding
-- [ ] 8. Create `claude-summary.ts` - AI summary generator (DEFERRED)
-- [x] 9. Create `v3-aggregator.ts` - New cron job (9 metrics/day)
+### Phase 1: Backend - Fetchers
+- [x] 4. Create `farside.ts` - ETF flows + holdings (BTC, ETH, SOL)
+- [x] 5. Create `coingecko.ts` - Prices, gainers/losers, supply
+- [x] 6. Create `solana.ts` - SOL supply/staking/fees/inflation
+- [x] 7. Create `binance.ts` - Long/Short, Funding
+- [x] 8. Create `defillama.ts` - TVL, Stablecoins, RWA
+- [x] 9. Create `aggregator.ts` - Daily cron job (3 ETF flow metrics)
+- [ ] 10. Create `claude.ts` - AI summary (DEFERRED)
 
 ### Phase 2: Backend - API Routes
-- [ ] 11. Create `/api/v3/quick-stats/route.ts`
-- [ ] 12. Create `/api/v3/gainers-losers/route.ts`
-- [ ] 13. Create `/api/v3/derivatives/route.ts`
-- [ ] 14. Create `/api/v3/chain/[chain]/route.ts`
-- [ ] 15. Create `/api/v3/summary/route.ts`
-- [ ] 16. Update `/api/cron/fetch/route.ts` - Use v3-aggregator
+- [x] 11. Create `/api/v1/ticker/route.ts`
+- [x] 12. Create `/api/v1/quick-stats/route.ts`
+- [x] 13. Create `/api/v1/gainers-losers/route.ts`
+- [x] 14. Create `/api/v1/derivatives/route.ts`
+- [x] 15. Create `/api/v1/chain/[chain]/route.ts`
+- [x] 16. Create `/api/v1/summary/route.ts`
+- [x] 17. Update `/api/cron/fetch/route.ts` - Uses aggregator
 
-### Phase 3: Backend - Real-time (Optional - can defer)
-- [ ] 17. Create `binance-ws.ts` - WebSocket client
-- [ ] 18. Create `/api/v3/ticker/route.ts` - REST fallback
+### Phase 3: Frontend - Components (by section)
+- [ ] 18. Create `StatPill.tsx` - reusable pill component
+- [ ] 19. Create `Ticker.tsx` - ❶ prices
+- [ ] 20. Create `QuickStats.tsx` - ❷ pill-style stats
+- [ ] 21. Create `TodaysCoin.tsx` - ❸ gainers/losers
+- [ ] 22. Create `YumyumComment.tsx` - ❹ AI summary
+- [ ] 23. Create `ChainTabs.tsx` - ❺ BTC/ETH/SOL tabs
+- [ ] 24. Create `MoreTabs.tsx` + `Derivatives.tsx` + `RwaSection.tsx` - ❻ 더보기
 
-### Phase 4: Frontend - Components (by section)
-- [ ] 19. Create `StatPill.tsx` - reusable pill component
-- [ ] 20. Create `Ticker.tsx` - ❶ real-time prices
-- [ ] 21. Create `QuickStats.tsx` - ❷ pill-style stats
-- [ ] 22. Create `TodaysCoin.tsx` - ❸ gainers/losers
-- [ ] 23. Create `YumyumComment.tsx` - ❹ AI summary
-- [ ] 24. Create `ChainTabs.tsx` - ❺ BTC/ETH/SOL tabs
-- [ ] 25. Create `MoreTabs.tsx` + `Derivatives.tsx` + `RwaSection.tsx` - ❻ 더보기
+### Phase 4: Frontend - Hooks & Page
+- [ ] 25. Create `use-ticker.ts` - ❶
+- [ ] 26. Create `use-quick-stats.ts` - ❷
+- [ ] 27. Create `use-gainers-losers.ts` - ❸
+- [ ] 28. Create `use-summary.ts` - ❹
+- [ ] 29. Create `use-chain-data.ts` - ❺
+- [ ] 30. Create `use-derivatives.ts` + `use-rwa.ts` - ❻
+- [ ] 31. Create `/app/dashboard-v3/page.tsx` - assemble all sections
 
-### Phase 5: Frontend - Hooks & Page
-- [ ] 26. Create `use-v3-ticker.ts` - ❶
-- [ ] 27. Create `use-v3-quick-stats.ts` - ❷
-- [ ] 28. Create `use-v3-gainers-losers.ts` - ❸
-- [ ] 29. Create `use-v3-summary.ts` - ❹
-- [ ] 30. Create `use-v3-chain-data.ts` - ❺
-- [ ] 31. Create `use-v3-derivatives.ts` + `use-v3-rwa.ts` - ❻
-- [ ] 32. Create `/app/dashboard-v3/page.tsx` - assemble all sections
-
-### Phase 6: Polish
-- [ ] 33. Style refinement based on feedback
-- [ ] 34. Responsive testing
-- [ ] 35. Error states & loading skeletons
+### Phase 5: Polish
+- [ ] 32. Style refinement based on feedback
+- [ ] 33. Responsive testing
+- [ ] 34. Error states & loading skeletons
 
 ---
 
@@ -618,68 +598,72 @@ async function backfillOnce() {
 - [x] Create `supabase/migrations/20260131000000_v3_schema.sql`
 - [x] Update `lib/database.types.ts`
 
-### Fetchers (Backend)
-- [x] Update `lib/fetchers/farside.ts` - Add SOL ETF
-- [x] Update `lib/fetchers/coingecko.ts` - Add SOL price, gainers/losers
-- [ ] Update `lib/fetchers/etherscan.ts` - Add ETH staking
-- [x] Create `lib/fetchers/solana.ts` - SOL supply/staking/fees (Dune)/inflation
-- [x] Create `lib/fetchers/binance-futures.ts` - Derivatives data
-- [ ] Create `lib/fetchers/binance-ws.ts` - Real-time prices
-- [ ] Create `lib/fetchers/claude-summary.ts` - AI summary (DEFERRED)
-- [x] Create `lib/fetchers/v3-aggregator.ts` - V3 cron job
-- [x] Delete `lib/fetchers/solana-fm.ts` - Merged into solana.ts
+### Fetchers (Backend) - Source-Based Naming
+- [x] `lib/fetchers/coingecko.ts` - Prices, gainers/losers, supply
+- [x] `lib/fetchers/coinmarketcap.ts` - BTC/ETH dominance
+- [x] `lib/fetchers/binance.ts` - Derivatives (Long/Short, Funding)
+- [x] `lib/fetchers/defillama.ts` - TVL, Stablecoins, RWA
+- [x] `lib/fetchers/farside.ts` - ETF flows + holdings
+- [x] `lib/fetchers/solana.ts` - Supply, staking, fees, inflation
+- [x] `lib/fetchers/etherscan.ts` - ETH supply
+- [x] `lib/fetchers/ultrasound.ts` - ETH burn
+- [x] `lib/fetchers/alternative.ts` - Fear & Greed
+- [x] `lib/fetchers/dune.ts` - ETF holdings (Dune queries)
+- [x] `lib/fetchers/aggregator.ts` - Daily cron orchestrator
+- [ ] `lib/fetchers/claude.ts` - AI summary (DEFERRED)
 
 ### API Routes
-- [ ] Create `app/api/v3/quick-stats/route.ts`
-- [ ] Create `app/api/v3/gainers-losers/route.ts`
-- [ ] Create `app/api/v3/derivatives/route.ts`
-- [ ] Create `app/api/v3/chain/[chain]/route.ts`
-- [ ] Create `app/api/v3/summary/route.ts`
-- [ ] Create `app/api/v3/ticker/route.ts`
-- [ ] Update `app/api/cron/fetch/route.ts`
+- [x] `app/api/v1/ticker/route.ts`
+- [x] `app/api/v1/quick-stats/route.ts`
+- [x] `app/api/v1/gainers-losers/route.ts`
+- [x] `app/api/v1/derivatives/route.ts`
+- [x] `app/api/v1/chain/[chain]/route.ts`
+- [x] `app/api/v1/summary/route.ts`
+- [x] `app/api/cron/fetch/route.ts`
+- [x] `app/api/admin/fetch/route.ts`
+- [x] `app/api/admin/backfill/route.ts`
 
-### Hooks
-- [ ] Create `lib/hooks/use-v3-ticker.ts` - ❶ Ticker
-- [ ] Create `lib/hooks/use-v3-quick-stats.ts` - ❷ Quick Stats
-- [ ] Create `lib/hooks/use-v3-gainers-losers.ts` - ❸ 오늘의 코인
-- [ ] Create `lib/hooks/use-v3-summary.ts` - ❹ 얌얌의 한마디
-- [ ] Create `lib/hooks/use-v3-chain-data.ts` - ❺ Chain Tabs
-- [ ] Create `lib/hooks/use-v3-derivatives.ts` - ❻ 파생상품
-- [ ] Create `lib/hooks/use-v3-rwa.ts` - ❻ RWA
+### Hooks (TODO)
+- [ ] `lib/hooks/use-ticker.ts` - ❶ Ticker
+- [ ] `lib/hooks/use-quick-stats.ts` - ❷ Quick Stats
+- [ ] `lib/hooks/use-gainers-losers.ts` - ❸ 오늘의 코인
+- [ ] `lib/hooks/use-summary.ts` - ❹ 얌얌의 한마디
+- [ ] `lib/hooks/use-chain-data.ts` - ❺ Chain Tabs
+- [ ] `lib/hooks/use-derivatives.ts` - ❻ 파생상품
+- [ ] `lib/hooks/use-rwa.ts` - ❻ RWA
 
-### Components
-- [ ] Create `components/ui/StatPill.tsx` - Reusable pill
-- [ ] Create `components/v3/Ticker.tsx` - ❶ Ticker
-- [ ] Create `components/v3/QuickStats.tsx` - ❷ Quick Stats
-- [ ] Create `components/v3/TodaysCoin.tsx` - ❸ 오늘의 코인
-- [ ] Create `components/v3/YumyumComment.tsx` - ❹ 얌얌의 한마디
-- [ ] Create `components/v3/ChainTabs.tsx` - ❺ Chain Tabs
-- [ ] Create `components/v3/MoreTabs.tsx` - ❻ 더보기 container
-- [ ] Create `components/v3/Derivatives.tsx` - ❻ 파생상품
-- [ ] Create `components/v3/RwaSection.tsx` - ❻ RWA
-- [ ] Update `components/ui/index.ts` - Export StatPill
+### Components (TODO)
+- [ ] `components/ui/StatPill.tsx` - Reusable pill
+- [ ] `components/v3/Ticker.tsx` - ❶ Ticker
+- [ ] `components/v3/QuickStats.tsx` - ❷ Quick Stats
+- [ ] `components/v3/TodaysCoin.tsx` - ❸ 오늘의 코인
+- [ ] `components/v3/YumyumComment.tsx` - ❹ 얌얌의 한마디
+- [ ] `components/v3/ChainTabs.tsx` - ❺ Chain Tabs
+- [ ] `components/v3/MoreTabs.tsx` - ❻ 더보기 container
+- [ ] `components/v3/Derivatives.tsx` - ❻ 파생상품
+- [ ] `components/v3/RwaSection.tsx` - ❻ RWA
 
-### Pages
-- [ ] Create `app/dashboard-v3/page.tsx`
+### Pages (TODO)
+- [ ] `app/dashboard-v3/page.tsx`
 
 ---
 
 ## 11. Verification Checklist
 
 ### Database
-- [ ] Verify `daily_summaries` table exists
-- [ ] Verify old metrics deleted (only V3 keys remain)
-- [ ] Verify cron stores 9 metrics/day (8 without AI summary)
+- [x] Verify `daily_summaries` table exists
+- [x] Verify old metrics deleted (only ETF flow keys remain)
+- [x] Verify cron stores 3 metrics/day (ETF flows only)
 
 ### Backend APIs
-- [ ] `curl /api/v3/ticker` - returns top 10 prices
-- [ ] `curl /api/v3/quick-stats` - returns F&G, BTC.D, Stables, ETF flows
-- [ ] `curl /api/v3/gainers-losers` - returns top 20 movers
-- [ ] `curl /api/v3/summary` - returns AI summary
-- [ ] `curl /api/v3/chain/eth` - returns ETH metrics
-- [ ] `curl /api/v3/chain/sol` - returns SOL metrics
-- [ ] `curl /api/v3/chain/btc` - returns BTC metrics
-- [ ] `curl /api/v3/derivatives` - returns Long/Short, Funding
+- [ ] `curl /api/v1/ticker` - returns BTC/ETH/SOL prices
+- [ ] `curl /api/v1/quick-stats` - returns F&G, BTC.D, Stables, ETF flows
+- [ ] `curl /api/v1/gainers-losers` - returns top movers
+- [ ] `curl /api/v1/summary` - returns AI summary (dummy for now)
+- [ ] `curl /api/v1/chain/eth` - returns ETH metrics
+- [ ] `curl /api/v1/chain/sol` - returns SOL metrics
+- [ ] `curl /api/v1/chain/btc` - returns BTC metrics
+- [ ] `curl /api/v1/derivatives` - returns Long/Short, Funding
 
 ### Frontend - All 6 Sections
 - [ ] ❶ Ticker: prices update, expand/collapse works
@@ -698,6 +682,14 @@ async function backfillOnce() {
 
 ## Changelog
 
+- **2026-02-01**: Renamed fetchers to source-based naming (`{source}.ts`)
+- **2026-02-01**: Renamed `v3-aggregator.ts` → `aggregator.ts`, function to `fetchAndStoreMetrics()`
+- **2026-02-01**: Merged `defillama-rwa.ts` into `defillama.ts`
+- **2026-02-01**: Updated API routes path from `/api/v3/` to `/api/v1/`
+- **2026-02-01**: Reduced stored metrics from 9 to 3 (ETF flows only)
+- **2026-02-01**: Removed unused lending functions from defillama.ts
+- **2026-02-01**: Removed `LendingProtocol` type from types.ts
+- **2026-02-01**: Created `docs/architecture.md` with backend structure guide
 - **2026-01-31**: Switched SOL fees from Solana.FM (down) to Dune API (query 6625740)
 - **2026-01-31**: Removed sol_burn/sol_issuance (fetch live instead), merged solana-fm.ts into solana.ts
 - **2026-01-31**: Merged v3-plan-final.md into implementation plan

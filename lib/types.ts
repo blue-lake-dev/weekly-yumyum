@@ -47,11 +47,6 @@ export interface CryptoMarket {
   cme_gap: MetricValue;
 }
 
-export interface LendingProtocol {
-  name: string;
-  borrow: MetricValue;
-}
-
 export interface FundFlow {
   btc_etf_flow: MetricValue;
   eth_etf_flow: MetricValue;
@@ -60,8 +55,6 @@ export interface FundFlow {
   cex_flow_btc: MetricValue;
   cex_flow_eth: MetricValue;
   miner_breakeven: MetricValue;
-  defi_total_borrow: MetricValue;
-  defi_top_protocols: LendingProtocol[];
   btc_oi: MetricValue;
   long_short_ratio: MetricValue;
   funding_rate: MetricValue;
