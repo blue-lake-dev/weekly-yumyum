@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fetchTickerPrices } from "@/lib/fetchers/coingecko";
+import { fetchTickerPrices } from "@/lib/fetchers/coingecko-market";
 
 export const revalidate = 60; // 1 min cache (CoinGecko updates every ~1-2 min)
 

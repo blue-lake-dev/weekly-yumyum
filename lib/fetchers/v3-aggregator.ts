@@ -1,6 +1,6 @@
 import { createServerClient } from "@/lib/supabase";
 import type { MetricInsert } from "@/lib/database.types";
-import { fetchEtfFlows } from "./farside";
+import { fetchEtfFlows } from "./farside-etf";
 
 // Get today's date in YYYY-MM-DD format
 function getToday(): string {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import type { MetricInsert } from "@/lib/database.types";
-import { fetchEtfFlows } from "@/lib/fetchers/farside";
+import { fetchEtfFlows } from "@/lib/fetchers/farside-etf";
 
 interface BackfillResult {
   success: boolean;

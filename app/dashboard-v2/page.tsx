@@ -1,3 +1,15 @@
+// V2 Dashboard - ARCHIVED FOR UI REFERENCE
+// Original implementation commented out below (useV2Metrics hook deleted in V3 cleanup)
+
+export default function DashboardV2() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <p className="text-gray-500">V2 Dashboard archived - see comments below for UI reference</p>
+    </div>
+  );
+}
+
+/*
 "use client";
 
 import { useState } from "react";
@@ -65,10 +77,10 @@ export default function DashboardV2() {
 
   return (
     <div className="min-h-screen bg-[#F6F7F9]">
-      {/* Header */}
+      {/* Header *}
       <header className="sticky top-0 z-50 w-full border-b border-[#E5E7EB] bg-white">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
-          {/* Left: Logo + Pixel Mascots */}
+          {/* Left: Logo + Pixel Mascots *}
           <div className="flex flex-1 items-center gap-3">
             <Image
               src="/assets/logo-full.png"
@@ -99,7 +111,7 @@ export default function DashboardV2() {
             </div>
           </div>
 
-          {/* Center: Navigation */}
+          {/* Center: Navigation *}
           <nav className="flex items-center gap-6 h-full">
             <Link
               href="/dashboard-v2"
@@ -125,7 +137,7 @@ export default function DashboardV2() {
             </Link>
           </nav>
 
-          {/* Right: Social + Admin */}
+          {/* Right: Social + Admin *}
           <div className="flex flex-1 items-center justify-end gap-2">
             <a href="#" className="flex h-8 w-8 items-center justify-center">
               <svg viewBox="0 0 24 24" className="h-6 w-6 fill-[#FF0000]">
@@ -144,9 +156,9 @@ export default function DashboardV2() {
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* Main Content *}
       <main className="mx-auto max-w-3xl px-4 py-4">
-        {/* Error State */}
+        {/* Error State *}
         {error && (
           <div className="mb-4 rounded-xl bg-red-50 border border-red-200 p-4">
             <p className="text-red-700 text-sm mb-2">데이터를 불러오는데 실패했습니다: {error}</p>
@@ -159,7 +171,7 @@ export default function DashboardV2() {
           </div>
         )}
 
-        {/* Loading State */}
+        {/* Loading State *}
         {isLoading && (
           <div className="space-y-4">
             <Skeleton className="h-64 w-full" />
@@ -171,14 +183,14 @@ export default function DashboardV2() {
           </div>
         )}
 
-        {/* Data content - show when not loading */}
+        {/* Data content - show when not loading *}
         {!isLoading && (
         <>
-        {/* ETH Section */}
+        {/* ETH Section *}
         <section className="mb-4">
           <h2 className="mb-4 font-pixel text-lg text-[#171717]">이더리움</h2>
 
-          {/* Row 1: ETH Price Card - Full Width */}
+          {/* Row 1: ETH Price Card - Full Width *}
           <div className="mb-3 rounded-xl bg-white p-6 shadow-sm">
             <div className="flex items-start justify-between mb-4">
               <div>
@@ -228,9 +240,9 @@ export default function DashboardV2() {
             </div>
           </div>
 
-          {/* Row 2: Supply + TVL - 50/50 */}
+          {/* Row 2: Supply + TVL - 50/50 *}
           <div className="mb-3 grid grid-cols-2 gap-3">
-            {/* Supply Card */}
+            {/* Supply Card *}
             <div className="rounded-xl bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
@@ -248,7 +260,7 @@ export default function DashboardV2() {
               </div>
             </div>
 
-            {/* TVL Card */}
+            {/* TVL Card *}
             <div className="rounded-xl bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between mb-2">
                 <div>
@@ -291,7 +303,7 @@ export default function DashboardV2() {
             </div>
           </div>
 
-          {/* Row 3: Burn vs Issuance - Full Width */}
+          {/* Row 3: Burn vs Issuance - Full Width *}
           <div className="mb-3 rounded-xl bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between mb-2">
               <p className="font-pixel text-sm text-[#6B7280]">
@@ -345,27 +357,27 @@ export default function DashboardV2() {
             </div>
           </div>
 
-          {/* Row 4: ETH Holdings - Full Width */}
+          {/* Row 4: ETH Holdings - Full Width *}
           <div className="rounded-xl bg-white p-4 shadow-sm">
             <p className="font-pixel text-sm text-[#6B7280] mb-3">
               기관 보유량
             </p>
 
-            {/* Segmented bar representing 100% supply */}
+            {/* Segmented bar representing 100% supply *}
             <div className="flex h-6 w-full rounded-full overflow-hidden bg-[#E5E7EB] mb-3">
-              {/* ETF segment */}
+              {/* ETF segment *}
               <div
                 className="h-full bg-[#E7F60E]"
                 style={{ width: `${Math.max(metrics?.etfHoldingsPct ?? 0, 0.5)}%` }}
               />
-              {/* DAT segment */}
+              {/* DAT segment *}
               <div
                 className="h-full bg-[#0D9488]"
                 style={{ width: `${Math.max(metrics?.datHoldingsPct ?? 0, 0.5)}%` }}
               />
             </div>
 
-            {/* Legend with ETH amounts */}
+            {/* Legend with ETH amounts *}
             <div className="flex justify-between text-xs">
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-1.5">
@@ -396,13 +408,13 @@ export default function DashboardV2() {
           </div>
         </section>
 
-        {/* RWA Section */}
+        {/* RWA Section *}
         <section className="mb-4">
           <h2 className="mb-4 font-pixel text-lg text-[#171717]">RWA</h2>
 
-          {/* Row 1: RWA Total + Chain breakdown - 50/50 */}
+          {/* Row 1: RWA Total + Chain breakdown - 50/50 *}
           <div className="mb-3 grid grid-cols-2 gap-3">
-            {/* RWA Total Card */}
+            {/* RWA Total Card *}
             <div className="rounded-xl bg-white p-4 shadow-sm">
               <div className="flex items-start justify-between">
                 <div>
@@ -420,12 +432,12 @@ export default function DashboardV2() {
               </div>
             </div>
 
-            {/* Chain RWA Card */}
+            {/* Chain RWA Card *}
             <div className="rounded-xl bg-white p-4 shadow-sm">
               <p className="font-pixel text-sm text-[#6B7280] mb-3">
                 체인별 RWA
               </p>
-              {/* Horizontal bars - dynamic from metrics */}
+              {/* Horizontal bars - dynamic from metrics *}
               <div className="space-y-2 text-sm">
                 {(() => {
                   const chainData = metrics?.rwaByChain ?? {};
@@ -455,7 +467,7 @@ export default function DashboardV2() {
             </div>
           </div>
 
-          {/* Row 2: Category RWA - Full Width (placeholder from rwa.xyz CSV until admin upload) */}
+          {/* Row 2: Category RWA - Full Width (placeholder from rwa.xyz CSV until admin upload) *}
           <div className="rounded-xl bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <p className="font-pixel text-sm text-[#6B7280]">
@@ -463,7 +475,7 @@ export default function DashboardV2() {
               </p>
               <span className="text-xs text-[#9CA3AF]">rwa.xyz 기준</span>
             </div>
-            {/* Horizontal bars with background - using placeholder data */}
+            {/* Horizontal bars with background - using placeholder data *}
             <div className="space-y-2 text-sm">
               {rwaByCategory.slice(0, 6).map((category) => {
                 const maxValue = rwaByCategory[0].value;
@@ -490,13 +502,13 @@ export default function DashboardV2() {
           </div>
         </section>
 
-        {/* ETF Section */}
+        {/* ETF Section *}
         <section className="mb-4">
           <h2 className="mb-4 font-pixel text-lg text-[#171717]">ETF 자금흐름</h2>
 
-          {/* Row 1: ETH + BTC ETF Flow - 50/50 */}
+          {/* Row 1: ETH + BTC ETF Flow - 50/50 *}
           <div className="grid grid-cols-2 gap-3">
-            {/* ETH ETF Flow Card */}
+            {/* ETH ETF Flow Card *}
             <div className="rounded-xl bg-white p-4 shadow-sm">
               <div className="mb-2">
                 <p className="font-pixel text-sm text-[#6B7280]">
@@ -547,7 +559,7 @@ export default function DashboardV2() {
               </div>
             </div>
 
-            {/* BTC ETF Flow Card */}
+            {/* BTC ETF Flow Card *}
             <div className="rounded-xl bg-white p-4 shadow-sm">
               <div className="mb-2">
                 <p className="font-pixel text-sm text-[#6B7280]">
@@ -600,13 +612,13 @@ export default function DashboardV2() {
           </div>
         </section>
 
-        {/* MARKET Section */}
+        {/* MARKET Section *}
         <section className="mb-4">
           <h2 className="mb-4 font-pixel text-lg text-[#171717]">MARKET</h2>
 
-          {/* Row 1: 5 Metric Cards */}
+          {/* Row 1: 5 Metric Cards *}
           <div className="mb-3 grid grid-cols-5 gap-3">
-            {/* BTC Price */}
+            {/* BTC Price *}
             <div className="rounded-xl bg-white p-3 shadow-sm text-center h-40 flex flex-col justify-between">
               <p className="font-pixel text-xs text-[#6B7280]">
                 비트코인 현재가
@@ -629,7 +641,7 @@ export default function DashboardV2() {
               </div>
             </div>
 
-            {/* BTC Dominance */}
+            {/* BTC Dominance *}
             <div className="rounded-xl bg-white p-3 shadow-sm text-center h-40 flex flex-col justify-between">
               <p className="font-pixel text-xs text-[#6B7280]">BTC 도미넌스</p>
               <div className="flex justify-center">
@@ -650,44 +662,44 @@ export default function DashboardV2() {
               </div>
             </div>
 
-            {/* Fear & Greed */}
+            {/* Fear & Greed *}
             <div className="rounded-xl bg-white p-3 shadow-sm text-center h-40 flex flex-col justify-between">
               <p className="font-pixel text-xs text-[#6B7280]">
                 공포 탐욕 지수
               </p>
               <div className="flex justify-center">
                 <div className="relative">
-                  {/* Half circle gauge with 4 segments */}
+                  {/* Half circle gauge with 4 segments *}
                   <svg width="96" height="52" viewBox="0 0 96 52">
-                    {/* Red segment: Extreme Fear (0-25) */}
+                    {/* Red segment: Extreme Fear (0-25) *}
                     <path
                       d="M 8 44 A 40 40 0 0 1 18.7 16.7"
                       fill="none"
                       stroke="#DC2626"
                       strokeWidth="10"
                     />
-                    {/* Orange segment: Fear (25-50) */}
+                    {/* Orange segment: Fear (25-50) *}
                     <path
                       d="M 20.2 15.2 A 40 40 0 0 1 47.3 4"
                       fill="none"
                       stroke="#F97316"
                       strokeWidth="10"
                     />
-                    {/* Lime segment: Greed (50-75) */}
+                    {/* Lime segment: Greed (50-75) *}
                     <path
                       d="M 49.4 4 A 40 40 0 0 1 76.3 15.7"
                       fill="none"
                       stroke="#E7F60E"
                       strokeWidth="10"
                     />
-                    {/* Green segment: Extreme Greed (75-100) */}
+                    {/* Green segment: Extreme Greed (75-100) *}
                     <path
                       d="M 77.7 17.2 A 40 40 0 0 1 88 44"
                       fill="none"
                       stroke="#16A34A"
                       strokeWidth="10"
                     />
-                    {/* Needle: value/100 * 180 - 90 degrees rotation */}
+                    {/* Needle: value/100 * 180 - 90 degrees rotation *}
                     <line
                       x1="48"
                       y1="44"
@@ -700,7 +712,7 @@ export default function DashboardV2() {
                     />
                     <circle cx="48" cy="44" r="4" fill="#1F2937" />
                   </svg>
-                  {/* Labels below gauge */}
+                  {/* Labels below gauge *}
                   <div className="flex justify-between px-1">
                     <span className="text-xs text-[#6B7280] font-medium">0</span>
                     <span className="text-xs text-[#6B7280] font-medium">100</span>
@@ -712,7 +724,7 @@ export default function DashboardV2() {
               </p>
             </div>
 
-            {/* ETH/BTC Ratio */}
+            {/* ETH/BTC Ratio *}
             <div className="rounded-xl bg-white p-3 shadow-sm text-center h-40 flex flex-col justify-between">
               <p className="font-pixel text-xs text-[#6B7280]">ETH/BTC 비율</p>
               <div className="flex justify-center">
@@ -743,7 +755,7 @@ export default function DashboardV2() {
               </div>
             </div>
 
-            {/* Stablecoin Market Cap */}
+            {/* Stablecoin Market Cap *}
             <div className="rounded-xl bg-white p-3 shadow-sm text-center h-40 flex flex-col justify-between">
               <p className="font-pixel text-xs text-[#6B7280]">
                 스테이블코인 시가총액
@@ -777,12 +789,12 @@ export default function DashboardV2() {
             </div>
           </div>
 
-          {/* Row 2: Stablecoin by Chain - Full Width */}
+          {/* Row 2: Stablecoin by Chain - Full Width *}
           <div className="rounded-xl bg-white p-4 shadow-sm">
             <p className="font-pixel text-sm text-[#6B7280] mb-3">
               체인별 스테이블코인
             </p>
-            {/* Segmented bar - dynamic based on stablecoinByChain */}
+            {/* Segmented bar - dynamic based on stablecoinByChain *}
             {(() => {
               const chainData = metrics?.stablecoinByChain ?? {};
               const total = Object.values(chainData).reduce((sum, v) => sum + v, 0);
@@ -821,7 +833,7 @@ export default function DashboardV2() {
         )}
       </main>
 
-      {/* Footer */}
+      {/* Footer *}
       <footer className="border-t border-[#E5E7EB] bg-white py-6">
         <div className="mx-auto max-w-3xl px-4">
           <div className="flex items-center justify-between text-xs text-[#6B7280]">
@@ -834,12 +846,12 @@ export default function DashboardV2() {
         </div>
       </footer>
 
-      {/* Floating Chat */}
+      {/* Floating Chat *}
       <div className="fixed bottom-6 right-6 flex flex-col items-end">
-        {/* Chat Panel */}
+        {/* Chat Panel *}
         {chatOpen && (
           <div className="mb-3 w-80 bg-white rounded-xl shadow-xl border border-[#E5E7EB] overflow-hidden">
-            {/* Header */}
+            {/* Header *}
             <div className="bg-[#E7F60E] px-4 py-3 flex items-center justify-between">
               <span className="font-semibold text-[#171717]">얌얌 채팅</span>
               <button
@@ -851,7 +863,7 @@ export default function DashboardV2() {
                 </svg>
               </button>
             </div>
-            {/* Messages */}
+            {/* Messages *}
             <div className="h-64 p-4 bg-[#F6F7F9] overflow-y-auto">
               <div className="space-y-3">
                 <div className="flex gap-2">
@@ -872,7 +884,7 @@ export default function DashboardV2() {
                 </div>
               </div>
             </div>
-            {/* Input */}
+            {/* Input *}
             <div className="p-3 border-t border-[#E5E7EB]">
               <div className="flex gap-2">
                 <input
@@ -890,7 +902,7 @@ export default function DashboardV2() {
           </div>
         )}
 
-        {/* Chat Bubble Button */}
+        {/* Chat Bubble Button *}
         <button
           onClick={() => setChatOpen(!chatOpen)}
           className="w-14 h-14 bg-[#E7F60E] rounded-full shadow-lg flex items-center justify-center hover:bg-[#d4e30d] transition-colors"
@@ -907,3 +919,4 @@ export default function DashboardV2() {
     </div>
   );
 }
+*/

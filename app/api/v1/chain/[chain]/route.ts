@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 
 // Import fetchers
-import { fetchCoinSupply, fetchPriceSparkline } from "@/lib/fetchers/coingecko";
-import { fetchEthBurnIssuance } from "@/lib/fetchers/ultrasound";
-import { fetchEthSupply } from "@/lib/fetchers/etherscan";
-import { fetchChainTvlWithSparkline, fetchStablecoinWithSparkline } from "@/lib/fetchers/defillama";
-import { fetchSolanaSupply, fetchSolanaInflation, fetchSolanaDailyFees } from "@/lib/fetchers/solana";
+import { fetchCoinSupply, fetchPriceSparkline } from "@/lib/fetchers/coingecko-market";
+import { fetchEthBurnIssuance } from "@/lib/fetchers/ultrasound-burn";
+import { fetchEthSupply } from "@/lib/fetchers/etherscan-supply";
+import { fetchChainTvlWithSparkline, fetchStablecoinWithSparkline } from "@/lib/fetchers/defillama-tvl";
+import { fetchSolanaSupply, fetchSolanaInflation, fetchSolanaDailyFees } from "@/lib/fetchers/solana-chain";
 
 export const revalidate = 900; // 15 min cache
 
@@ -226,14 +226,14 @@ async function getEtfFlowHistory(key: string, days: number) {
     .select("date, value")
     .eq("key", key)
     .gte("date", startDate.toISOString().split("T")[0])
-    .order("date", { descending: true });
+    .order("date", { ascending: false });
 
   if (error) {
     console.error("[chain] getEtfFlowHistory error:", error);
     return [];
   }
 
-  return (data || []).map((row) => ({
+  return (data || []).map((row: { date: string; value: number | null }) => ({
     date: row.date,
     value: row.value,
   }));
