@@ -6,12 +6,24 @@ import { useTicker } from "@/lib/hooks/use-ticker";
 
 function formatPrice(price: number | null): string {
   if (price === null) return "—";
-  const decimals = price >= 1000 ? 0 : price >= 1 ? 2 : 4;
+
+  if (price < 1) {
+    // Small prices: show 4 decimals
+    return price.toLocaleString("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 4,
+      maximumFractionDigits: 4,
+    });
+  }
+
+  // For prices >= $1: show 2 decimals, but hide if .00
+  const hasDecimals = price % 1 !== 0;
   return price.toLocaleString("en-US", {
     style: "currency",
     currency: "USD",
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
+    minimumFractionDigits: hasDecimals ? 2 : 0,
+    maximumFractionDigits: hasDecimals ? 2 : 0,
   });
 }
 
