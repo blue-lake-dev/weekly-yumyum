@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useEffect, useState } from "react";
+import Image from "next/image";
 import { useTicker } from "@/lib/hooks/use-ticker";
-import { Skeleton } from "@/components/ui/Skeleton";
 
 function formatPrice(price: number | null): string {
   if (price === null) return "—";
@@ -15,74 +15,122 @@ function formatPrice(price: number | null): string {
   });
 }
 
-function formatChange(change: number | null): string {
-  if (change === null) return "—";
-  const sign = change >= 0 ? "+" : "";
-  return `${sign}${change.toFixed(2)}%`;
+function formatChange(change: number | null): { arrow: string; value: string } {
+  if (change === null) return { arrow: "", value: "—" };
+  const arrow = change >= 0 ? "▲" : "▼";
+  return { arrow, value: `${Math.abs(change).toFixed(2)}%` };
 }
 
-const symbolIcons: Record<string, string> = {
-  BTC: "₿",
-  ETH: "Ξ",
-  SOL: "◎",
-};
+interface FlashState {
+  [symbol: string]: "up" | "down" | null;
+}
 
 export function Ticker() {
+  const { data: tickers = [] } = useTicker();
+  const prevPricesRef = useRef<Map<string, number>>(new Map());
+  const [flashStates, setFlashStates] = useState<FlashState>({});
   const [expanded, setExpanded] = useState(false);
-  const { data: tickers = [], isLoading } = useTicker();
 
-  // Show top 3 by default, all when expanded
-  const displayTickers = expanded ? tickers : tickers.slice(0, 3);
+  // Detect price changes and trigger flash animations
+  useEffect(() => {
+    if (tickers.length === 0) return;
 
-  if (isLoading) {
-    return (
-      <section className="mb-4">
-        <div className="flex items-center gap-4">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-10 w-32" />
-          ))}
-        </div>
-      </section>
-    );
+    const newFlashStates: FlashState = {};
+    const prevPrices = prevPricesRef.current;
+
+    tickers.forEach((ticker) => {
+      const prevPrice = prevPrices.get(ticker.symbol);
+      const currentPrice = ticker.price;
+
+      if (prevPrice !== undefined && currentPrice !== null && prevPrice !== currentPrice) {
+        newFlashStates[ticker.symbol] = currentPrice > prevPrice ? "up" : "down";
+      }
+
+      // Update stored price
+      if (currentPrice !== null) {
+        prevPrices.set(ticker.symbol, currentPrice);
+      }
+    });
+
+    // Only update state if there are changes
+    if (Object.keys(newFlashStates).length > 0) {
+      setFlashStates(newFlashStates);
+
+      // Clear flash states after animation completes
+      const timer = setTimeout(() => {
+        setFlashStates({});
+      }, 4000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [tickers]);
+
+
+  if (tickers.length === 0) {
+    return <div className="w-full bg-[#DEE1E5] h-10 animate-pulse" />;
   }
 
-  return (
-    <section className="mb-4">
-      <div className="flex flex-wrap items-center gap-3">
-        {displayTickers.map((ticker) => {
-          const changeColor =
-            ticker.change24h === null
-              ? "text-[#6B7280]"
-              : ticker.change24h >= 0
-                ? "text-[#16A34A]"
-                : "text-[#DC2626]";
+  const renderTickerItem = (ticker: typeof tickers[0]) => {
+    const changeColor =
+      ticker.change24h === null
+        ? "text-[#6B7280]"
+        : ticker.change24h >= 0
+          ? "text-[#16A34A]"
+          : "text-[#DC2626]";
 
-          return (
-            <div
-              key={ticker.symbol}
-              className="flex items-center gap-2 rounded-lg bg-white border border-[#E5E7EB] px-3 py-2 shadow-sm"
-            >
-              <span className="text-lg">{symbolIcons[ticker.symbol] || ticker.symbol}</span>
-              <span className="font-medium text-[#171717]">{ticker.symbol}</span>
-              <span className="font-semibold text-[#171717] tabular-nums">
-                {formatPrice(ticker.price)}
-              </span>
-              <span className={`text-sm font-medium tabular-nums ${changeColor}`}>
-                {formatChange(ticker.change24h)}
-              </span>
-            </div>
-          );
-        })}
+    const flashClass = flashStates[ticker.symbol]
+      ? flashStates[ticker.symbol] === "up"
+        ? "animate-flash-up"
+        : "animate-flash-down"
+      : "";
 
-        {tickers.length > 3 && (
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="text-sm text-[#6B7280] hover:text-[#171717] transition-colors"
-          >
-            {expanded ? "접기 ▲" : "더보기 ▼"}
-          </button>
-        )}
+    const { arrow, value } = formatChange(ticker.change24h);
+
+    const priceText = formatPrice(ticker.price);
+
+    return (
+      <div key={ticker.symbol} className="flex items-center gap-1 whitespace-nowrap">
+        <Image
+          src={ticker.image}
+          alt={ticker.name}
+          width={20}
+          height={20}
+          className="rounded-full"
+        />
+        <span className="font-medium text-[#171717]">{ticker.symbol}</span>
+        <span className={`price-flash font-medium text-[#171717] tabular-nums ${flashClass}`}>
+          {priceText}
+          {flashClass && <span className="price-flash-overlay">{priceText}</span>}
+        </span>
+        <span className={`text-sm font-normal tabular-nums ${changeColor}`}>
+          <span className="text-[10px]">{arrow}</span> {value}
+        </span>
       </div>
-    </section>
+    );
+  };
+
+  return (
+    <div className="w-full bg-[#DEE1E5]">
+      <div className={`flex gap-4 px-4 py-2.5 ${expanded ? "items-start" : "items-center"}`}>
+        {/* Fixed label */}
+        <div className="flex-shrink-0 font-medium text-[#171717]">
+          ⭐️ Top 10
+        </div>
+
+        {/* Ticker items */}
+        <div className={`flex-1 flex items-center gap-x-8 gap-y-2 ${expanded ? "flex-wrap" : "overflow-hidden"}`}>
+          {tickers.map((ticker) => renderTickerItem(ticker))}
+        </div>
+
+        {/* Expand/collapse button */}
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="flex-shrink-0 text-xs text-[#6B7280] hover:text-[#171717] transition-colors"
+          aria-label={expanded ? "Collapse" : "Expand"}
+        >
+          {expanded ? "▲" : "▼"}
+        </button>
+      </div>
+    </div>
   );
 }

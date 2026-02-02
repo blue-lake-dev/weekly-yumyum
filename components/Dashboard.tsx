@@ -25,10 +25,10 @@ export function Dashboard() {
     <div className="min-h-screen bg-[#F6F7F9]">
       <Header />
 
-      <main className="mx-auto max-w-5xl px-4 py-6">
-        {/* ❶ Ticker - Blocking (instant) */}
-        <Ticker />
+      {/* ❶ Ticker - Full width, attached to header */}
+      <Ticker />
 
+      <main className="mx-auto max-w-5xl px-4 py-6">
         {/* ❷ Quick Stats - Blocking (instant) */}
         <QuickStats />
 

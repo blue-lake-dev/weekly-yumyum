@@ -38,19 +38,10 @@ function calcChangePct(current: number | null, previous: number | null): number 
   return ((current - previous) / previous) * 100;
 }
 
-/**
- * Simple price data with 24h change - single API call for all coins
- * Much more efficient than fetching market_chart for each coin
- */
-interface SimplePriceResponse {
-  [coinId: string]: {
-    usd: number;
-    usd_24h_change: number;
-  };
-}
-
 export interface TickerData {
   symbol: string;
+  name: string;
+  image: string;
   price: number | null;
   change24h: number | null;
 }
@@ -103,40 +94,43 @@ export async function fetchPriceSparkline(coinId: string): Promise<SparklineData
   }
 }
 
+interface MarketCoinWithImage {
+  id: string;
+  symbol: string;
+  name: string;
+  image: string;
+  current_price: number;
+  price_change_percentage_24h: number | null;
+}
+
+/**
+ * Fetch top 10 coins by market cap with images for ticker marquee
+ * Uses /coins/markets endpoint
+ */
 export async function fetchTickerPrices(): Promise<TickerData[]> {
   try {
-    const data = await fetchWithTimeout<SimplePriceResponse>(
-      `${COINGECKO_API}/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true`
+    const data = await fetchWithTimeout<MarketCoinWithImage[]>(
+      `${COINGECKO_API}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1&sparkline=false&price_change_percentage=24h`
     );
 
-    const tickers: TickerData[] = [
-      {
-        symbol: "BTC",
-        price: data.bitcoin?.usd ?? null,
-        change24h: data.bitcoin?.usd_24h_change ?? null,
-      },
-      {
-        symbol: "ETH",
-        price: data.ethereum?.usd ?? null,
-        change24h: data.ethereum?.usd_24h_change ?? null,
-      },
-      {
-        symbol: "SOL",
-        price: data.solana?.usd ?? null,
-        change24h: data.solana?.usd_24h_change ?? null,
-      },
-    ];
+    if (!data || !Array.isArray(data)) {
+      throw new Error("Invalid response from CoinGecko");
+    }
 
-    console.log("[coingecko] Ticker prices fetched:", tickers.map(t => `${t.symbol}: $${t.price?.toFixed(2)} (${t.change24h?.toFixed(2)}%)`).join(", "));
+    const tickers: TickerData[] = data.map((coin) => ({
+      symbol: coin.symbol.toUpperCase(),
+      name: coin.name,
+      image: coin.image,
+      price: coin.current_price ?? null,
+      change24h: coin.price_change_percentage_24h ?? null,
+    }));
+
+    console.log("[coingecko] Ticker fetched:", tickers.length, "coins");
 
     return tickers;
   } catch (error) {
     console.error("[coingecko] fetchTickerPrices error:", error);
-    return [
-      { symbol: "BTC", price: null, change24h: null },
-      { symbol: "ETH", price: null, change24h: null },
-      { symbol: "SOL", price: null, change24h: null },
-    ];
+    return [];
   }
 }
 

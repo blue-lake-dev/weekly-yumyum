@@ -16,6 +16,8 @@ function getUrl(path: string): string {
 
 export interface TickerItem {
   symbol: string;
+  name: string;
+  image: string;
   price: number | null;
   change24h: number | null;
 }

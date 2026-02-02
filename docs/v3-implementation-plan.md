@@ -160,29 +160,32 @@ export interface DailySummaryRow {
 
 ## 3. Section ❶: Ticker
 
-### Component: `components/v3/Ticker.tsx`
+### Component: `components/sections/Ticker.tsx`
 
 **Display:**
-- Default: Top 3 (BTC, ETH, SOL) with price + 24h change
-- Expanded: Top 10 by market cap
-- Toggle: [더보기 ▼] / [접기 ▲]
+- Gray bar (`#DEE1E5`) full-width, attached below Header
+- Left: "⭐️ Top 10" label (fixed)
+- Center: Top 10 coins by market cap with coin image, symbol, price, 24h change
+- Right: Expand/collapse button (▼/▲)
+- Default: Shows as many coins as fit (overflow hidden)
+- Expanded: Wraps to show all 10 coins
+
+**Each coin item:**
+- Circular coin image (20x20) from CoinGecko
+- Symbol (e.g., "BTC")
+- Price with smart decimals (0 for ≥$1000, 2 for ≥$1, 4 for <$1)
+- 24h change with colored arrow: `▲ 2.45%` (green) / `▼ 1.23%` (red)
+
+**Price change animation (CMC-style):**
+- On refetch, if price changed: colored overlay (green/red) fades out
+- Hold full color for ~1.5s, then gradual opacity fade to 0 over ~3s
+- Total animation: 4.5s
 
 **Data:**
-- Source: CoinGecko REST API (1 min cache)
+- Source: CoinGecko `/coins/markets` endpoint (top 10 by market cap)
+- Includes: symbol, name, image, current_price, price_change_percentage_24h
+- Refetch: Every 1 min (client-side polling)
 - No storage
-
-**Props:**
-```typescript
-interface TickerProps {
-  prices: Array<{
-    symbol: string;      // "BTC", "ETH", "SOL"
-    price: number;
-    change24h: number;   // percentage
-  }>;
-  expanded?: boolean;
-  onToggle?: () => void;
-}
-```
 
 **Hook:** `use-ticker.ts` - fetches from `/api/v1/ticker`
 
@@ -748,6 +751,7 @@ lib/hooks/         # Data fetching hooks
 
 ## Changelog
 
+- **2026-02-02**: Ticker redesign - gray bar with top 10 coins, coin images, fold/unfold, CMC-style price change animation (opacity fade)
 - **2026-02-02**: Header polish - added pixel mascots (doge, pepe, robot), Admin button, fixed YouTube URL
 - **2026-02-02**: QuickStats polish - simplified StatPill component, added valueColor prop for ETF flows
 - **2026-02-02**: Fixed ETF flows to fetch latest available data (not just today) for weekends
