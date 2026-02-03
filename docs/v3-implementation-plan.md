@@ -642,7 +642,7 @@ lib/hooks/         # Data fetching hooks
 > Match each section to the design reference image
 - [x] 46. ❶ Ticker - Design aligned
 - [x] 47. ❷ Quick Stats - Design aligned
-- [ ] 48. ❸ 오늘의 코인 - **IN PROGRESS**
+- [x] 48. ❸ 오늘의 코인 - Design aligned (two-card layout, stablecoin filter)
 - [ ] 49. ❹ 얌얌의 한마디 - Needs design work
 - [ ] 50. ❺ Chain Tabs - Needs design work
 - [ ] 51. ❻ 더보기 (파생상품/RWA) - Needs design work
@@ -734,7 +734,7 @@ lib/hooks/         # Data fetching hooks
 ### Frontend - All 6 Sections (Design Alignment)
 - [x] ❶ Ticker: prices update, expand/collapse works, design aligned
 - [x] ❷ Quick Stats: cards render with correct values/colors, design aligned
-- [ ] ❸ 오늘의 코인: functional, **needs design alignment**
+- [x] ❸ 오늘의 코인: two-card layout, stablecoin filtered, design aligned
 - [ ] ❹ 얌얌의 한마디: functional, **needs design alignment**
 - [ ] ❺ Chain Tabs: functional, **needs design alignment**
 - [ ] ❻ 더보기: functional, **needs design alignment**
@@ -748,6 +748,7 @@ lib/hooks/         # Data fetching hooks
 
 ## Changelog
 
+- **2026-02-03**: TodaysCoin redesign - two-card layout (gainers/losers), added image/price to API, stablecoin filter, blur placeholder for coin images, matching skeleton
 - **2026-02-03**: Docs update - removed deprecated v3-ref-1.png references, added Phase 6 (UI Design Alignment), marked backend APIs verified, updated component names (StatPill → QuickStatCard)
 - **2026-02-02**: Ticker redesign - gray bar with top 10 coins, coin images, fold/unfold, CMC-style price change animation (opacity fade)
 - **2026-02-02**: Header polish - added pixel mascots (doge, pepe, robot), Admin button, fixed YouTube URL

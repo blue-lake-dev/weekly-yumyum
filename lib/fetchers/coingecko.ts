@@ -3,6 +3,24 @@ import { formatTimestamp } from "../utils";
 
 const COINGECKO_API = "https://api.coingecko.com/api/v3";
 
+// Stablecoins to filter out from ticker and gainers/losers
+const STABLECOIN_SYMBOLS = new Set([
+  "USDT", "USDC", "DAI", "BUSD", "TUSD", "USDP", "USDD", "GUSD", "FRAX", "LUSD",
+  "PYUSD", "RLUSD", "USDS", "USD1", "USYC", "USDT0", "FDUSD", "EURC", "UST",
+  "USDJ", "CUSD", "SUSD", "MIM", "CRVUSD", "GHO", "DOLA", "ALUSD", "BEAN",
+  "USDC.E", "USDT.E", "USDG", "BFUSD", "SUSDE", "USDE", "SYRUPUSDC", "BUIDL",
+  "USDM", "USDB", "USD0", "HUSD", "USDX", "USDK", "USDQ", "FLEXUSD", "USDN",
+]);
+
+// Also filter by price range - coins priced $0.98-$1.02 with "USD" in name are likely stablecoins
+function isLikelyStablecoin(symbol: string, price: number): boolean {
+  const upperSymbol = symbol.toUpperCase();
+  if (STABLECOIN_SYMBOLS.has(upperSymbol)) return true;
+  // Check if symbol contains USD and price is ~$1
+  if (upperSymbol.includes("USD") && price >= 0.98 && price <= 1.02) return true;
+  return false;
+}
+
 interface GlobalData {
   data: {
     market_cap_percentage: {
@@ -109,23 +127,28 @@ interface MarketCoinWithImage {
  */
 export async function fetchTickerPrices(): Promise<TickerData[]> {
   try {
+    // Fetch more than 10 to account for filtered stablecoins
     const data = await fetchWithTimeout<MarketCoinWithImage[]>(
-      `${COINGECKO_API}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1&sparkline=false&price_change_percentage=24h`
+      `${COINGECKO_API}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1&sparkline=false&price_change_percentage=24h`
     );
 
     if (!data || !Array.isArray(data)) {
       throw new Error("Invalid response from CoinGecko");
     }
 
-    const tickers: TickerData[] = data.map((coin) => ({
-      symbol: coin.symbol.toUpperCase(),
-      name: coin.name,
-      image: coin.image,
-      price: coin.current_price ?? null,
-      change24h: coin.price_change_percentage_24h ?? null,
-    }));
+    // Filter out stablecoins and take top 10
+    const tickers: TickerData[] = data
+      .filter((coin) => !isLikelyStablecoin(coin.symbol, coin.current_price ?? 0))
+      .slice(0, 10)
+      .map((coin) => ({
+        symbol: coin.symbol.toUpperCase(),
+        name: coin.name,
+        image: coin.image,
+        price: coin.current_price ?? null,
+        change24h: coin.price_change_percentage_24h ?? null,
+      }));
 
-    console.log("[coingecko] Ticker fetched:", tickers.length, "coins");
+    console.log("[coingecko] Ticker fetched:", tickers.length, "coins (stablecoins filtered)");
 
     return tickers;
   } catch (error) {
@@ -275,8 +298,8 @@ export async function fetchSolPrice(): Promise<MetricValue> {
 
 // Gainers/Losers types and fetcher
 export interface GainersLosersData {
-  gainers: Array<{ symbol: string; name: string; change: number }>;
-  losers: Array<{ symbol: string; name: string; change: number }>;
+  gainers: Array<{ symbol: string; name: string; image: string; price: number; change: number }>;
+  losers: Array<{ symbol: string; name: string; image: string; price: number; change: number }>;
   error?: string;
 }
 
@@ -284,6 +307,8 @@ interface MarketCoin {
   id: string;
   symbol: string;
   name: string;
+  image: string;
+  current_price: number;
   price_change_percentage_24h: number | null;
 }
 
@@ -301,25 +326,42 @@ export async function fetchGainersLosers(limit: number = 10): Promise<GainersLos
       throw new Error("Invalid response from CoinGecko");
     }
 
-    // Filter out coins with null change and sort
-    const validCoins = data.filter((coin) => coin.price_change_percentage_24h !== null);
+    // Filter out coins with null change and stablecoins
+    const validCoins = data.filter(
+      (coin) =>
+        coin.price_change_percentage_24h !== null &&
+        !isLikelyStablecoin(coin.symbol, coin.current_price)
+    );
 
     // Sort by 24h change descending for gainers
     const sortedByChange = [...validCoins].sort(
       (a, b) => (b.price_change_percentage_24h ?? 0) - (a.price_change_percentage_24h ?? 0)
     );
 
-    const gainers = sortedByChange.slice(0, limit).map((coin) => ({
-      symbol: coin.symbol.toUpperCase(),
-      name: coin.name,
-      change: coin.price_change_percentage_24h ?? 0,
-    }));
+    // Gainers: only positive changes
+    const gainers = sortedByChange
+      .filter((coin) => (coin.price_change_percentage_24h ?? 0) > 0)
+      .slice(0, limit)
+      .map((coin) => ({
+        symbol: coin.symbol.toUpperCase(),
+        name: coin.name,
+        image: coin.image,
+        price: coin.current_price,
+        change: coin.price_change_percentage_24h ?? 0,
+      }));
 
-    const losers = sortedByChange.slice(-limit).reverse().map((coin) => ({
-      symbol: coin.symbol.toUpperCase(),
-      name: coin.name,
-      change: coin.price_change_percentage_24h ?? 0,
-    }));
+    // Losers: only negative changes
+    const losers = sortedByChange
+      .filter((coin) => (coin.price_change_percentage_24h ?? 0) < 0)
+      .slice(-limit)
+      .reverse()
+      .map((coin) => ({
+        symbol: coin.symbol.toUpperCase(),
+        name: coin.name,
+        image: coin.image,
+        price: coin.current_price,
+        change: coin.price_change_percentage_24h ?? 0,
+      }));
 
     console.log("[coingecko] Top gainer:", gainers[0]?.symbol, gainers[0]?.change?.toFixed(2) + "%");
     console.log("[coingecko] Top loser:", losers[0]?.symbol, losers[0]?.change?.toFixed(2) + "%");

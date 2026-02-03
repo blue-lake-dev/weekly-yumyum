@@ -34,7 +34,7 @@ export function Dashboard() {
 
         {/* ❸ 오늘의 코인 - Streaming */}
         <ErrorBoundary>
-          <Suspense fallback={<SectionSkeleton height="h-32" />}>
+          <Suspense fallback={<TodaysCoinSkeleton />}>
             <TodaysCoin />
           </Suspense>
         </ErrorBoundary>
@@ -75,5 +75,50 @@ function SectionSkeleton({ height }: { height: string }) {
       <Skeleton className="h-5 w-32 mb-3" />
       <Skeleton className="h-full w-full" />
     </div>
+  );
+}
+
+function TodaysCoinSkeleton() {
+  return (
+    <section className="mb-6">
+      {/* Section Header */}
+      <div className="flex items-center justify-between mb-3">
+        <Skeleton className="h-6 w-64" />
+        <Skeleton className="h-4 w-16" />
+      </div>
+      {/* Two Cards */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex-1 rounded-xl bg-white border border-[#E5E7EB] shadow-sm p-4">
+          <Skeleton className="h-4 w-24 mb-3" />
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-2">
+                <Skeleton className="h-4 w-4" />
+                <Skeleton className="h-6 w-6 rounded-full" />
+                <Skeleton className="h-4 w-12" />
+                <div className="flex-1" />
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-14" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="flex-1 rounded-xl bg-white border border-[#E5E7EB] shadow-sm p-4">
+          <Skeleton className="h-4 w-24 mb-3" />
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-2">
+                <Skeleton className="h-4 w-4" />
+                <Skeleton className="h-6 w-6 rounded-full" />
+                <Skeleton className="h-4 w-12" />
+                <div className="flex-1" />
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-14" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }

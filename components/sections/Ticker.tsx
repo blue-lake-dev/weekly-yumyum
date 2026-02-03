@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState } from "react";
 import Image from "next/image";
 import { useTicker } from "@/lib/hooks/use-ticker";
+import { COIN_IMAGE_PLACEHOLDER } from "@/lib/constants";
 
 function formatPrice(price: number | null): string {
   if (price === null) return "—";
@@ -109,6 +110,8 @@ export function Ticker() {
           width={20}
           height={20}
           className="rounded-full"
+          placeholder="blur"
+          blurDataURL={COIN_IMAGE_PLACEHOLDER}
         />
         <span className="font-medium text-[#171717]">{ticker.symbol}</span>
         <span className={`price-flash font-medium text-[#171717] tabular-nums ${flashClass}`}>
