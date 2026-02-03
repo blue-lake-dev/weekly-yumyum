@@ -6,7 +6,7 @@
 ## Goal
 Build the complete V3 dashboard with:
 1. All 6 sections (Ticker, Quick Stats, 오늘의 코인, 얌얌의 한마디, Chain Tabs, 더보기)
-2. Quick Stats pill-style design (from v3-ref-1.png)
+2. Quick Stats card layout (see v3-design-cand-1.png)
 3. Multi-chain support (BTC, ETH, SOL)
 4. New backend infrastructure (fetchers, APIs, cron)
 5. Database schema migration (cleanup V2, add V3 keys)
@@ -191,48 +191,34 @@ export interface DailySummaryRow {
 
 ---
 
-## 4. Section ❷: Quick Stats (Pill Style)
+## 4. Section ❷: Quick Stats (Card Layout)
 
-### Component: `components/v3/QuickStats.tsx`
+### Component: `components/sections/QuickStats.tsx`
 
 **Display:**
-- 6 pill-style cards (from v3-ref-1.png)
-- Responsive: wrap on mobile
+- 5 card-style components (see v3-design-cand-1.png)
+- Horizontal scroll on mobile with right fade indicator
 
-**Pills:**
-| # | Label | Icon | Value | Source |
-|---|-------|------|-------|--------|
-| 1 | F&G | 😨/😀 | 26 "공포" | Alternative.me |
-| 2 | BTC.D | ₿ | 57.3% | CoinGecko |
-| 3 | Stables | 💵 | $307B (+0.8%) | DeFiLlama |
-| 4 | BTC ETF | ₿ | -$5.4M | Supabase |
-| 5 | ETH ETF | Ξ | +$0.8M | Supabase |
-| 6 | SOL ETF | ◎ | +$12.3M | Supabase |
+**Cards:**
+| # | Label | Content | Source |
+|---|-------|---------|--------|
+| 1 | 암호화폐 시총 | Total market cap + 24h change | CoinGecko |
+| 2 | 공포 & 탐욕 | FearGreedGauge + label | Alternative.me |
+| 3 | BTC Dominance | BTC/ETH/Others % + DominanceBar | CoinMarketCap |
+| 4 | 스테이블코인 시총 | Value + 7d sparkline | DeFiLlama |
+| 5 | ETF 자금흐름 | BTC/ETH/SOL rows with icons | Supabase |
 
-**Sub-component:** `components/ui/StatPill.tsx`
-```typescript
-interface StatPillProps {
-  icon?: string;
-  label: string;
-  value: string | number;
-  subLabel?: string;         // "공포", "탐욕"
-  change?: number | null;
-  changeType?: 'percent' | 'flow';
-}
-```
-
-**Pill Styling (Tailwind):**
-```
-rounded-full bg-white border border-[#E5E7EB] px-3 py-1.5
-flex items-center gap-2 shadow-sm
-```
+**Sub-components:**
+- `QuickStatCard` - Card wrapper with label, subtitle
+- `FearGreedGauge` - SVG semi-circle gauge with animated needle
+- `DominanceBar` - Segmented horizontal bar
 
 **F&G Label Logic:**
-- 0-25: 😨 "극단적 공포"
-- 26-45: 😟 "공포"
-- 46-55: 😐 "중립"
-- 56-75: 😊 "탐욕"
-- 76-100: 🤑 "극단적 탐욕"
+- 0-25: "극단적 공포" (red)
+- 26-45: "공포" (orange)
+- 46-55: "중립" (yellow-green)
+- 56-75: "탐욕" (lime)
+- 76-100: "극단적 탐욕" (green)
 
 **Hook:** `use-quick-stats.ts`
 
@@ -624,12 +610,12 @@ lib/hooks/         # Data fetching hooks
 - [x] 22. Delete `components/ui/ActionButtons.tsx`
 
 **Components:**
-- [x] 23. Create `components/ui/StatPill.tsx` - pill component (per v3-ref-1.png)
+- [x] 23. Create `components/ui/QuickStatCard.tsx` - card wrapper
 - [x] 24. Create `components/ui/Skeleton.tsx` - loading placeholder
 - [x] 25. Create `components/layout/Header.tsx` - logo + nav + social
 - [x] 26. Create `components/layout/Footer.tsx` - credits + timestamp
 - [x] 27. Create `components/sections/Ticker.tsx` - ❶ prices
-- [x] 28. Create `components/sections/QuickStats.tsx` - ❷ pill-style stats
+- [x] 28. Create `components/sections/QuickStats.tsx` - ❷ card-style stats
 - [x] 29. Create `components/sections/TodaysCoin.tsx` - ❸ gainers/losers
 - [x] 30. Create `components/sections/YumyumComment.tsx` - ❹ AI summary
 - [x] 31. Create `components/sections/ChainTabs.tsx` - ❺ BTC/ETH/SOL tabs
@@ -651,6 +637,15 @@ lib/hooks/         # Data fetching hooks
 - [x] 43. Style refinement based on feedback
 - [ ] 44. Responsive testing
 - [x] 45. Error states & loading skeletons
+
+### Phase 6: UI Design Alignment (v3-design-cand-1.png)
+> Match each section to the design reference image
+- [x] 46. ❶ Ticker - Design aligned
+- [x] 47. ❷ Quick Stats - Design aligned
+- [ ] 48. ❸ 오늘의 코인 - **IN PROGRESS**
+- [ ] 49. ❹ 얌얌의 한마디 - Needs design work
+- [ ] 50. ❺ Chain Tabs - Needs design work
+- [ ] 51. ❻ 더보기 (파생상품/RWA) - Needs design work
 
 ---
 
@@ -695,7 +690,9 @@ lib/hooks/         # Data fetching hooks
 - [x] `lib/hooks/use-rwa.ts` - ❻ RWA
 
 ### Components - UI (Primitives)
-- [x] `components/ui/StatPill.tsx` - Reusable pill (per v3-ref-1.png)
+- [x] `components/ui/QuickStatCard.tsx` - Card wrapper with label/subtitle
+- [x] `components/ui/FearGreedGauge.tsx` - SVG semi-circle gauge
+- [x] `components/ui/DominanceBar.tsx` - Segmented horizontal bar
 - [x] `components/ui/Skeleton.tsx` - Loading placeholder
 
 ### Components - Layout
@@ -725,22 +722,22 @@ lib/hooks/         # Data fetching hooks
 - [x] Verify cron stores 3 metrics/day (ETF flows only)
 
 ### Backend APIs
-- [ ] `curl /api/v1/ticker` - returns BTC/ETH/SOL prices
-- [ ] `curl /api/v1/quick-stats` - returns F&G, BTC.D, Stables, ETF flows
-- [ ] `curl /api/v1/gainers-losers` - returns top movers
-- [ ] `curl /api/v1/summary` - returns AI summary (dummy for now)
-- [ ] `curl /api/v1/chain/eth` - returns ETH metrics
-- [ ] `curl /api/v1/chain/sol` - returns SOL metrics
-- [ ] `curl /api/v1/chain/btc` - returns BTC metrics
-- [ ] `curl /api/v1/derivatives` - returns Long/Short, Funding
+- [x] `curl /api/v1/ticker` - returns BTC/ETH/SOL prices
+- [x] `curl /api/v1/quick-stats` - returns F&G, BTC.D, Stables, ETF flows
+- [x] `curl /api/v1/gainers-losers` - returns top movers
+- [x] `curl /api/v1/summary` - returns AI summary (dummy for now)
+- [x] `curl /api/v1/chain/eth` - returns ETH metrics
+- [x] `curl /api/v1/chain/sol` - returns SOL metrics
+- [x] `curl /api/v1/chain/btc` - returns BTC metrics
+- [x] `curl /api/v1/derivatives` - returns Long/Short, Funding
 
-### Frontend - All 6 Sections
-- [ ] ❶ Ticker: prices update, expand/collapse works
-- [ ] ❷ Quick Stats: pills render with correct values/colors, responsive wrap
-- [ ] ❸ 오늘의 코인: gainers green, losers red, expand/collapse works
-- [ ] ❹ 얌얌의 한마디: AI summary displays with mascot
-- [ ] ❺ Chain Tabs: tabs switch, charts render, data loads per chain
-- [ ] ❻ 더보기: derivatives + RWA tabs work
+### Frontend - All 6 Sections (Design Alignment)
+- [x] ❶ Ticker: prices update, expand/collapse works, design aligned
+- [x] ❷ Quick Stats: cards render with correct values/colors, design aligned
+- [ ] ❸ 오늘의 코인: functional, **needs design alignment**
+- [ ] ❹ 얌얌의 한마디: functional, **needs design alignment**
+- [ ] ❺ Chain Tabs: functional, **needs design alignment**
+- [ ] ❻ 더보기: functional, **needs design alignment**
 
 ### Responsive
 - [ ] Test at 375px (mobile)
@@ -751,6 +748,7 @@ lib/hooks/         # Data fetching hooks
 
 ## Changelog
 
+- **2026-02-03**: Docs update - removed deprecated v3-ref-1.png references, added Phase 6 (UI Design Alignment), marked backend APIs verified, updated component names (StatPill → QuickStatCard)
 - **2026-02-02**: Ticker redesign - gray bar with top 10 coins, coin images, fold/unfold, CMC-style price change animation (opacity fade)
 - **2026-02-02**: Header polish - added pixel mascots (doge, pepe, robot), Admin button, fixed YouTube URL
 - **2026-02-02**: QuickStats polish - simplified StatPill component, added valueColor prop for ETF flows
