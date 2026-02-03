@@ -1,6 +1,7 @@
 import { createServerClient } from "@/lib/supabase";
 import type { MetricInsert } from "@/lib/database.types";
 import { fetchEtfFlows } from "./farside";
+import { fetchDatHoldings } from "./dat-scraper";
 
 // Get today's date in YYYY-MM-DD format
 function getToday(): string {
@@ -14,13 +15,14 @@ export interface FetchResult {
 }
 
 /**
- * Daily Aggregator - Stores only 3 ETF flow metrics daily
+ * Daily Aggregator - Stores metrics that require scraping or daily snapshots
  * Everything else is fetched live (no storage needed)
  *
  * Stored metrics:
- * - etf_flow_btc
- * - etf_flow_eth
- * - etf_flow_sol
+ * - etf_flow_btc (daily ETF net flow)
+ * - etf_flow_eth (daily ETF net flow)
+ * - etf_flow_sol (daily ETF net flow)
+ * - dat_holdings_eth (corporate/institutional ETH holdings snapshot)
  */
 export async function fetchAndStoreMetrics(): Promise<FetchResult> {
   console.log("[aggregator] Starting fetch...");
@@ -82,6 +84,33 @@ export async function fetchAndStoreMetrics(): Promise<FetchResult> {
     if (etfFlows.error) errors.push(`farside: ${etfFlows.error}`);
   } catch (e) {
     errors.push(`farside: ${e}`);
+  }
+
+  // Fetch DAT (Digital Asset Treasury) Holdings - ETH corporate/institutional holdings
+  // Unlike ETF flows, this is a cumulative snapshot that updates daily
+  try {
+    console.log("[aggregator] Fetching DAT holdings...");
+    const datHoldings = await fetchDatHoldings();
+
+    if (datHoldings.totalEth && !datHoldings.error) {
+      metrics.push({
+        date: today,
+        key: "dat_holdings_eth",
+        value: datHoldings.totalEth,
+        metadata: {
+          totalUsd: datHoldings.totalUsd,
+          supplyPct: datHoldings.supplyPct,
+          companies: datHoldings.companies,
+        },
+      });
+      console.log(`[aggregator] DAT holdings: ${datHoldings.totalEth} ETH, ${datHoldings.companies?.length ?? 0} companies`);
+    } else {
+      console.log("[aggregator] DAT holdings fetch returned no data");
+      if (datHoldings.error) errors.push(`dat: ${datHoldings.error}`);
+    }
+  } catch (e) {
+    console.error("[aggregator] DAT holdings error:", e);
+    errors.push(`dat: ${e}`);
   }
 
   // Store metrics in Supabase

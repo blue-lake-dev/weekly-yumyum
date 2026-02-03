@@ -433,6 +433,14 @@ Dashboard → ✏️ 수동 입력 → /api/update-manual → Vercel KV 업데�
   - [x] ETF 자금흐름 (BTC/ETH/SOL)
 - [x] 데스크톱 가로 스크롤 (scrollbar-touch-hide)
 - [x] API 원칙: raw 값 반환, 클라이언트 포맷팅
+- [x] ChainTabs 섹션 (ETH 탭)
+  - [x] ETH 가격 차트 (7d 스파크라인, 고가/저가)
+  - [x] TVL 차트 (Exclude L1 토글, L2 개별 라인)
+  - [x] Stablecoins 차트 (Exclude L1 토글, L2 개별 라인)
+  - [x] 툴팁: L1/L2 breakdown 표시
+- [ ] ChainTabs 섹션 (ETH 탭 - 나머지)
+  - [ ] Supply, Staking, Burn 통계
+  - [ ] ETF flows + holdings (탭 뷰)
 - [ ] Gainers/Losers 섹션
 - [ ] 파생상품 섹션
 - [ ] 배포 (Vercel production)

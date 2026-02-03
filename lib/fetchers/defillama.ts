@@ -286,6 +286,254 @@ export async function fetchChainTvlWithSparkline(chain: string): Promise<TvlSpar
 }
 
 // ============================================================================
+// L2 Stacked Data (for stacked area charts)
+// ============================================================================
+
+// All ETH ecosystem chains to track
+const ALL_ETH_L2_CHAINS = [
+  "Ethereum",
+  "Arbitrum",
+  "Base",
+  "Optimism",
+  "Polygon",
+  "zkSync Era",
+  "Linea",
+  "Scroll",
+  "Mantle",
+  "Blast",
+];
+
+// Number of top chains to display individually (rest aggregated as "others")
+const TOP_CHAINS_COUNT = 4;
+
+export interface StackedChainEntry {
+  name: string;      // Chain name (e.g., "Ethereum", "Arbitrum", "others")
+  values: number[];  // Raw values aligned with dates
+  current: number;   // Current (latest) raw value
+}
+
+export interface StackedChainData {
+  dates: string[];                    // ISO date strings for x-axis
+  chains: StackedChainEntry[];        // Top N chains + "others", sorted by current value desc
+  totals: {
+    current: number;                  // Raw total
+    previous: number;                 // Raw total 7d ago
+    change7d: number | null;          // Percentage change
+  };
+  error?: string;
+}
+
+/**
+ * Fetch L2 TVL with stacked historical data for charts
+ * Returns 7 days of aligned RAW values (not formatted)
+ * Top chains by TVL are displayed individually, rest as "others"
+ */
+export async function fetchL2TvlStacked(): Promise<StackedChainData> {
+  try {
+    // Fetch all chains in parallel
+    const chainPromises = ALL_ETH_L2_CHAINS.map(async (chain) => {
+      try {
+        const data = await fetchWithTimeout<HistoricalTvlEntry[]>(
+          `${DEFILLAMA_API}/v2/historicalChainTvl/${chain}`
+        );
+        return { chain, data: data || [] };
+      } catch {
+        console.warn(`[defillama] Failed to fetch TVL for ${chain}`);
+        return { chain, data: [] };
+      }
+    });
+
+    const results = await Promise.all(chainPromises);
+
+    // Use Ethereum as reference for dates
+    const ethData = results.find((r) => r.chain === "Ethereum")?.data || [];
+    if (ethData.length < 8) {
+      throw new Error("Insufficient Ethereum TVL data");
+    }
+
+    const recentEthData = ethData.slice(-8);
+    const dates = recentEthData.slice(-7).map((d) =>
+      new Date(d.date * 1000).toISOString().split("T")[0]
+    );
+
+    // Calculate current TVL for each chain to determine top chains
+    const chainCurrentTvl: Array<{ chain: string; current: number; previous: number; data: HistoricalTvlEntry[] }> = [];
+
+    for (const { chain, data } of results) {
+      if (data.length >= 8) {
+        const current = data[data.length - 1].tvl;
+        const previous = data[data.length - 8].tvl;
+        chainCurrentTvl.push({ chain, current, previous, data });
+      }
+    }
+
+    // Sort by current TVL descending
+    chainCurrentTvl.sort((a, b) => b.current - a.current);
+
+    // Split into top chains and others
+    const topChains = chainCurrentTvl.slice(0, TOP_CHAINS_COUNT);
+    const otherChains = chainCurrentTvl.slice(TOP_CHAINS_COUNT);
+
+    // Build aligned historical data
+    const chainEntries: StackedChainEntry[] = [];
+
+    // Process top chains
+    for (const { chain, current, data } of topChains) {
+      const values: number[] = [];
+      for (let i = 1; i < recentEthData.length; i++) {
+        const targetDate = recentEthData[i].date;
+        const entry = data.find((d) => Math.abs(d.date - targetDate) < 86400);
+        values.push(entry ? entry.tvl : 0);
+      }
+      chainEntries.push({ name: chain, values, current });
+    }
+
+    // Aggregate others
+    const othersValues: number[] = new Array(7).fill(0);
+    let othersCurrent = 0;
+
+    for (const { current, data } of otherChains) {
+      othersCurrent += current;
+      for (let i = 1; i < recentEthData.length; i++) {
+        const targetDate = recentEthData[i].date;
+        const entry = data.find((d) => Math.abs(d.date - targetDate) < 86400);
+        othersValues[i - 1] += entry ? entry.tvl : 0;
+      }
+    }
+
+    if (otherChains.length > 0) {
+      chainEntries.push({ name: "others", values: othersValues, current: othersCurrent });
+    }
+
+    // Calculate totals
+    const currentTotal = chainCurrentTvl.reduce((sum, c) => sum + c.current, 0);
+    const previousTotal = chainCurrentTvl.reduce((sum, c) => sum + c.previous, 0);
+    const change7d = previousTotal > 0
+      ? ((currentTotal - previousTotal) / previousTotal) * 100
+      : null;
+
+    return {
+      dates,
+      chains: chainEntries,
+      totals: { current: currentTotal, previous: previousTotal, change7d },
+    };
+  } catch (error) {
+    console.error("fetchL2TvlStacked error:", error);
+    return {
+      dates: [],
+      chains: [],
+      totals: { current: 0, previous: 0, change7d: null },
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+/**
+ * Fetch L2 stablecoin supply with stacked historical data for charts
+ * Returns 7 days of aligned RAW values (not formatted)
+ * Top chains by supply are displayed individually, rest as "others"
+ */
+export async function fetchL2StablecoinStacked(): Promise<StackedChainData> {
+  try {
+    // Fetch all chains in parallel
+    const chainPromises = ALL_ETH_L2_CHAINS.map(async (chain) => {
+      try {
+        const data = await fetchWithTimeout<StablecoinChainChartEntry[]>(
+          `${STABLECOINS_API}/stablecoincharts/${chain}`
+        );
+        return { chain, data: data || [] };
+      } catch {
+        console.warn(`[defillama] Failed to fetch stablecoin for ${chain}`);
+        return { chain, data: [] };
+      }
+    });
+
+    const results = await Promise.all(chainPromises);
+
+    // Use Ethereum as reference for dates
+    const ethData = results.find((r) => r.chain === "Ethereum")?.data || [];
+    if (ethData.length < 8) {
+      throw new Error("Insufficient Ethereum stablecoin data");
+    }
+
+    const recentEthData = ethData.slice(-8);
+    const dates = recentEthData.slice(-7).map((d) =>
+      new Date(Number(d.date) * 1000).toISOString().split("T")[0]
+    );
+
+    // Calculate current supply for each chain to determine top chains
+    const chainCurrentSupply: Array<{ chain: string; current: number; previous: number; data: StablecoinChainChartEntry[] }> = [];
+
+    for (const { chain, data } of results) {
+      if (data.length >= 8) {
+        const current = data[data.length - 1].totalCirculating.peggedUSD;
+        const previous = data[data.length - 8].totalCirculating.peggedUSD;
+        chainCurrentSupply.push({ chain, current, previous, data });
+      }
+    }
+
+    // Sort by current supply descending
+    chainCurrentSupply.sort((a, b) => b.current - a.current);
+
+    // Split into top chains and others
+    const topChains = chainCurrentSupply.slice(0, TOP_CHAINS_COUNT);
+    const otherChains = chainCurrentSupply.slice(TOP_CHAINS_COUNT);
+
+    // Build aligned historical data
+    const chainEntries: StackedChainEntry[] = [];
+
+    // Process top chains
+    for (const { chain, current, data } of topChains) {
+      const values: number[] = [];
+      for (let i = 1; i < recentEthData.length; i++) {
+        const targetDate = Number(recentEthData[i].date);
+        const entry = data.find((d) => Math.abs(Number(d.date) - targetDate) < 86400);
+        values.push(entry ? entry.totalCirculating.peggedUSD : 0);
+      }
+      chainEntries.push({ name: chain, values, current });
+    }
+
+    // Aggregate others
+    const othersValues: number[] = new Array(7).fill(0);
+    let othersCurrent = 0;
+
+    for (const { current, data } of otherChains) {
+      othersCurrent += current;
+      for (let i = 1; i < recentEthData.length; i++) {
+        const targetDate = Number(recentEthData[i].date);
+        const entry = data.find((d) => Math.abs(Number(d.date) - targetDate) < 86400);
+        othersValues[i - 1] += entry ? entry.totalCirculating.peggedUSD : 0;
+      }
+    }
+
+    if (otherChains.length > 0) {
+      chainEntries.push({ name: "others", values: othersValues, current: othersCurrent });
+    }
+
+    // Calculate totals
+    const currentTotal = chainCurrentSupply.reduce((sum, c) => sum + c.current, 0);
+    const previousTotal = chainCurrentSupply.reduce((sum, c) => sum + c.previous, 0);
+    const change7d = previousTotal > 0
+      ? ((currentTotal - previousTotal) / previousTotal) * 100
+      : null;
+
+    return {
+      dates,
+      chains: chainEntries,
+      totals: { current: currentTotal, previous: previousTotal, change7d },
+    };
+  } catch (error) {
+    console.error("fetchL2StablecoinStacked error:", error);
+    return {
+      dates: [],
+      chains: [],
+      totals: { current: 0, previous: 0, change7d: null },
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+// ============================================================================
 // RWA (Real World Assets) by Chain
 // ============================================================================
 

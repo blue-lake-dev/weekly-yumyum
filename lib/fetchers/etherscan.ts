@@ -1,4 +1,5 @@
 const ETHERSCAN_API = "https://api.etherscan.io/v2/api";
+const BEACONCHAIN_API = "https://beaconcha.in/api/v1";
 
 interface EthSupply2Response {
   status: string;
@@ -78,6 +79,79 @@ export async function fetchEthSupply(): Promise<EthSupplyData> {
       ethSupply: null,
       ethBurnt: null,
       eth2Staking: null,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+// ============================================================================
+// Beacon Chain Staking Data (from beaconcha.in)
+// ============================================================================
+
+interface BeaconEpochResponse {
+  status: string;
+  data: {
+    epoch: number;
+    validatorscount: number;
+    totalvalidatorbalance: number; // in Gwei
+    averagevalidatorbalance: number;
+    finalized: boolean;
+    eligibleether: number; // in Gwei
+    globalparticipationrate: number;
+    votedether: number; // in Gwei
+  };
+}
+
+export interface EthStakingData {
+  totalStaked: number | null;      // Total ETH staked (raw ETH, not wei)
+  validatorCount: number | null;   // Number of active validators
+  stakingRatio: number | null;     // % of supply staked (e.g., 28.4)
+  avgValidatorBalance: number | null; // Average validator balance in ETH
+  error?: string;
+}
+
+/**
+ * Fetch ETH staking data from beaconcha.in
+ * Returns total staked ETH and validator count
+ * Note: Rate limited to 1 req/min on free tier
+ */
+export async function fetchEthStaking(): Promise<EthStakingData> {
+  try {
+    const url = `${BEACONCHAIN_API}/epoch/latest`;
+    const data = await fetchWithTimeout<BeaconEpochResponse>(url);
+
+    if (data.status !== "OK" || !data.data) {
+      throw new Error("Invalid beaconcha.in response");
+    }
+
+    const { validatorscount, totalvalidatorbalance, averagevalidatorbalance } = data.data;
+
+    // Convert Gwei to ETH (1 ETH = 1e9 Gwei)
+    const totalStaked = totalvalidatorbalance / 1e9;
+    const avgValidatorBalance = averagevalidatorbalance / 1e9;
+
+    // To calculate staking ratio, we need total supply
+    // Fetch it from Etherscan
+    const supplyData = await fetchEthSupply();
+    const stakingRatio = supplyData.ethSupply
+      ? (totalStaked / supplyData.ethSupply) * 100
+      : null;
+
+    console.log(`[beaconchain] Staked: ${totalStaked.toFixed(0)} ETH, Validators: ${validatorscount}, Ratio: ${stakingRatio?.toFixed(2)}%`);
+
+    return {
+      totalStaked,
+      validatorCount: validatorscount,
+      stakingRatio,
+      avgValidatorBalance,
+    };
+  } catch (error) {
+    console.error("fetchEthStaking error:", error);
+    return {
+      totalStaked: null,
+      validatorCount: null,
+      stakingRatio: null,
+      avgValidatorBalance: null,
       error: error instanceof Error ? error.message : "Unknown error",
     };
   }
