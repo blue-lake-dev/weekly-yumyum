@@ -23,10 +23,33 @@ export interface TickerItem {
 }
 
 export interface QuickStatsData {
-  fearGreed: { value: number | null; label: string };
-  dominance: { btc: number | null; eth: number | null; others: number | null };
-  stablecoins: { total: number | null };
-  etfFlows: { btc: number | null; eth: number | null; sol: number | null };
+  totalMarketCap: {
+    value: number | null;
+    change24h: number | null;
+  };
+  fearGreed: {
+    value: number | null;
+    label: string;
+    change1d: number | null;
+    change7d: number | null;
+    change30d: number | null;
+  };
+  dominance: {
+    btc: number | null;
+    eth: number | null;
+    others: number | null;
+  };
+  stablecoins: {
+    value: number | null;
+    change7d: number | null;
+    sparkline: number[];
+  };
+  etfFlows: {
+    btc: number | null;
+    eth: number | null;
+    sol: number | null;
+    date: string | null;
+  };
 }
 
 export interface CoinChange {

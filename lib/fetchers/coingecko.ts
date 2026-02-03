@@ -383,3 +383,54 @@ export async function fetchCoinSupply(coinId: string): Promise<CoinSupplyData> {
     };
   }
 }
+
+// ============================================================================
+// Global Market Metrics (Total Market Cap)
+// ============================================================================
+
+interface GlobalMetricsResponse {
+  data: {
+    total_market_cap: Record<string, number>;
+    market_cap_change_percentage_24h_usd: number;
+  };
+}
+
+export interface GlobalMetricsData {
+  totalMarketCap: number | null;       // USD value
+  totalMarketCapTrillion: number | null; // in trillions for display
+  marketCapChange24h: number | null;   // percentage
+  error?: string;
+}
+
+/**
+ * Fetch global market metrics from CoinGecko /global endpoint
+ * Returns total market cap and 24h change percentage
+ */
+export async function fetchGlobalMetrics(): Promise<GlobalMetricsData> {
+  try {
+    const data = await fetchWithTimeout<GlobalMetricsResponse>(
+      `${COINGECKO_API}/global`
+    );
+
+    const totalMarketCap = data.data.total_market_cap?.usd ?? null;
+    const totalMarketCapTrillion = totalMarketCap !== null ? totalMarketCap / 1e12 : null;
+    const marketCapChange24h = data.data.market_cap_change_percentage_24h_usd ?? null;
+
+    console.log("[coingecko] Total Market Cap:", totalMarketCapTrillion?.toFixed(2) + "T");
+    console.log("[coingecko] 24h Change:", marketCapChange24h?.toFixed(2) + "%");
+
+    return {
+      totalMarketCap,
+      totalMarketCapTrillion,
+      marketCapChange24h,
+    };
+  } catch (error) {
+    console.error("[coingecko] fetchGlobalMetrics error:", error);
+    return {
+      totalMarketCap: null,
+      totalMarketCapTrillion: null,
+      marketCapChange24h: null,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}

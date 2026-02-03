@@ -137,15 +137,15 @@ export async function fetchStablecoinByChain(chain: string): Promise<MetricValue
 }
 
 export interface StablecoinSparklineData {
-  current: number | null; // in billions
+  current: number | null; // raw USD value
   change7d: number | null; // percentage
-  sparkline: number[]; // 7 daily values in billions
+  sparkline: number[]; // 7 daily raw USD values
   error?: string;
 }
 
 /**
  * Fetch stablecoin by chain with 7d sparkline
- * @param chain - Chain name (e.g., "Ethereum", "Solana")
+ * @param chain - Chain name (e.g., "Ethereum", "Solana", "all")
  */
 export async function fetchStablecoinWithSparkline(chain: string): Promise<StablecoinSparklineData> {
   try {
@@ -160,17 +160,17 @@ export async function fetchStablecoinWithSparkline(chain: string): Promise<Stabl
     // Get last 8 days (need 8 to calculate 7d change)
     const recentData = data.slice(-8);
 
-    // Current value (latest)
-    const current = recentData[recentData.length - 1].totalCirculating.peggedUSD / 1e9;
+    // Current value (latest) - raw USD
+    const current = recentData[recentData.length - 1].totalCirculating.peggedUSD;
 
-    // 7 days ago value (first of 8)
-    const previous = recentData[0].totalCirculating.peggedUSD / 1e9;
+    // 7 days ago value (first of 8) - raw USD
+    const previous = recentData[0].totalCirculating.peggedUSD;
 
     // Calculate 7d change
     const change7d = previous > 0 ? ((current - previous) / previous) * 100 : null;
 
-    // Sparkline: last 7 days
-    const sparkline = recentData.slice(-7).map(d => d.totalCirculating.peggedUSD / 1e9);
+    // Sparkline: last 7 days - raw USD values
+    const sparkline = recentData.slice(-7).map(d => d.totalCirculating.peggedUSD);
 
     return {
       current,

@@ -64,8 +64,9 @@ export function Ticker() {
       }
     });
 
-    // Only update state if there are changes
+    // Only update state if there are changes - intentional price flash animation
     if (Object.keys(newFlashStates).length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFlashStates(newFlashStates);
 
       // Clear flash states after animation completes

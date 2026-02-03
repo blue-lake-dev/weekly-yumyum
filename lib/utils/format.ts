@@ -3,10 +3,10 @@
  */
 
 /**
- * Format a number with compact notation (K, M, B)
+ * Format a number with compact notation (K, M, B, T)
  * @param value - The number to format
  * @param decimals - Decimal places (default: 2)
- * @returns Formatted string like "1.50B", "234.00M", "12.00K"
+ * @returns Formatted string like "3.41T", "1.50B", "234.00M", "12.00K"
  */
 export function formatCompactNumber(
   value: number | null | undefined,
@@ -17,6 +17,7 @@ export function formatCompactNumber(
   const abs = Math.abs(value);
   const sign = value < 0 ? "-" : "";
 
+  if (abs >= 1e12) return `${sign}${(abs / 1e12).toFixed(decimals)}T`;
   if (abs >= 1e9) return `${sign}${(abs / 1e9).toFixed(decimals)}B`;
   if (abs >= 1e6) return `${sign}${(abs / 1e6).toFixed(decimals)}M`;
   if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(decimals)}K`;

@@ -1,6 +1,9 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { getQueryClient } from "@/lib/get-query-client";
 import { Dashboard } from "@/components/Dashboard";
+
+// Force dynamic rendering - API data changes frequently
+export const dynamic = "force-dynamic";
 import {
   fetchTicker,
   fetchQuickStats,

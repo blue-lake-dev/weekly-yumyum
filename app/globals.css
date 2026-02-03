@@ -94,3 +94,42 @@ body {
   color: #DC2626;
   animation: opacity-fade 4.5s linear forwards;
 }
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;             /* Chrome, Safari, Opera */
+}
+
+/* Hide scrollbar only on touch devices, show on desktop */
+.scrollbar-touch-hide {
+  scrollbar-width: thin;
+  scrollbar-color: #D1D5DB transparent;
+  padding-bottom: 8px; /* Space for scrollbar */
+}
+.scrollbar-touch-hide::-webkit-scrollbar {
+  height: 6px;
+}
+.scrollbar-touch-hide::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-touch-hide::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 3px;
+}
+.scrollbar-touch-hide::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+@media (pointer: coarse) {
+  .scrollbar-touch-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    padding-bottom: 0; /* No padding when scrollbar hidden */
+  }
+  .scrollbar-touch-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

@@ -2,9 +2,9 @@
 
 ## 현재 버전
 
-> **V2 개발 중** - 내부 대시보드 → 퍼블릭 커뮤니티 플랫폼 전환
+> **V3 개발 중** - 퍼블릭 대시보드 UI 리디자인
 >
-> 상세 마이그레이션 계획: [`docs/v2-plan.md`](./docs/v2-plan.md)
+> V2 마이그레이션 계획: [`docs/v2-plan.md`](./docs/v2-plan.md)
 
 ---
 
@@ -19,11 +19,17 @@
 - localStorage 기반
 - 40+ 지표, 15개 수동 입력
 
-### V2 (진행 중)
+### V2 (완료)
 - 퍼블릭 커뮤니티 플랫폼
 - Supabase 백엔드 (DB + Realtime + Auth)
 - ETH 중심 지표 (Supply, RWA, ETF, TVL)
 - 일정 캘린더 + 실시간 채팅
+
+### V3 (진행 중)
+- 퍼블릭 대시보드 UI 리디자인
+- TanStack Query + Server-side hydration
+- 카드 기반 QuickStats 레이아웃
+- 실시간 가격 업데이트 (Ticker)
 
 ## 기술 스택
 
@@ -361,6 +367,19 @@ Dashboard → ✏️ 수동 입력 → /api/update-manual → Vercel KV 업데�
   - `lib/fetchers/browser.ts` - Puppeteer 브라우저 런처 (Vercel/로컬 지원)
   - `lib/fetchers/v2-aggregator.ts` - V2 데이터 수집기
 
+### V3 UI 컴포넌트
+- `components/ui/QuickStatCard.tsx` - 카드 래퍼 (label, subtitle 지원)
+- `components/ui/FearGreedGauge.tsx` - SVG 반원 게이지 (5단계, 애니메이션)
+- `components/ui/DominanceBar.tsx` - BTC/ETH/Others 세그먼트 바
+- `components/sections/QuickStats.tsx` - 5개 카드 레이아웃 (가로 스크롤)
+- `components/sections/Ticker.tsx` - Top 10 코인 티커 (실시간 가격 플래시)
+
+### V3 API 설계 원칙
+- API는 항상 raw 값 반환 (포맷팅은 클라이언트에서)
+- `formatCompactNumber()`: K/M/B/T 자동 변환
+- `formatUsd()`: 달러 포맷 ($1.23T)
+- `formatPercent()`: 퍼센트 포맷 (1.23%)
+
 ---
 
 ## 현재 진행 상태
@@ -373,7 +392,7 @@ Dashboard → ✏️ 수동 입력 → /api/update-manual → Vercel KV 업데�
 - [x] Phase 5: 데이터 수집 API (TypeScript)
 - [x] Phase 6: 배포 (완료)
 
-### V2 (퍼블릭 플랫폼) - 진행 중
+### V2 (퍼블릭 플랫폼) - 완료
 - [x] 데이터 소스 리서치 및 API 테스트
 - [x] 아키텍처 설계 (Supabase, normalized schema)
 - [x] UI/UX 결정 (top nav, 지표별 시각화)
@@ -398,9 +417,22 @@ Dashboard → ✏️ 수동 입력 → /api/update-manual → Vercel KV 업데�
   - [x] 포맷터 유틸 (`lib/utils/format.ts`)
   - [x] Recharts 차트 (가격, TVL, ETF 플로우, Burn/Issuance)
   - [x] 일일 변동률 계산 (ETH, BTC, BTC.D, ETH/BTC, Stablecoin)
-- [ ] 캘린더 & 채팅 기능
 - [x] Telegram OTP 인증
   - [x] `lib/telegram.ts` - Bot API helper
   - [x] `lib/auth.ts` - JWT sign/verify
   - [x] `/api/auth/request-otp`, `/api/auth/verify-otp`
+
+### V3 (UI 리디자인) - 진행 중
+- [x] TanStack Query + Server hydration 셋업
+- [x] Ticker 컴포넌트 (Top 10 코인, 가격 플래시 애니메이션)
+- [x] QuickStats 카드 레이아웃
+  - [x] 암호화폐 시총 (24h 변동률)
+  - [x] Fear & Greed 게이지 (SVG, 애니메이션)
+  - [x] BTC Dominance 바
+  - [x] 스테이블코인 시총 (7d 스파크라인)
+  - [x] ETF 자금흐름 (BTC/ETH/SOL)
+- [x] 데스크톱 가로 스크롤 (scrollbar-touch-hide)
+- [x] API 원칙: raw 값 반환, 클라이언트 포맷팅
+- [ ] Gainers/Losers 섹션
+- [ ] 파생상품 섹션
 - [ ] 배포 (Vercel production)
