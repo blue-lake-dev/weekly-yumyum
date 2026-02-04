@@ -4,8 +4,7 @@ import { createServerClient } from "@/lib/supabase";
 // Import fetchers
 import { fetchCoinSupply, fetchPriceSparkline } from "@/lib/fetchers/coingecko";
 import { fetchEthBurnIssuance } from "@/lib/fetchers/ultrasound";
-import { fetchEthSupply, fetchEthStaking } from "@/lib/fetchers/etherscan";
-import { fetchEthStakingRewards } from "@/lib/fetchers/beaconchain";
+import { fetchEthStaking, fetchEthStakingRewards } from "@/lib/fetchers/beaconchain";
 import {
   fetchChainTvlWithSparkline,
   fetchStablecoinWithSparkline,
@@ -131,8 +130,8 @@ async function getEthData() {
     datHoldings,
   ] = await Promise.all([
     timed("CoinGecko (sparkline)", () => fetchPriceSparkline("ethereum")),
-    timed("Etherscan (supply)", () => fetchEthSupply()),
-    timed("Etherscan (staking)", () => fetchEthStaking()),
+    timed("CoinGecko (supply)", () => fetchCoinSupply("ethereum")),
+    timed("Beaconchain (staking)", () => fetchEthStaking()),
     timed("Beaconchain (rewards)", () => fetchEthStakingRewards()),
     timed("Ultrasound (burn)", () => fetchEthBurnIssuance()),
     timed("DeFiLlama (L2 TVL)", () => fetchL2TvlStacked()),
@@ -142,11 +141,16 @@ async function getEthData() {
     timed("Supabase (DAT)", () => getDatHoldings("dat_holdings_eth")),
   ]);
 
+  // Calculate staking ratio using CoinGecko supply (faster than Etherscan)
+  const stakingRatio = stakingData.totalStaked && supplyData.circulatingSupply
+    ? (stakingData.totalStaked / supplyData.circulatingSupply) * 100
+    : null;
+
   const totalMs = (performance.now() - totalStart).toFixed(0);
   console.log(`[chain/eth] ✅ All fetches complete in ${totalMs}ms`);
   console.log("[chain/eth] Sparkline:", sparklineData.sparkline.length, "pts, change:", sparklineData.change7d?.toFixed(2) + "%");
-  console.log("[chain/eth] Supply:", supplyData.ethSupply?.toLocaleString(), "ETH");
-  console.log("[chain/eth] Staking:", stakingData.totalStaked?.toLocaleString(), "ETH,", stakingData.stakingRatio?.toFixed(2) + "%");
+  console.log("[chain/eth] Supply:", supplyData.circulatingSupply?.toLocaleString(), "ETH");
+  console.log("[chain/eth] Staking:", stakingData.totalStaked?.toLocaleString(), "ETH,", stakingRatio?.toFixed(2) + "%");
   console.log("[chain/eth] Staking APR:", stakingRewardsData.apr ? (stakingRewardsData.apr * 100).toFixed(2) + "%" : "N/A");
   console.log("[chain/eth] Issuance 7d:", stakingRewardsData.issuance7d?.toFixed(0), "ETH");
   console.log("[chain/eth] Burn 7d:", burnIssuanceData.burn7d?.toFixed(2), "ETH");
@@ -179,13 +183,13 @@ async function getEthData() {
       low: low7d,
     },
     supply: {
-      circulating: supplyData.ethSupply,
-      totalBurnt: supplyData.ethBurnt,
+      circulating: supplyData.circulatingSupply,
+      totalBurnt: burnIssuanceData.burnTotal, // Total since EIP-1559 (from ultrasound)
     },
     staking: {
       totalStaked: stakingData.totalStaked,
       validatorCount: stakingData.validatorCount,
-      stakingRatio: stakingData.stakingRatio,
+      stakingRatio, // Calculated using CoinGecko supply
       apr: stakingRewardsData.apr,
     },
     inflation: {

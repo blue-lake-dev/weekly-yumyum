@@ -50,6 +50,7 @@ export interface EthBurnIssuanceData {
   burn24h: number | null; // ETH burned in last 24h
   burn7d: number | null; // ETH burned in last 7 days
   burnSinceMerge: number | null; // Total burned since merge
+  burnTotal: number | null; // Total burned since EIP-1559 (Aug 2021)
 
   // Supply growth rate (from gauge-rates)
   supplyGrowthRateYearly: number | null; // e.g., 0.0079 = 0.79%
@@ -77,6 +78,7 @@ export async function fetchEthBurnIssuance(): Promise<EthBurnIssuanceData> {
     const burn24h = burnSums.d1?.sum.eth ?? null;
     const burn7d = burnSums.d7?.sum.eth ?? null;
     const burnSinceMerge = burnSums.since_merge?.sum.eth ?? null;
+    const burnTotal = burnSums.since_burn?.sum.eth ?? null; // Since EIP-1559
 
     // Supply growth rate (negative = deflationary)
     const supplyGrowthRateYearly = d1.supply_growth_rate_yearly;
@@ -89,6 +91,7 @@ export async function fetchEthBurnIssuance(): Promise<EthBurnIssuanceData> {
       burn24h,
       burn7d,
       burnSinceMerge,
+      burnTotal,
       supplyGrowthRateYearly,
       isDeflationary,
       timestamp: d1.timestamp,
@@ -99,6 +102,7 @@ export async function fetchEthBurnIssuance(): Promise<EthBurnIssuanceData> {
       burn24h: null,
       burn7d: null,
       burnSinceMerge: null,
+      burnTotal: null,
       supplyGrowthRateYearly: null,
       isDeflationary: false,
       timestamp: null,

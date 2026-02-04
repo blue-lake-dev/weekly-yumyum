@@ -78,6 +78,73 @@ async function fetchWithRetry<T>(
   throw lastError || new Error("Failed after retries");
 }
 
+// ============================================================================
+// Epoch Data (staked amount, validator count)
+// ============================================================================
+
+interface BeaconEpochResponse {
+  status: string;
+  data: {
+    epoch: number;
+    validatorscount: number;
+    totalvalidatorbalance: number; // in Gwei
+    averagevalidatorbalance: number;
+    finalized: boolean;
+    eligibleether: number; // in Gwei
+    globalparticipationrate: number;
+    votedether: number; // in Gwei
+  };
+}
+
+export interface EthStakingAmountData {
+  totalStaked: number | null;      // Total ETH staked (raw ETH, not wei)
+  validatorCount: number | null;   // Number of active validators
+  avgValidatorBalance: number | null; // Average validator balance in ETH
+  error?: string;
+}
+
+/**
+ * Fetch ETH staking data from beaconcha.in epoch endpoint
+ * Returns total staked ETH and validator count
+ * Note: Rate limited to 1 req/min on free tier
+ */
+export async function fetchEthStaking(): Promise<EthStakingAmountData> {
+  try {
+    const url = `${BEACONCHAIN_API}/epoch/latest`;
+    const data = await fetchWithRetry<BeaconEpochResponse>(url);
+
+    if (data.status !== "OK" || !data.data) {
+      throw new Error("Invalid beaconcha.in response");
+    }
+
+    const { validatorscount, totalvalidatorbalance, averagevalidatorbalance } = data.data;
+
+    // Convert Gwei to ETH (1 ETH = 1e9 Gwei)
+    const totalStaked = totalvalidatorbalance / 1e9;
+    const avgValidatorBalance = averagevalidatorbalance / 1e9;
+
+    console.log(`[beaconchain] Staked: ${totalStaked.toFixed(0)} ETH, Validators: ${validatorscount}`);
+
+    return {
+      totalStaked,
+      validatorCount: validatorscount,
+      avgValidatorBalance,
+    };
+  } catch (error) {
+    console.error("[beaconchain] fetchEthStaking error:", error);
+    return {
+      totalStaked: null,
+      validatorCount: null,
+      avgValidatorBalance: null,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+// ============================================================================
+// ETH.STORE Data (APR, issuance)
+// ============================================================================
+
 /**
  * Fetch ETH staking APR and issuance data from beaconcha.in ETH.STORE
  * Updates once per day, recommended cache: 30-60 min
