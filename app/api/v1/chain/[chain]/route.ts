@@ -5,6 +5,7 @@ import { createServerClient } from "@/lib/supabase";
 import { fetchCoinSupply, fetchPriceSparkline } from "@/lib/fetchers/coingecko";
 import { fetchEthBurnIssuance } from "@/lib/fetchers/ultrasound";
 import { fetchEthSupply, fetchEthStaking } from "@/lib/fetchers/etherscan";
+import { fetchEthStakingRewards } from "@/lib/fetchers/beaconchain";
 import {
   fetchChainTvlWithSparkline,
   fetchStablecoinWithSparkline,
@@ -113,6 +114,7 @@ async function getEthData() {
     sparklineData,
     supplyData,
     stakingData,
+    stakingRewardsData,
     burnIssuanceData,
     l2TvlData,
     l2StablecoinData,
@@ -123,6 +125,7 @@ async function getEthData() {
     fetchPriceSparkline("ethereum"),
     fetchEthSupply(),
     fetchEthStaking(),
+    fetchEthStakingRewards(),
     fetchEthBurnIssuance(),
     fetchL2TvlStacked(),
     fetchL2StablecoinStacked(),
@@ -134,7 +137,9 @@ async function getEthData() {
   console.log("[chain/eth] Sparkline:", sparklineData.sparkline.length, "pts, change:", sparklineData.change7d?.toFixed(2) + "%");
   console.log("[chain/eth] Supply:", supplyData.ethSupply?.toLocaleString(), "ETH");
   console.log("[chain/eth] Staking:", stakingData.totalStaked?.toLocaleString(), "ETH,", stakingData.stakingRatio?.toFixed(2) + "%");
-  console.log("[chain/eth] Burn 24h:", burnIssuanceData.burn24h?.toFixed(2), "ETH, deflationary:", burnIssuanceData.isDeflationary);
+  console.log("[chain/eth] Staking APR:", stakingRewardsData.apr ? (stakingRewardsData.apr * 100).toFixed(2) + "%" : "N/A");
+  console.log("[chain/eth] Issuance 7d:", stakingRewardsData.issuance7d?.toFixed(0), "ETH");
+  console.log("[chain/eth] Burn 7d:", burnIssuanceData.burn7d?.toFixed(2), "ETH");
   console.log("[chain/eth] L2 TVL chains:", l2TvlData.chains.length, ", total:", (l2TvlData.totals.current / 1e9).toFixed(2) + "B");
   console.log("[chain/eth] L2 Stablecoins chains:", l2StablecoinData.chains.length, ", total:", (l2StablecoinData.totals.current / 1e9).toFixed(2) + "B");
   console.log("[chain/eth] ETF flows:", etfFlows.length, "days");
@@ -148,6 +153,12 @@ async function getEthData() {
   const low7d = sparklineData.sparkline.length > 0
     ? Math.min(...sparklineData.sparkline)
     : null;
+
+  // Calculate net supply change (issuance - burn)
+  const issuance7d = stakingRewardsData.issuance7d;
+  const burn7d = burnIssuanceData.burn7d;
+  const netSupplyChange7d = issuance7d && burn7d ? issuance7d - burn7d : null;
+  const isDeflationary = netSupplyChange7d !== null ? netSupplyChange7d < 0 : null;
 
   return {
     chain: "eth",
@@ -165,7 +176,18 @@ async function getEthData() {
       totalStaked: stakingData.totalStaked,
       validatorCount: stakingData.validatorCount,
       stakingRatio: stakingData.stakingRatio,
+      apr: stakingRewardsData.apr,
     },
+    inflation: {
+      issuance7d: stakingRewardsData.issuance7d,
+      burn7d: burnIssuanceData.burn7d,
+      netSupplyChange7d,
+      supplyGrowthPct: burnIssuanceData.supplyGrowthRateYearly
+        ? burnIssuanceData.supplyGrowthRateYearly * 100
+        : null,
+      isDeflationary,
+    },
+    // Legacy burn field for backwards compatibility
     burn: {
       last24h: burnIssuanceData.burn24h,
       last7d: burnIssuanceData.burn7d,

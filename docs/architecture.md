@@ -221,6 +221,37 @@ lib/
 
 ---
 
+## Formatting
+
+### API: Raw Values Only
+
+**APIs must always return raw values.** Formatting is done on the client.
+
+```
+✓ API returns: { "stakingRatio": 30.469463527189 }
+✗ API returns: { "stakingRatio": "30.5%" }
+```
+
+This allows clients to format values as needed and avoids coupling API responses to display logic.
+
+### Client: Use Shared Formatters
+
+**All number/value formatting must use `lib/utils/format.ts`.**
+
+Do NOT use inline formatting like `.toFixed()`, `.toLocaleString()`, or manual K/M/B conversions in components. Always import and use the shared formatters:
+
+| Function | Use Case |
+|----------|----------|
+| `formatEthAmount()` | ETH amounts (120.69M) |
+| `formatPercent()` | Percentages (30.5%, +2.85%) |
+| `formatCompactNumber()` | Generic numbers (K/M/B/T) |
+| `formatUsd()` | USD with compact notation ($1.5B) |
+| `formatFlow()` | ETF flows with sign (+$234M) |
+
+This ensures consistent formatting across the dashboard and makes it easy to adjust formatting rules globally.
+
+---
+
 ## References
 
 - [Modern Full Stack Application Architecture Using Next.js 15+](https://softwaremill.com/modern-full-stack-application-architecture-using-next-js-15/)

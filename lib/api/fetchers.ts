@@ -105,7 +105,8 @@ export interface EthData {
   chain: "eth";
   price7d: { change: number | null; sparkline: number[]; high: number | null; low: number | null };
   supply: { circulating: number | null; totalBurnt: number | null };
-  staking: { totalStaked: number | null; validatorCount: number | null; stakingRatio: number | null };
+  staking: { totalStaked: number | null; validatorCount: number | null; stakingRatio: number | null; apr: number | null };
+  inflation: { issuance7d: number | null; burn7d: number | null; netSupplyChange7d: number | null; supplyGrowthPct: number | null; isDeflationary: boolean | null };
   burn: { last24h: number | null; last7d: number | null; sinceMerge: number | null; supplyGrowthPct: number | null; isDeflationary: boolean | null };
   l2Tvl: { dates: string[]; chains: Array<{ name: string; values: number[]; current: number }>; totals: { current: number; previous: number; change7d: number | null } };
   l2Stablecoins: { dates: string[]; chains: Array<{ name: string; values: number[]; current: number }>; totals: { current: number; previous: number; change7d: number | null } };

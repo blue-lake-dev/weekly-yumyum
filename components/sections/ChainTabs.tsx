@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { useChainDataSuspense } from "@/lib/hooks/use-chain-data";
 import { useTicker } from "@/lib/hooks/use-ticker";
 import type { Chain, EthData } from "@/lib/api/fetchers";
+import { formatEthAmount, formatPercent, formatCompactNumber } from "@/lib/utils/format";
 
 interface ChainTabsProps {
   activeChain: Chain;
@@ -62,12 +63,6 @@ function formatBillions(value: number | null): string {
 function formatMillions(value: number | null): string {
   if (value === null) return "—";
   return `${(value / 1e6).toFixed(2)}M`;
-}
-
-function formatPercent(value: number | null): string {
-  if (value === null) return "—";
-  const sign = value >= 0 ? "+" : "";
-  return `${sign}${value.toFixed(2)}%`;
 }
 
 // Transform sparkline array to chart data
@@ -216,7 +211,7 @@ function TvlChart({ data }: TvlChartProps) {
       {/* Header */}
       <div className="flex items-start justify-between mb-2">
         <div>
-          <p className="text-sm text-[#6B7280]">TVL {excludeL1 && <span className="text-[#9CA3AF]">(L2)</span>}</p>
+          <p className="text-sm text-[#6B7280]">총 예치량 {excludeL1 && <span className="text-[#9CA3AF]">(L2)</span>}</p>
           <div className="flex items-baseline gap-2">
             <p className="text-lg font-bold tabular-nums text-[#171717]">
               {formatBillions(displayValue)}
@@ -234,7 +229,7 @@ function TvlChart({ data }: TvlChartProps) {
             onChange={(e) => setExcludeL1(e.target.checked)}
             className="w-3.5 h-3.5 rounded border-[#D1D5DB] text-[#14B8A6] focus:ring-[#14B8A6] focus:ring-offset-0"
           />
-          <span className="text-xs text-[#6B7280]">Exclude L1</span>
+          <span className="text-xs text-[#6B7280]">L1 제외</span>
         </label>
       </div>
 
@@ -266,6 +261,8 @@ function TvlChart({ data }: TvlChartProps) {
                   fill={L2_LINE_COLORS[chain.name] || "#9CA3AF"}
                   fillOpacity={0.1}
                   strokeWidth={2}
+                  dot={false}
+                  activeDot={false}
                 />
               ))
             ) : (
@@ -277,6 +274,8 @@ function TvlChart({ data }: TvlChartProps) {
                 fill="#171717"
                 fillOpacity={0.1}
                 strokeWidth={2}
+                dot={false}
+                activeDot={false}
               />
             )}
           </AreaChart>
@@ -414,7 +413,7 @@ function StablecoinsChart({ data }: StablecoinsChartProps) {
       {/* Header */}
       <div className="flex items-start justify-between mb-2">
         <div>
-          <p className="text-sm text-[#6B7280]">Stablecoins {excludeL1 && <span className="text-[#9CA3AF]">(L2)</span>}</p>
+          <p className="text-sm text-[#6B7280]">스테이블코인 {excludeL1 && <span className="text-[#9CA3AF]">(L2)</span>}</p>
           <div className="flex items-baseline gap-2">
             <p className="text-lg font-bold tabular-nums text-[#171717]">
               {formatBillions(displayValue)}
@@ -432,7 +431,7 @@ function StablecoinsChart({ data }: StablecoinsChartProps) {
             onChange={(e) => setExcludeL1(e.target.checked)}
             className="w-3.5 h-3.5 rounded border-[#D1D5DB] text-[#10B981] focus:ring-[#10B981] focus:ring-offset-0"
           />
-          <span className="text-xs text-[#6B7280]">Exclude L1</span>
+          <span className="text-xs text-[#6B7280]">L1 제외</span>
         </label>
       </div>
 
@@ -464,6 +463,8 @@ function StablecoinsChart({ data }: StablecoinsChartProps) {
                   fill={L2_LINE_COLORS[chain.name] || "#9CA3AF"}
                   fillOpacity={0.1}
                   strokeWidth={2}
+                  dot={false}
+                  activeDot={false}
                 />
               ))
             ) : (
@@ -475,6 +476,8 @@ function StablecoinsChart({ data }: StablecoinsChartProps) {
                 fill="#10B981"
                 fillOpacity={0.1}
                 strokeWidth={2}
+                dot={false}
+                activeDot={false}
               />
             )}
           </AreaChart>
@@ -680,7 +683,157 @@ function EthContent({ data }: { data: EthData }) {
         </div>
       </div>
 
-      {/* Row 2: TVL + Stablecoins (side by side) */}
+      {/* Row 2: Supply, Staking, Inflation cards */}
+      <div className="grid grid-cols-3 gap-4">
+        {/* Card 1: ETH Supply */}
+        <div className="rounded-xl bg-white border border-[#E5E7EB] p-4 flex flex-col justify-between min-h-[140px]">
+          {/* Top row: Label + ETH logo */}
+          <div className="flex items-start justify-between">
+            <p className="text-sm font-medium text-[#6B7280]">ETH 공급량</p>
+            <Image
+              src="/assets/pixels/ethereum.png"
+              alt="ETH"
+              width={48}
+              height={48}
+            />
+          </div>
+          {/* Bottom: Large number */}
+          <p className="text-3xl font-bold tabular-nums text-[#171717]">
+            {formatEthAmount(data.supply.circulating)}
+            <span className="text-lg font-medium text-[#6B7280] ml-1">ETH</span>
+          </p>
+        </div>
+
+        {/* Card 2: Staking */}
+        <div className="rounded-xl bg-white border border-[#E5E7EB] p-4 min-h-[140px]">
+          <p className="text-sm font-medium text-[#6B7280] mb-3">스테이킹</p>
+          <div className="flex items-center justify-between">
+            {/* Donut Chart */}
+            <div className="relative w-20 h-20 flex-shrink-0">
+              <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                {/* Background track */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="none"
+                  stroke="#E5E7EB"
+                  strokeWidth="12"
+                />
+                {/* Progress arc */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="none"
+                  stroke="#627EEA"
+                  strokeWidth="12"
+                  strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 40}
+                  strokeDashoffset={
+                    2 * Math.PI * 40 * (1 - (data.staking.stakingRatio ?? 0) / 100)
+                  }
+                />
+              </svg>
+              {/* Center text */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-sm font-semibold tabular-nums text-[#171717]">
+                  {formatPercent(data.staking.stakingRatio, false, 1)}
+                </span>
+              </div>
+            </div>
+            {/* Stats */}
+            <div className="text-right">
+              <p className="text-2xl font-bold tabular-nums text-[#171717]">
+                {formatPercent(data.staking.stakingRatio, false, 1)}
+              </p>
+              <p className="text-sm text-[#6B7280]">
+                {formatEthAmount(data.staking.totalStaked)} ETH
+              </p>
+              {data.staking.apr && (
+                <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium text-[#16A34A] bg-[#DCFCE7] rounded">
+                  APR {formatPercent(data.staking.apr * 100, false)}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Inflation */}
+        <div className="rounded-xl bg-white border border-[#E5E7EB] p-4 min-h-[140px]">
+          {/* Header: Label + 7d indicator */}
+          <div className="flex justify-between items-start mb-2">
+            <p className="text-sm font-medium text-[#6B7280]">
+              {data.inflation?.isDeflationary ? "디플레이션" : "인플레이션"}
+            </p>
+            <span className="text-xs text-[#9CA3AF]">7d</span>
+          </div>
+          {/* Main value + Annual rate */}
+          <div className="flex items-baseline gap-2">
+            <p
+              className={`text-2xl font-bold tabular-nums ${
+                data.inflation?.netSupplyChange7d !== null
+                  ? data.inflation.netSupplyChange7d >= 0
+                    ? "text-[#0EA5E9]"
+                    : "text-[#DC2626]"
+                  : "text-[#171717]"
+              }`}
+            >
+              {data.inflation?.netSupplyChange7d !== null
+                ? `${data.inflation.netSupplyChange7d >= 0 ? "+" : ""}${formatCompactNumber(Math.abs(data.inflation.netSupplyChange7d), 1)}`
+                : "—"}
+              <span className="text-base font-medium text-[#6B7280] ml-1">ETH</span>
+            </p>
+            <span
+              className={`text-sm font-medium tabular-nums ${
+                data.inflation?.supplyGrowthPct !== null
+                  ? data.inflation.supplyGrowthPct >= 0
+                    ? "text-[#0EA5E9]"
+                    : "text-[#DC2626]"
+                  : "text-[#6B7280]"
+              }`}
+            >
+              {data.inflation?.supplyGrowthPct !== null
+                ? `${formatPercent(data.inflation.supplyGrowthPct)}/yr`
+                : "—"}
+            </span>
+          </div>
+          {/* Proportional bar */}
+          {data.inflation?.issuance7d && data.inflation?.burn7d && (
+            <div className="flex h-3 rounded-full overflow-hidden mt-3">
+              <div
+                className="bg-[#0EA5E9]"
+                style={{
+                  width: `${(data.inflation.issuance7d / (data.inflation.issuance7d + data.inflation.burn7d)) * 100}%`,
+                }}
+              />
+              <div
+                className="bg-[#DC2626]"
+                style={{
+                  width: `${(data.inflation.burn7d / (data.inflation.issuance7d + data.inflation.burn7d)) * 100}%`,
+                }}
+              />
+            </div>
+          )}
+          {/* Labels */}
+          <div className="flex justify-between mt-2 text-sm">
+            <div>
+              <span className="text-[#6B7280]">발행 </span>
+              <span className="text-[#0EA5E9] font-medium tabular-nums">
+                +{formatEthAmount(data.inflation?.issuance7d, 1)}
+              </span>
+            </div>
+            <div>
+              <span className="text-[#6B7280]">소각 </span>
+              <span className="text-[#DC2626] font-medium tabular-nums">
+                -{formatCompactNumber(data.inflation?.burn7d, 1)}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Row 3: TVL + Stablecoins (side by side) */}
       <div className="flex gap-4">
         <TvlChart data={data.l2Tvl} />
         <StablecoinsChart data={data.l2Stablecoins} />
