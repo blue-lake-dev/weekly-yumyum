@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchAllDerivatives } from "@/lib/fetchers/binance";
 
-export const revalidate = 300; // 5 min cache
-
 /**
  * GET /api/v3/derivatives
  * Returns Long/Short ratio and Funding rate for BTC, ETH, SOL

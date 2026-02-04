@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Image from "next/image";
 import {
   AreaChart,
   Area,
   BarChart,
   Bar,
+  Cell,
   XAxis,
   YAxis,
   Tooltip,
@@ -17,7 +18,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { useChainDataSuspense } from "@/lib/hooks/use-chain-data";
 import { useTicker } from "@/lib/hooks/use-ticker";
 import type { Chain, EthData } from "@/lib/api/fetchers";
-import { formatEthAmount, formatPercent, formatCompactNumber } from "@/lib/utils/format";
+import { formatEthAmount, formatPercent, formatCompactNumber, formatUsd } from "@/lib/utils/format";
 
 interface ChainTabsProps {
   activeChain: Chain;
@@ -175,7 +176,7 @@ function TvlChart({ data }: TvlChartProps) {
         {excludeL1 ? (
           // L2 breakdown
           payload.map((entry: { dataKey: string; value: number; color: string }) => (
-            <div key={entry.dataKey} className="flex items-center justify-between gap-3 py-0.5">
+            <div key={entry.dataKey} className="flex items-center justify-between gap-2 py-0.5">
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
                 <span className="text-[#171717]">{entry.dataKey}</span>
@@ -186,16 +187,16 @@ function TvlChart({ data }: TvlChartProps) {
         ) : (
           // Total with L1/L2 breakdown
           <>
-            <div className="flex items-center justify-between gap-3 py-0.5">
+            <div className="flex items-center justify-between gap-2 py-0.5">
               <span className="text-[#171717] font-medium">Total</span>
               <span className="text-[#171717] font-medium tabular-nums">${(d._l1 + d._l2).toFixed(2)}B</span>
             </div>
             <div className="border-t border-[#E5E7EB] mt-1 pt-1">
-              <div className="flex items-center justify-between gap-3 py-0.5 text-[#6B7280]">
+              <div className="flex items-center justify-between gap-2 py-0.5 text-[#6B7280]">
                 <span>L1 (Ethereum)</span>
                 <span className="tabular-nums">${d._l1.toFixed(2)}B</span>
               </div>
-              <div className="flex items-center justify-between gap-3 py-0.5 text-[#6B7280]">
+              <div className="flex items-center justify-between gap-2 py-0.5 text-[#6B7280]">
                 <span>L2</span>
                 <span className="tabular-nums">${d._l2.toFixed(2)}B</span>
               </div>
@@ -207,7 +208,7 @@ function TvlChart({ data }: TvlChartProps) {
   };
 
   return (
-    <div className="flex-1 rounded-xl bg-white border border-[#E5E7EB] p-4">
+    <div className="flex-1 rounded-xl bg-white border border-[#E5E7EB] p-3">
       {/* Header */}
       <div className="flex items-start justify-between mb-2">
         <div>
@@ -217,7 +218,7 @@ function TvlChart({ data }: TvlChartProps) {
               {formatBillions(displayValue)}
             </p>
             <span className={`text-xs font-medium tabular-nums ${change.color}`}>
-              <span className="text-[9px]">{change.arrow}</span> {change.value} <span className="text-[#9CA3AF]">7d</span>
+              <span className="text-[9px]">{change.arrow}</span> {change.value} <span className="text-[#9CA3AF]">7일</span>
             </span>
           </div>
         </div>
@@ -377,7 +378,7 @@ function StablecoinsChart({ data }: StablecoinsChartProps) {
         {excludeL1 ? (
           // L2 breakdown
           payload.map((entry: { dataKey: string; value: number; color: string }) => (
-            <div key={entry.dataKey} className="flex items-center justify-between gap-3 py-0.5">
+            <div key={entry.dataKey} className="flex items-center justify-between gap-2 py-0.5">
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
                 <span className="text-[#171717]">{entry.dataKey}</span>
@@ -388,16 +389,16 @@ function StablecoinsChart({ data }: StablecoinsChartProps) {
         ) : (
           // Total with L1/L2 breakdown
           <>
-            <div className="flex items-center justify-between gap-3 py-0.5">
+            <div className="flex items-center justify-between gap-2 py-0.5">
               <span className="text-[#171717] font-medium">Total</span>
               <span className="text-[#171717] font-medium tabular-nums">${(d._l1 + d._l2).toFixed(2)}B</span>
             </div>
             <div className="border-t border-[#E5E7EB] mt-1 pt-1">
-              <div className="flex items-center justify-between gap-3 py-0.5 text-[#6B7280]">
+              <div className="flex items-center justify-between gap-2 py-0.5 text-[#6B7280]">
                 <span>L1 (Ethereum)</span>
                 <span className="tabular-nums">${d._l1.toFixed(2)}B</span>
               </div>
-              <div className="flex items-center justify-between gap-3 py-0.5 text-[#6B7280]">
+              <div className="flex items-center justify-between gap-2 py-0.5 text-[#6B7280]">
                 <span>L2</span>
                 <span className="tabular-nums">${d._l2.toFixed(2)}B</span>
               </div>
@@ -409,7 +410,7 @@ function StablecoinsChart({ data }: StablecoinsChartProps) {
   };
 
   return (
-    <div className="flex-1 rounded-xl bg-white border border-[#E5E7EB] p-4">
+    <div className="flex-1 rounded-xl bg-white border border-[#E5E7EB] p-3">
       {/* Header */}
       <div className="flex items-start justify-between mb-2">
         <div>
@@ -419,7 +420,7 @@ function StablecoinsChart({ data }: StablecoinsChartProps) {
               {formatBillions(displayValue)}
             </p>
             <span className={`text-xs font-medium tabular-nums ${change.color}`}>
-              <span className="text-[9px]">{change.arrow}</span> {change.value} <span className="text-[#9CA3AF]">7d</span>
+              <span className="text-[9px]">{change.arrow}</span> {change.value} <span className="text-[#9CA3AF]">7일</span>
             </span>
           </div>
         </div>
@@ -507,29 +508,258 @@ function toFlowChartData(history: Array<{ date: string; value: number | null }>)
   return history.map((d) => ({
     date: d.date.slice(5), // "MM-DD"
     value: d.value ?? 0,
-    positive: d.value && d.value > 0 ? d.value : 0,
-    negative: d.value && d.value < 0 ? d.value : 0,
   })).reverse();
 }
 
-export function ChainTabs({ activeChain, onChainChange }: ChainTabsProps) {
+// Format flow value with sign (e.g., "+$12M", "-$5M")
+function formatFlowValue(value: number | null): string {
+  if (value === null) return "—";
+  const sign = value >= 0 ? "+" : "-";
+  return `${sign}${formatUsd(Math.abs(value), 0)}`;
+}
+
+// Get color class for flow value (blue for inflows, red for outflows)
+function getFlowColor(value: number | null): string {
+  if (value === null) return "text-[#6B7280]";
+  return value >= 0 ? "text-[#627EEA]" : "text-[#DC2626]";
+}
+
+// Holdings Card for ETH tab (ETF + DAT holdings with tabs)
+function HoldingsCard({
+  etfHoldings,
+  datHoldings,
+}: {
+  etfHoldings: EthData["etfHoldings"];
+  datHoldings: EthData["datHoldings"];
+}) {
+  const [activeTab, setActiveTab] = useState<"etf" | "dat">("etf");
+
+  return (
+    <div className="flex-1 rounded-xl bg-white border border-[#E5E7EB] p-3">
+      {/* Header: Label + Tabs */}
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm text-[#6B7280]">기관 보유량</p>
+        <div className="flex gap-1">
+          <button
+            onClick={() => setActiveTab("etf")}
+            className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+              activeTab === "etf"
+                ? "bg-[#627EEA] text-white"
+                : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"
+            }`}
+          >
+            ETF
+          </button>
+          <button
+            onClick={() => setActiveTab("dat")}
+            className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+              activeTab === "dat"
+                ? "bg-[#627EEA] text-white"
+                : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"
+            }`}
+          >
+            기업
+          </button>
+        </div>
+      </div>
+
+      {/* Column Headers */}
+      <div className="grid grid-cols-[24px_1fr_80px_72px] gap-2 text-[10px] text-[#9CA3AF] uppercase tracking-wide pb-1.5 border-b border-[#E5E7EB] mb-1 pr-2">
+        <span>#</span>
+        <span>이름</span>
+        <span>보유량</span>
+        <span>가치</span>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === "etf" ? (
+        <div>
+          {/* Holdings List */}
+          <div className="max-h-36 overflow-y-auto pr-2">
+            {etfHoldings.holdings?.map((h, index) => (
+              <div
+                key={h.ticker}
+                className={`grid grid-cols-[24px_1fr_80px_72px] gap-2 text-xs py-1.5 ${
+                  index % 2 === 1 ? "bg-[#F9FAFB]" : ""
+                }`}
+              >
+                <span className="text-[#9CA3AF]">{index + 1}.</span>
+                <span className="text-[#171717] truncate">{h.issuer}</span>
+                <span className="tabular-nums text-[#171717]">
+                  {formatEthAmount(h.eth)}
+                </span>
+                <span className="tabular-nums text-[#6B7280]">
+                  {formatUsd(h.usd, 1)}
+                </span>
+              </div>
+            )) ?? (
+              <p className="text-xs text-[#9CA3AF] py-2">데이터 없음</p>
+            )}
+          </div>
+          {/* Footer: Totals */}
+          <div className="border-t border-[#E5E7EB] pt-2 mt-1 flex items-center justify-between text-sm pr-2">
+            <span className="text-[#6B7280]">총 보유</span>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold tabular-nums text-[#171717]">
+                {formatEthAmount(etfHoldings.totalEth)} ETH
+              </span>
+              <span className="text-[#9CA3AF] tabular-nums text-xs">
+                총 공급량 대비 {((etfHoldings.totalEth ?? 0) / 120_000_000 * 100).toFixed(2)}%
+              </span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div>
+          {/* Companies List */}
+          <div className="max-h-36 overflow-y-auto pr-2">
+            {datHoldings.companies?.map((c, index) => (
+              <div
+                key={c.name}
+                className={`grid grid-cols-[24px_1fr_80px_72px] gap-2 text-xs py-1.5 ${
+                  index % 2 === 1 ? "bg-[#F9FAFB]" : ""
+                }`}
+              >
+                <span className="text-[#9CA3AF]">{index + 1}.</span>
+                <span className="text-[#171717] truncate">{c.name}</span>
+                <span className="tabular-nums text-[#171717]">
+                  {formatEthAmount(c.holdings)}
+                </span>
+                <span className="tabular-nums text-[#6B7280]">
+                  {formatUsd(c.holdingsUsd, 1)}
+                </span>
+              </div>
+            )) ?? (
+              <p className="text-xs text-[#9CA3AF] py-2">데이터 없음</p>
+            )}
+          </div>
+          {/* Footer: Totals */}
+          <div className="border-t border-[#E5E7EB] pt-2 mt-1 flex items-center justify-between text-sm pr-2">
+            <span className="text-[#6B7280]">총 보유</span>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold tabular-nums text-[#171717]">
+                {formatEthAmount(datHoldings.totalEth)} ETH
+              </span>
+              <span className="text-[#9CA3AF] tabular-nums text-xs">
+                총 공급량 대비 {datHoldings.supplyPct?.toFixed(2) ?? "—"}%
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ETF Flow Card for ETH tab (with summary stats)
+function EtfFlowCard({
+  history,
+  today,
+}: {
+  history: Array<{ date: string; value: number | null }>;
+  today: number | null;
+}) {
+  const chartData = toFlowChartData(history);
+
+  // Calculate 7-day cumulative
+  const cumulative7d = history.reduce((sum, d) => sum + (d.value ?? 0), 0);
+
+  return (
+    <div className="flex-1 rounded-xl bg-white border border-[#E5E7EB] p-3">
+      {/* Header */}
+      <p className="text-sm text-[#6B7280] mb-3">ETF 자금흐름</p>
+
+      {/* Summary Stats */}
+      <div className="flex gap-8 mb-3">
+        <div>
+          <p className="text-xs text-[#9CA3AF] mb-1">오늘</p>
+          <p className={`text-xl font-bold tabular-nums ${getFlowColor(today)}`}>
+            {formatFlowValue(today)}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-[#9CA3AF] mb-1">7일</p>
+          <p className={`text-xl font-bold tabular-nums ${getFlowColor(cumulative7d)}`}>
+            {formatFlowValue(cumulative7d)}
+          </p>
+        </div>
+      </div>
+
+      {/* Bar Chart */}
+      <div className="h-32">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={chartData}>
+            <XAxis
+              dataKey="date"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 10, fill: "#9CA3AF" }}
+            />
+            <YAxis hide />
+            <Tooltip
+              cursor={false}
+              content={({ active, payload, label }) => {
+                if (!active || !payload?.length) return null;
+                const value = payload[0].payload.value;
+                return (
+                  <div className="rounded-lg bg-white border border-[#E5E7EB] px-3 py-2 text-xs shadow-lg">
+                    <p className="text-[#6B7280] mb-1">{label}</p>
+                    <p className="flex items-center gap-1.5">
+                      <span className={`w-2 h-2 rounded-full ${value >= 0 ? "bg-[#627EEA]" : "bg-[#DC2626]"}`} />
+                      <span className={`font-medium tabular-nums ${value >= 0 ? "text-[#627EEA]" : "text-[#DC2626]"}`}>
+                        {value >= 0 ? "+" : "-"}{formatUsd(Math.abs(value), 0)}
+                      </span>
+                    </p>
+                  </div>
+                );
+              }}
+            />
+            <ReferenceLine y={0} stroke="#E5E7EB" strokeWidth={1} />
+            <Bar dataKey="value" radius={[2, 2, 2, 2]}>
+              {chartData.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={entry.value >= 0 ? "#627EEA" : "#DC2626"}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+// Content component that fetches data and renders appropriate chain content
+function ChainContent({ activeChain }: { activeChain: Chain }) {
   const { data } = useChainDataSuspense(activeChain);
+
+  if (data.chain === "btc") {
+    return <BtcContent data={data} />;
+  } else if (data.chain === "eth") {
+    return <EthContent data={data} />;
+  } else {
+    return <SolContent data={data} />;
+  }
+}
+
+export function ChainTabs({ activeChain, onChainChange }: ChainTabsProps) {
   const chains: Chain[] = ["btc", "eth", "sol"];
 
   return (
-    <section className="mb-6">
+    <section className="mb-3">
       {/* Section Label */}
-      <h2 className="mb-3 font-pixel text-lg text-[#171717]">체인별 현황</h2>
+      <h2 className="mb-1 font-bold text-lg text-[#171717]">체인별 현황</h2>
 
       {/* Tabs - underline style like Header nav */}
-      <div className="flex items-center gap-8 border-b border-[#E5E7EB]">
+      <div className="flex items-center gap-6 border-b border-[#E5E7EB]">
         {chains.map((chain) => {
           const isActive = activeChain === chain;
           return (
             <button
               key={chain}
               onClick={() => onChainChange(chain)}
-              className={`relative flex items-center gap-2.5 h-14 text-base font-medium transition-colors ${
+              className={`relative flex items-center gap-2.5 py-2 text-base font-medium transition-colors ${
                 isActive
                   ? "text-[#171717] font-semibold"
                   : "text-[#6B7280] hover:text-[#171717]"
@@ -551,17 +781,11 @@ export function ChainTabs({ activeChain, onChainChange }: ChainTabsProps) {
         })}
       </div>
 
-      {/* Content - no outer wrapper, each row is its own card */}
+      {/* Content - wrapped in Suspense so tabs stay visible while loading */}
       <div className="mt-2">
-        {!data ? (
-          <ChainSkeleton />
-        ) : data.chain === "btc" ? (
-          <BtcContent data={data} />
-        ) : data.chain === "eth" ? (
-          <EthContent data={data} />
-        ) : (
-          <SolContent data={data} />
-        )}
+        <Suspense fallback={<ChainSkeleton />}>
+          <ChainContent activeChain={activeChain} />
+        </Suspense>
       </div>
     </section>
   );
@@ -569,13 +793,16 @@ export function ChainTabs({ activeChain, onChainChange }: ChainTabsProps) {
 
 function ChainSkeleton() {
   return (
-    <div className="space-y-4">
-      <Skeleton className="h-6 w-48" />
-      <Skeleton className="h-32 w-full" />
-      <div className="grid grid-cols-3 gap-4">
-        <Skeleton className="h-16" />
-        <Skeleton className="h-16" />
-        <Skeleton className="h-16" />
+    <div className="space-y-2">
+      {/* Row 1: 2-col grid */}
+      <div className="grid grid-cols-2 gap-2">
+        <Skeleton className="h-44 rounded-xl" />
+        <Skeleton className="h-44 rounded-xl" />
+      </div>
+      {/* Row 2: 2-col grid */}
+      <div className="grid grid-cols-2 gap-2">
+        <Skeleton className="h-44 rounded-xl" />
+        <Skeleton className="h-44 rounded-xl" />
       </div>
     </div>
   );
@@ -583,7 +810,7 @@ function ChainSkeleton() {
 
 function BtcContent({ data }: { data: BtcData }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {/* Price Sparkline */}
       <div>
         <div className="flex items-center justify-between mb-2">
@@ -602,7 +829,7 @@ function BtcContent({ data }: { data: BtcData }) {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-2">
         <StatCard label="유통량" value={formatMillions(data.supply.circulating)} subValue="BTC" />
         <StatCard label="최대 공급량" value={formatMillions(data.supply.maxSupply)} subValue="BTC" />
         <StatCard label="채굴률" value={data.supply.percentMined ? `${data.supply.percentMined.toFixed(1)}%` : "—"} />
@@ -621,9 +848,9 @@ function EthContent({ data }: { data: EthData }) {
   const change7d = formatChange7d(data.price7d.change);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {/* Row 1: Price */}
-      <div className="rounded-xl bg-white border border-[#E5E7EB] p-4">
+      <div className="rounded-xl bg-white border border-[#E5E7EB] p-3">
         {/* Header: Label + High/Low */}
         <div className="flex items-start justify-between mb-2">
           <div>
@@ -633,7 +860,7 @@ function EthContent({ data }: { data: EthData }) {
                 {currentPrice ? `$${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
               </p>
               <span className={`text-sm font-medium tabular-nums ${change7d.color}`}>
-                <span className="text-[10px]">{change7d.arrow}</span> {change7d.value} <span className="text-[#9CA3AF]">7d</span>
+                <span className="text-[10px]">{change7d.arrow}</span> {change7d.value} <span className="text-[#9CA3AF]">7일</span>
               </span>
             </div>
           </div>
@@ -684,9 +911,9 @@ function EthContent({ data }: { data: EthData }) {
       </div>
 
       {/* Row 2: Supply, Staking, Inflation cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-2">
         {/* Card 1: ETH Supply */}
-        <div className="rounded-xl bg-white border border-[#E5E7EB] p-4 flex flex-col justify-between min-h-[140px]">
+        <div className="rounded-xl bg-white border border-[#E5E7EB] p-3 flex flex-col justify-between min-h-[140px]">
           {/* Top row: Label + ETH logo */}
           <div className="flex items-start justify-between">
             <p className="text-sm font-medium text-[#6B7280]">ETH 공급량</p>
@@ -705,7 +932,7 @@ function EthContent({ data }: { data: EthData }) {
         </div>
 
         {/* Card 2: Staking */}
-        <div className="rounded-xl bg-white border border-[#E5E7EB] p-4 min-h-[140px]">
+        <div className="rounded-xl bg-white border border-[#E5E7EB] p-3 min-h-[140px]">
           <p className="text-sm font-medium text-[#6B7280] mb-3">스테이킹</p>
           <div className="flex items-center justify-between">
             {/* Donut Chart */}
@@ -760,13 +987,13 @@ function EthContent({ data }: { data: EthData }) {
         </div>
 
         {/* Card 3: Inflation */}
-        <div className="rounded-xl bg-white border border-[#E5E7EB] p-4 min-h-[140px]">
-          {/* Header: Label + 7d indicator */}
+        <div className="rounded-xl bg-white border border-[#E5E7EB] p-3 min-h-[140px]">
+          {/* Header: Label + 7일 indicator */}
           <div className="flex justify-between items-start mb-2">
             <p className="text-sm font-medium text-[#6B7280]">
               {data.inflation?.isDeflationary ? "디플레이션" : "인플레이션"}
             </p>
-            <span className="text-xs text-[#9CA3AF]">7d</span>
+            <span className="text-xs text-[#9CA3AF]">7일</span>
           </div>
           {/* Main value + Annual rate */}
           <div className="flex items-baseline gap-2">
@@ -834,20 +1061,23 @@ function EthContent({ data }: { data: EthData }) {
       </div>
 
       {/* Row 3: TVL + Stablecoins (side by side) */}
-      <div className="flex gap-4">
+      <div className="flex gap-2">
         <TvlChart data={data.l2Tvl} />
         <StablecoinsChart data={data.l2Stablecoins} />
       </div>
 
-      {/* ETF Flow Chart */}
-      <EtfFlowChart history={data.etfFlows.history} today={data.etfFlows.today} color="#627EEA" />
+      {/* Row 4: ETF Flows + Holdings (side by side) */}
+      <div className="flex gap-2">
+        <EtfFlowCard history={data.etfFlows.history} today={data.etfFlows.today} />
+        <HoldingsCard etfHoldings={data.etfHoldings} datHoldings={data.datHoldings} />
+      </div>
     </div>
   );
 }
 
 function SolContent({ data }: { data: SolData }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {/* Price Sparkline */}
       <div>
         <div className="flex items-center justify-between mb-2">
@@ -866,7 +1096,7 @@ function SolContent({ data }: { data: SolData }) {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-4 gap-2">
         <StatCard label="스테이킹" value={data.supply.stakingPct ? `${data.supply.stakingPct.toFixed(1)}%` : "—"} subValue={formatMillions(data.supply.staked) + " SOL"} />
         <StatCard label="TVL" value={formatBillions(data.tvl.total)} change={data.tvl.change7d} />
         <StatCard label="스테이블코인" value={formatBillions(data.stablecoins.total)} change={data.stablecoins.change7d} />
@@ -902,7 +1132,7 @@ function StatCard({
       {subValue && <p className="text-xs text-[#9CA3AF]">{subValue}</p>}
       {change !== undefined && change !== null && (
         <p className={`text-xs font-medium tabular-nums ${change >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
-          {formatPercent(change)} (7d)
+          {formatPercent(change)} (7일)
         </p>
       )}
     </div>
@@ -926,23 +1156,42 @@ function EtfFlowChart({
         <h3 className="text-sm font-semibold text-[#171717]">ETF 자금흐름 (7일)</h3>
         {today !== null && (
           <span className={`text-sm font-medium tabular-nums ${today >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
-            오늘: {today >= 0 ? "+" : ""}${Math.abs(today).toFixed(1)}M
+            오늘: {today >= 0 ? "+" : "-"}{formatUsd(Math.abs(today), 0)}
           </span>
         )}
       </div>
       <div className="h-24">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} stackOffset="sign">
+          <BarChart data={chartData}>
             <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#6B7280" }} />
             <YAxis hide />
             <Tooltip
               cursor={false}
-              contentStyle={{ backgroundColor: "#171717", border: "none", borderRadius: "8px", color: "#fff", fontSize: 12 }}
-              formatter={(value) => [`$${Math.abs(Number(value) || 0).toFixed(1)}M`, ""]}
+              content={({ active, payload, label }) => {
+                if (!active || !payload?.length) return null;
+                const value = payload[0].payload.value;
+                return (
+                  <div className="rounded-lg bg-white border border-[#E5E7EB] px-3 py-2 text-xs shadow-lg">
+                    <p className="text-[#6B7280] mb-1">{label}</p>
+                    <p className="flex items-center gap-1.5">
+                      <span className={`w-2 h-2 rounded-full ${value >= 0 ? "bg-[#627EEA]" : "bg-[#DC2626]"}`} />
+                      <span className={`font-medium tabular-nums ${value >= 0 ? "text-[#627EEA]" : "text-[#DC2626]"}`}>
+                        {value >= 0 ? "+" : "-"}{formatUsd(Math.abs(value), 0)}
+                      </span>
+                    </p>
+                  </div>
+                );
+              }}
             />
             <ReferenceLine y={0} stroke="#E5E7EB" />
-            <Bar dataKey="positive" fill={color} stackId="stack" radius={[2, 2, 0, 0]} />
-            <Bar dataKey="negative" fill="#DC2626" stackId="stack" radius={[0, 0, 2, 2]} />
+            <Bar dataKey="value" radius={[2, 2, 2, 2]}>
+              {chartData.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={entry.value >= 0 ? color : "#DC2626"}
+                />
+              ))}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>

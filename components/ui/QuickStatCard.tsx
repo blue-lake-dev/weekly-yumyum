@@ -27,7 +27,7 @@ export function QuickStatCard({
       `}
     >
       <div className="mb-2">
-        <p className="font-pixel text-xs text-[#6B7280]">{label}</p>
+        <p className="font-semibold text-xs text-[#6B7280]">{label}</p>
         {subtitle && <p className="text-[10px] text-[#9CA3AF]">{subtitle}</p>}
       </div>
       {children}

@@ -5,8 +5,6 @@ import { fetchGlobalMetrics } from "@/lib/fetchers/coingecko";
 import { fetchStablecoinWithSparkline } from "@/lib/fetchers/defillama";
 import { createServerClient } from "@/lib/supabase";
 
-export const revalidate = 900; // 15 min cache
-
 /**
  * GET /api/v1/quick-stats
  * Returns: Total Market Cap, Fear & Greed, Dominance, Stablecoins, ETF flows
@@ -78,9 +76,9 @@ export async function GET() {
       sparkline: stablecoinResult.sparkline ?? [], // Raw USD values
     },
     etfFlows: {
-      btc: etfFlowsResult.btc !== null ? etfFlowsResult.btc * 1e6 : null, // Raw USD value
-      eth: etfFlowsResult.eth !== null ? etfFlowsResult.eth * 1e6 : null, // Raw USD value
-      sol: etfFlowsResult.sol !== null ? etfFlowsResult.sol * 1e6 : null, // Raw USD value
+      btc: etfFlowsResult.btc !== null ? etfFlowsResult.btc * 1e6 : null, // Raw USD
+      eth: etfFlowsResult.eth !== null ? etfFlowsResult.eth * 1e6 : null, // Raw USD
+      sol: etfFlowsResult.sol !== null ? etfFlowsResult.sol * 1e6 : null, // Raw USD
       date: etfFlowsResult.date,
     },
     errors: errors.length > 0 ? errors : undefined,

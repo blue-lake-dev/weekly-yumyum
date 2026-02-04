@@ -17,12 +17,19 @@ function weiToEth(wei: string): number {
   return Number(BigInt(wei) / BigInt(1e14)) / 10000; // Keep 4 decimal precision
 }
 
-async function fetchWithTimeout<T>(url: string, timeout = 15000): Promise<T> {
+async function fetchWithTimeout<T>(
+  url: string,
+  timeout = 5000,
+  revalidate = 900 // 15 min default cache (matches use-chain-data)
+): Promise<T> {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
 
   try {
-    const response = await fetch(url, { signal: controller.signal });
+    const response = await fetch(url, {
+      signal: controller.signal,
+      next: { revalidate },
+    });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.json();
   } finally {

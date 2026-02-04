@@ -380,6 +380,24 @@ Dashboard → ✏️ 수동 입력 → /api/update-manual → Vercel KV 업데�
 - `formatUsd()`: 달러 포맷 ($1.23T)
 - `formatPercent()`: 퍼센트 포맷 (1.23%)
 
+### V3 캐싱 전략
+- **Fetcher-level caching**: 각 fetch() 호출에 `{ next: { revalidate } }` 사용
+- **Route-level**: `export const dynamic = 'force-dynamic'` (빌드 에러 방지, 폴백값 노출 방지)
+- **Timeout**: 모든 fetcher 5초 (Etherscan은 느려서 rate limit 주의)
+
+| Fetcher | Revalidate | 비고 |
+|---------|------------|------|
+| CoinGecko ticker | 60s | 실시간 가격 |
+| CoinGecko others | 300s | 시총, 스파크라인 |
+| Alternative (F&G) | 900s | 하루 1회 업데이트 |
+| CoinMarketCap | 900s | 도미넌스 |
+| DeFiLlama | 900s | TVL, 스테이블코인 |
+| Etherscan | 900s | ETH supply (느림) |
+| Beaconchain | 900s | 스테이킹 APR |
+| Ultrasound | 900s | 번/이슈언스 |
+| Binance | 300s | 파생상품 |
+| Dune | 3600s | ETF 홀딩스 (1시간) |
+
 ---
 
 ## 현재 진행 상태
@@ -433,13 +451,14 @@ Dashboard → ✏️ 수동 입력 → /api/update-manual → Vercel KV 업데�
   - [x] ETF 자금흐름 (BTC/ETH/SOL)
 - [x] 데스크톱 가로 스크롤 (scrollbar-touch-hide)
 - [x] API 원칙: raw 값 반환, 클라이언트 포맷팅
+- [x] Fetcher-level caching (revalidate per endpoint)
 - [x] ChainTabs 섹션 (ETH 탭)
   - [x] ETH 가격 차트 (7d 스파크라인, 고가/저가)
   - [x] TVL 차트 (Exclude L1 토글, L2 개별 라인)
   - [x] Stablecoins 차트 (Exclude L1 토글, L2 개별 라인)
   - [x] 툴팁: L1/L2 breakdown 표시
-- [ ] ChainTabs 섹션 (ETH 탭 - 나머지)
-  - [ ] Supply, Staking, Burn 통계
+- [x] ChainTabs 섹션 (ETH 탭 - 나머지)
+  - [x] Supply, Staking, Burn 통계
   - [ ] ETF flows + holdings (탭 뷰)
 - [ ] Gainers/Losers 섹션
 - [ ] 파생상품 섹션

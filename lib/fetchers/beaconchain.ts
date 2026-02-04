@@ -36,7 +36,12 @@ export interface EthStakingData {
   error?: string;
 }
 
-async function fetchWithRetry<T>(url: string, retries = 3, timeout = 15000): Promise<T> {
+async function fetchWithRetry<T>(
+  url: string,
+  retries = 3,
+  timeout = 5000,
+  revalidate = 900 // 15 min default cache (matches use-chain-data)
+): Promise<T> {
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < retries; attempt++) {
@@ -44,7 +49,10 @@ async function fetchWithRetry<T>(url: string, retries = 3, timeout = 15000): Pro
     const id = setTimeout(() => controller.abort(), timeout);
 
     try {
-      const response = await fetch(url, { signal: controller.signal });
+      const response = await fetch(url, {
+        signal: controller.signal,
+        next: { revalidate },
+      });
       clearTimeout(id);
 
       if (response.status === 429) {

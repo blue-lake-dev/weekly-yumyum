@@ -41,13 +41,18 @@ interface BtcEtfRow {
 async function fetchWithTimeout<T>(
   url: string,
   options: RequestInit = {},
-  timeout = 30000
+  timeout = 5000,
+  revalidate = 3600 // 1 hour default cache (ETF holdings update daily)
 ): Promise<T> {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
 
   try {
-    const response = await fetch(url, { ...options, signal: controller.signal });
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+      next: { revalidate },
+    });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.json();
   } finally {

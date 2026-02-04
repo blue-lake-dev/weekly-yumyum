@@ -34,12 +34,19 @@ interface MarketChartResponse {
   prices: [number, number][]; // [timestamp_ms, price]
 }
 
-async function fetchWithTimeout<T>(url: string, timeout = 10000): Promise<T> {
+async function fetchWithTimeout<T>(
+  url: string,
+  timeout = 5000,
+  revalidate = 300 // 5 min default cache
+): Promise<T> {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
 
   try {
-    const response = await fetch(url, { signal: controller.signal });
+    const response = await fetch(url, {
+      signal: controller.signal,
+      next: { revalidate },
+    });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.json();
   } finally {
@@ -129,7 +136,9 @@ export async function fetchTickerPrices(): Promise<TickerData[]> {
   try {
     // Fetch more than 10 to account for filtered stablecoins
     const data = await fetchWithTimeout<MarketCoinWithImage[]>(
-      `${COINGECKO_API}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1&sparkline=false&price_change_percentage=24h`
+      `${COINGECKO_API}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1&sparkline=false&price_change_percentage=24h`,
+      5000,
+      60 // 1 min cache (matches use-ticker)
     );
 
     if (!data || !Array.isArray(data)) {
@@ -319,7 +328,9 @@ interface MarketCoin {
 export async function fetchGainersLosers(limit: number = 10): Promise<GainersLosersData> {
   try {
     const data = await fetchWithTimeout<MarketCoin[]>(
-      `${COINGECKO_API}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=24h`
+      `${COINGECKO_API}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=24h`,
+      5000,
+      900 // 15 min cache (matches use-gainers-losers)
     );
 
     if (!data || !Array.isArray(data)) {
@@ -402,7 +413,9 @@ interface CoinDetailResponse {
 export async function fetchCoinSupply(coinId: string): Promise<CoinSupplyData> {
   try {
     const data = await fetchWithTimeout<CoinDetailResponse>(
-      `${COINGECKO_API}/coins/${coinId}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`
+      `${COINGECKO_API}/coins/${coinId}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`,
+      5000,
+      900 // 15 min cache
     );
 
     const marketData = data.market_data;
@@ -451,7 +464,9 @@ export interface GlobalMetricsData {
 export async function fetchGlobalMetrics(): Promise<GlobalMetricsData> {
   try {
     const data = await fetchWithTimeout<GlobalMetricsResponse>(
-      `${COINGECKO_API}/global`
+      `${COINGECKO_API}/global`,
+      5000,
+      900 // 15 min cache (matches use-quick-stats)
     );
 
     const totalMarketCap = data.data.total_market_cap?.usd ?? null;

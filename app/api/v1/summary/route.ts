@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
 
-export const revalidate = 3600; // 1 hour cache
-
 /**
  * GET /api/v3/summary
  * Returns today's AI-generated market summary

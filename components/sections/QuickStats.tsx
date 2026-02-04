@@ -14,9 +14,9 @@ export function QuickStats() {
 
   if (isLoading || !data) {
     return (
-      <section className="mb-6">
-        <h2 className="mb-3 font-pixel text-lg text-[#171717]">빠른 현황</h2>
-        <div className="flex gap-3 overflow-x-auto lg:overflow-visible scrollbar-hide">
+      <section className="mb-3">
+        <h2 className="mb-3 font-bold text-lg text-[#171717]">빠른 현황</h2>
+        <div className="flex gap-2 overflow-x-auto lg:overflow-visible scrollbar-hide">
           {[1, 2, 3, 4, 5].map((i) => (
             <Skeleton
               key={i}
@@ -30,11 +30,11 @@ export function QuickStats() {
 
   return (
     <section className="mb-3">
-      <h2 className="mb-3 font-pixel text-lg text-[#171717]">얌얌 시황</h2>
+      <h2 className="mb-3 font-bold text-lg text-[#171717]">얌얌 시황</h2>
 
       {/* Horizontal scroll container with fade on mobile */}
       <div className="relative">
-        <div className="flex gap-3 overflow-x-auto scrollbar-touch-hide">
+        <div className="flex gap-2 overflow-x-auto scrollbar-touch-hide">
           {/* Card 1: Total Market Cap */}
           <QuickStatCard label="암호화폐 시총">
             <div className="flex-1 flex items-center justify-center text-center">
@@ -43,20 +43,23 @@ export function QuickStats() {
                   {formatUsd(data.totalMarketCap.value, 2)}
                 </p>
                 {data.totalMarketCap.change24h !== null && (
-                  <p
-                    className={`text-sm font-semibold tabular-nums ${
-                      data.totalMarketCap.change24h >= 0
-                        ? "text-[#16A34A]"
-                        : "text-[#DC2626]"
-                    }`}
-                  >
-                    <span className="text-[10px]">
-                      {data.totalMarketCap.change24h >= 0 ? "▲" : "▼"}
-                    </span>{" "}
-                    {formatPercent(
-                      Math.abs(data.totalMarketCap.change24h),
-                      false,
-                    )}
+                  <p className="text-sm tabular-nums">
+                    <span
+                      className={`font-semibold ${
+                        data.totalMarketCap.change24h >= 0
+                          ? "text-[#16A34A]"
+                          : "text-[#DC2626]"
+                      }`}
+                    >
+                      <span className="text-[10px]">
+                        {data.totalMarketCap.change24h >= 0 ? "▲" : "▼"}
+                      </span>{" "}
+                      {formatPercent(
+                        Math.abs(data.totalMarketCap.change24h),
+                        false,
+                      )}
+                    </span>
+                    <span className="text-[#9CA3AF] ml-1">24h</span>
                   </p>
                 )}
               </div>
@@ -137,17 +140,20 @@ export function QuickStats() {
                   {formatUsd(data.stablecoins.value, 1)}
                 </p>
                 {data.stablecoins.change7d !== null && (
-                  <p
-                    className={`text-sm font-semibold tabular-nums ${
-                      data.stablecoins.change7d >= 0
-                        ? "text-[#16A34A]"
-                        : "text-[#DC2626]"
-                    }`}
-                  >
-                    <span className="text-[10px]">
-                      {data.stablecoins.change7d >= 0 ? "▲" : "▼"}
-                    </span>{" "}
-                    {formatPercent(Math.abs(data.stablecoins.change7d), false)}
+                  <p className="text-sm tabular-nums">
+                    <span
+                      className={`font-semibold ${
+                        data.stablecoins.change7d >= 0
+                          ? "text-[#16A34A]"
+                          : "text-[#DC2626]"
+                      }`}
+                    >
+                      <span className="text-[10px]">
+                        {data.stablecoins.change7d >= 0 ? "▲" : "▼"}
+                      </span>{" "}
+                      {formatPercent(Math.abs(data.stablecoins.change7d), false)}
+                    </span>
+                    <span className="text-[#9CA3AF] ml-1">7일</span>
                   </p>
                 )}
               </div>

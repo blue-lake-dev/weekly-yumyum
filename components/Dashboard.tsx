@@ -46,14 +46,12 @@ export function Dashboard() {
           </Suspense>
         </ErrorBoundary>
 
-        {/* ❺ Chain Tabs - Streaming */}
+        {/* ❺ Chain Tabs - Suspense handled internally */}
         <ErrorBoundary>
-          <Suspense fallback={<SectionSkeleton height="h-96" />}>
-            <ChainTabs
-              activeChain={activeChain}
-              onChainChange={setActiveChain}
-            />
-          </Suspense>
+          <ChainTabs
+            activeChain={activeChain}
+            onChainChange={setActiveChain}
+          />
         </ErrorBoundary>
 
         {/* ❻ 더보기 - Streaming */}

@@ -135,10 +135,10 @@ export function TodaysCoin() {
   const hasMore = gainers.length > 3 || losers.length > 3;
 
   return (
-    <section className="mb-6">
+    <section className="mb-3">
       {/* Section Header - Outside cards */}
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-pixel text-lg text-[#171717]">
+        <h2 className="font-bold text-lg text-[#171717]">
           오늘의 코인 (Gainers/Losers)
         </h2>
         {hasMore && (
@@ -152,7 +152,7 @@ export function TodaysCoin() {
       </div>
 
       {/* Two Cards Side by Side */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row gap-2">
         <CoinCard
           title="gainers"
           titleColor="text-[#16A34A]"

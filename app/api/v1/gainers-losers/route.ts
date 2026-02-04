@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchGainersLosers } from "@/lib/fetchers/coingecko";
 
-export const revalidate = 900; // 15 min cache
-
 /**
  * GET /api/v3/gainers-losers
  * Returns top gainers and losers from top 100 coins by market cap

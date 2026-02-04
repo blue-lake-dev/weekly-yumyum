@@ -19,7 +19,7 @@ export function MoreTabs() {
   ];
 
   return (
-    <section className="mb-6">
+    <section className="mb-3">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-semibold text-[#171717]">더보기</h2>
         <div className="flex gap-1">
@@ -39,7 +39,7 @@ export function MoreTabs() {
         </div>
       </div>
 
-      <div className="rounded-xl bg-white border border-[#E5E7EB] p-4 shadow-sm">
+      <div className="rounded-xl bg-white border border-[#E5E7EB] p-3 shadow-sm">
         {activeTab === "derivatives" ? (
           <Derivatives data={derivativesData ?? null} />
         ) : (

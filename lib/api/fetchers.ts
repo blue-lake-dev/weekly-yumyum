@@ -111,7 +111,7 @@ export interface EthData {
   l2Tvl: { dates: string[]; chains: Array<{ name: string; values: number[]; current: number }>; totals: { current: number; previous: number; change7d: number | null } };
   l2Stablecoins: { dates: string[]; chains: Array<{ name: string; values: number[]; current: number }>; totals: { current: number; previous: number; change7d: number | null } };
   etfFlows: EtfFlow;
-  etfHoldings: { totalEth: number | null; totalUsd: number | null; holdings: Array<{ name: string; ethAmount: number; pctOfTotal: number }> | null };
+  etfHoldings: { totalEth: number | null; totalUsd: number | null; holdings: Array<{ ticker: string; issuer: string; eth: number; usd: number; percentage: number }> | null };
   datHoldings: { totalEth: number | null; totalUsd: number | null; supplyPct: number | null; companies: Array<{ name: string; holdings: number; holdingsUsd: number; supplyPct: number }> | null; date: string | null };
 }
 

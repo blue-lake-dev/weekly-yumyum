@@ -55,6 +55,7 @@ export async function fetchDominance(): Promise<DominanceData> {
         "X-CMC_PRO_API_KEY": apiKey,
         Accept: "application/json",
       },
+      next: { revalidate: 900 }, // 15 min cache (matches use-quick-stats)
     });
 
     if (!response.ok) {

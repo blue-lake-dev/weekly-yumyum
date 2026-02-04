@@ -47,12 +47,12 @@ export function YumyumComment() {
   );
 
   return (
-    <section className="mb-6">
+    <section className="mb-3">
       {/* Section Header - Outside card */}
-      <h2 className="mb-3 font-pixel text-lg text-[#171717]">얌얌 브리핑</h2>
+      <h2 className="mb-3 font-bold text-lg text-[#171717]">얌얌 브리핑</h2>
 
       {/* Card */}
-      <div className="rounded-xl bg-white border border-[#E5E7EB] p-4 shadow-sm">
+      <div className="rounded-xl bg-white border border-[#E5E7EB] p-3 shadow-sm">
         <div className="flex items-start gap-4">
           {/* Mascot - flipped to face right */}
           <div className="flex-shrink-0">

@@ -33,12 +33,19 @@ export interface AllDerivativesData {
   error?: string;
 }
 
-async function fetchWithTimeout<T>(url: string, timeout = 10000): Promise<T> {
+async function fetchWithTimeout<T>(
+  url: string,
+  timeout = 5000,
+  revalidate = 300 // 5 min default cache (matches use-derivatives)
+): Promise<T> {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
 
   try {
-    const response = await fetch(url, { signal: controller.signal });
+    const response = await fetch(url, {
+      signal: controller.signal,
+      next: { revalidate },
+    });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.json();
   } finally {

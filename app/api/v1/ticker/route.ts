@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchTickerPrices } from "@/lib/fetchers/coingecko";
 
-export const revalidate = 60; // 1 min cache (CoinGecko updates every ~1-2 min)
-
 /**
  * GET /api/v3/ticker
  * Returns live prices for BTC, ETH, SOL with 24h change

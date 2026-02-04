@@ -15,7 +15,6 @@ import {
 import { fetchSolanaSupply, fetchSolanaInflation, fetchSolanaDailyFees } from "@/lib/fetchers/solana";
 import { fetchEthEtfHoldings } from "@/lib/fetchers/dune";
 
-export const revalidate = 900; // 15 min cache
 
 type ChainParam = "btc" | "eth" | "sol";
 
@@ -98,6 +97,15 @@ async function getBtcData() {
   };
 }
 
+// Helper to measure fetch time
+async function timed<T>(name: string, fn: () => Promise<T>): Promise<T> {
+  const start = performance.now();
+  const result = await fn();
+  const ms = (performance.now() - start).toFixed(0);
+  console.log(`[chain/eth] ⏱ ${name}: ${ms}ms`);
+  return result;
+}
+
 /**
  * ETH Chain Data
  * - 7d price sparkline + change + high/low
@@ -108,7 +116,7 @@ async function getBtcData() {
  * - DAT holdings (corporate/institutional)
  */
 async function getEthData() {
-  console.log("[chain/eth] Fetching ETH data...");
+  const totalStart = performance.now();
 
   const [
     sparklineData,
@@ -122,18 +130,20 @@ async function getEthData() {
     etfHoldings,
     datHoldings,
   ] = await Promise.all([
-    fetchPriceSparkline("ethereum"),
-    fetchEthSupply(),
-    fetchEthStaking(),
-    fetchEthStakingRewards(),
-    fetchEthBurnIssuance(),
-    fetchL2TvlStacked(),
-    fetchL2StablecoinStacked(),
-    getEtfFlowHistory("etf_flow_eth", 7),
-    fetchEthEtfHoldings(),
-    getDatHoldings("dat_holdings_eth"),
+    timed("CoinGecko (sparkline)", () => fetchPriceSparkline("ethereum")),
+    timed("Etherscan (supply)", () => fetchEthSupply()),
+    timed("Etherscan (staking)", () => fetchEthStaking()),
+    timed("Beaconchain (rewards)", () => fetchEthStakingRewards()),
+    timed("Ultrasound (burn)", () => fetchEthBurnIssuance()),
+    timed("DeFiLlama (L2 TVL)", () => fetchL2TvlStacked()),
+    timed("DeFiLlama (L2 stables)", () => fetchL2StablecoinStacked()),
+    timed("Supabase (ETF flows)", () => getEtfFlowHistory("etf_flow_eth", 7)),
+    timed("Dune (ETF holdings)", () => fetchEthEtfHoldings()),
+    timed("Supabase (DAT)", () => getDatHoldings("dat_holdings_eth")),
   ]);
 
+  const totalMs = (performance.now() - totalStart).toFixed(0);
+  console.log(`[chain/eth] ✅ All fetches complete in ${totalMs}ms`);
   console.log("[chain/eth] Sparkline:", sparklineData.sparkline.length, "pts, change:", sparklineData.change7d?.toFixed(2) + "%");
   console.log("[chain/eth] Supply:", supplyData.ethSupply?.toLocaleString(), "ETH");
   console.log("[chain/eth] Staking:", stakingData.totalStaked?.toLocaleString(), "ETH,", stakingData.stakingRatio?.toFixed(2) + "%");
@@ -318,7 +328,7 @@ async function getEtfFlowHistory(key: string, days: number) {
 
   return (data || []).map((row: { date: string; value: number | null }) => ({
     date: row.date,
-    value: row.value,
+    value: row.value !== null ? row.value * 1e6 : null, // Convert millions to raw USD
   }));
 }
 

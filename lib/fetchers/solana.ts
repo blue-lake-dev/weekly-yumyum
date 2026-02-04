@@ -69,7 +69,11 @@ export interface SolanaDailyFeesData {
   error?: string;
 }
 
-async function rpcCall<T>(method: string, params: unknown[] = []): Promise<T> {
+async function rpcCall<T>(
+  method: string,
+  params: unknown[] = [],
+  revalidate = 900 // 15 min default cache (matches use-chain-data)
+): Promise<T> {
   const response = await fetch(SOLANA_RPC, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -79,6 +83,7 @@ async function rpcCall<T>(method: string, params: unknown[] = []): Promise<T> {
       method,
       params,
     }),
+    next: { revalidate },
   });
 
   if (!response.ok) {
@@ -191,6 +196,7 @@ export async function fetchSolanaDailyFees(days: number = 1): Promise<SolanaDail
       headers: {
         "X-DUNE-API-KEY": apiKey,
       },
+      next: { revalidate: 900 }, // 15 min cache (matches use-chain-data)
     });
 
     if (!response.ok) {
