@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -16,10 +16,8 @@ import { YumyumComment } from "@/components/sections/YumyumComment";
 import { ChainTabs } from "@/components/sections/ChainTabs";
 import { MoreTabs } from "@/components/sections/MoreTabs";
 
-import type { Chain } from "@/lib/api/fetchers";
 
 export function Dashboard() {
-  const [activeChain, setActiveChain] = useState<Chain>("eth");
 
   return (
     <div className="min-h-screen bg-[#F6F7F9]">
@@ -48,10 +46,7 @@ export function Dashboard() {
 
         {/* ❺ Chain Tabs - Suspense handled internally */}
         <ErrorBoundary>
-          <ChainTabs
-            activeChain={activeChain}
-            onChainChange={setActiveChain}
-          />
+          <ChainTabs />
         </ErrorBoundary>
 
         {/* ❻ 더보기 - Streaming */}

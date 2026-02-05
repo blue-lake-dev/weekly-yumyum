@@ -15,15 +15,13 @@ import {
   ReferenceLine,
 } from "recharts";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { useQueryClient } from "@tanstack/react-query";
 import { useChainDataSuspense } from "@/lib/hooks/use-chain-data";
+import { fetchChainData, queryKeys } from "@/lib/api/fetchers";
 import { useTicker } from "@/lib/hooks/use-ticker";
 import type { Chain, EthData } from "@/lib/api/fetchers";
 import { formatEthAmount, formatPercent, formatCompactNumber, formatUsd } from "@/lib/utils/format";
 
-interface ChainTabsProps {
-  activeChain: Chain;
-  onChainChange: (chain: Chain) => void;
-}
 
 // Data types for each chain
 interface BtcData {
@@ -872,8 +870,18 @@ function ChainContent({ activeChain }: { activeChain: Chain }) {
   }
 }
 
-export function ChainTabs({ activeChain, onChainChange }: ChainTabsProps) {
+export function ChainTabs() {
+  const [activeChain, setActiveChain] = useState<Chain>("eth");
   const chains: Chain[] = ["btc", "eth", "sol"];
+  const queryClient = useQueryClient();
+
+  const prefetchChain = (chain: Chain) => {
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.chain(chain),
+      queryFn: () => fetchChainData(chain),
+      staleTime: 15 * 60 * 1000,
+    });
+  };
 
   return (
     <section className="mb-3">
@@ -887,7 +895,8 @@ export function ChainTabs({ activeChain, onChainChange }: ChainTabsProps) {
           return (
             <button
               key={chain}
-              onClick={() => onChainChange(chain)}
+              onMouseEnter={() => prefetchChain(chain)}
+              onClick={() => setActiveChain(chain)}
               className={`relative flex items-center gap-2.5 py-2 text-base font-medium transition-colors ${
                 isActive
                   ? "text-[#171717] font-semibold"
@@ -910,7 +919,7 @@ export function ChainTabs({ activeChain, onChainChange }: ChainTabsProps) {
         })}
       </div>
 
-      {/* Content - wrapped in Suspense so tabs stay visible while loading */}
+      {/* Content */}
       <div className="mt-2">
         <Suspense fallback={<ChainSkeleton />}>
           <ChainContent activeChain={activeChain} />
