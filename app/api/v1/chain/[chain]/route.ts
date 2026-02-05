@@ -14,8 +14,17 @@ import {
 import { fetchSolanaSupply, fetchSolanaInflation, fetchSolanaDailyFees } from "@/lib/fetchers/solana";
 import { fetchEthEtfHoldings } from "@/lib/fetchers/dune";
 
-
 type ChainParam = "btc" | "eth" | "sol";
+
+/**
+ * Convert APR to APY with compounding
+ * @param apr - Annual Percentage Rate as decimal (e.g., 0.059 for 5.9%)
+ * @param periodsPerYear - Number of compounding periods per year
+ * @returns APY as decimal
+ */
+function aprToApy(apr: number, periodsPerYear: number): number {
+  return Math.pow(1 + apr / periodsPerYear, periodsPerYear) - 1;
+}
 
 /**
  * GET /api/v3/chain/[chain]
@@ -190,7 +199,7 @@ async function getEthData() {
       totalStaked: stakingData.totalStaked,
       validatorCount: stakingData.validatorCount,
       stakingRatio, // Calculated using CoinGecko supply
-      apr: stakingRewardsData.apr,
+      apy: stakingRewardsData.apr ? aprToApy(stakingRewardsData.apr, 365) : null, // Convert APR to APY (daily compounding)
     },
     inflation: {
       issuance7d: stakingRewardsData.issuance7d,
@@ -254,6 +263,8 @@ async function getSolData() {
     tvlData,
     stablecoinsData,
     etfFlows,
+    etfHoldings,
+    datHoldings,
   ] = await Promise.all([
     fetchPriceSparkline("solana"),
     fetchSolanaSupply(),
@@ -262,25 +273,50 @@ async function getSolData() {
     fetchChainTvlWithSparkline("Solana"),
     fetchStablecoinWithSparkline("Solana"),
     getEtfFlowHistory("etf_flow_sol", 7),
+    getSolEtfHoldings(),
+    getSolDatHoldings(),
   ]);
+
+  // Calculate 7d high/low from sparkline
+  const high7d = sparklineData.sparkline.length > 0
+    ? Math.max(...sparklineData.sparkline)
+    : null;
+  const low7d = sparklineData.sparkline.length > 0
+    ? Math.min(...sparklineData.sparkline)
+    : null;
+
+  // Calculate staking APR from inflation: APR = inflation_rate × (total_supply / staked_amount)
+  // Then convert to APY with ~150 epochs/year compounding
+  const stakingApr = inflationData.annualRatePct && supplyData.totalSupply && supplyData.stakedAmount
+    ? (inflationData.annualRatePct / 100) * (supplyData.totalSupply / supplyData.stakedAmount)
+    : null;
+  const stakingApy = stakingApr ? aprToApy(stakingApr, 150) : null;
 
   console.log("[chain/sol] Sparkline:", sparklineData.sparkline.length, "pts, change:", sparklineData.change7d?.toFixed(2) + "%");
   console.log("[chain/sol] Supply:", supplyData.circulatingSupply?.toLocaleString(), "SOL, staking:", supplyData.stakingPct?.toFixed(1) + "%");
+  console.log("[chain/sol] Staking APR:", stakingApr ? (stakingApr * 100).toFixed(2) + "%" : "N/A", "→ APY:", stakingApy ? (stakingApy * 100).toFixed(2) + "%" : "N/A");
   console.log("[chain/sol] Inflation:", inflationData.annualRatePct?.toFixed(2) + "%");
   console.log("[chain/sol] TVL:", tvlData.current ? (tvlData.current / 1e9).toFixed(2) + "B" : "null");
   console.log("[chain/sol] ETF flows:", etfFlows.length, "days");
+  console.log("[chain/sol] ETF holdings:", etfHoldings.holdings?.length ?? 0, "funds, AUM:", etfHoldings.totalUsd ? (etfHoldings.totalUsd / 1e6).toFixed(2) + "M" : "null");
+  console.log("[chain/sol] DAT holdings:", datHoldings.totalSol?.toLocaleString(), "SOL,", datHoldings.companies?.length ?? 0, "companies");
 
   return {
     chain: "sol",
     price7d: {
       change: sparklineData.change7d,
       sparkline: sparklineData.sparkline,
+      high: high7d,
+      low: low7d,
     },
     supply: {
       total: supplyData.totalSupply,
       circulating: supplyData.circulatingSupply,
+    },
+    staking: {
       staked: supplyData.stakedAmount,
       stakingPct: supplyData.stakingPct,
+      apy: stakingApy, // Calculated from inflation, converted to APY
     },
     inflation: {
       annualRatePct: inflationData.annualRatePct,
@@ -304,6 +340,8 @@ async function getSolData() {
       today: etfFlows[0]?.value ?? null,
       history: etfFlows,
     },
+    etfHoldings: etfHoldings,
+    datHoldings: datHoldings,
     timestamp: new Date().toISOString(),
   };
 }
@@ -385,6 +423,103 @@ async function getDatHoldings(key: string) {
 
   return {
     totalEth: row.value,
+    totalUsd: metadata?.totalUsd ?? null,
+    supplyPct: metadata?.supplyPct ?? null,
+    companies: metadata?.companies ?? null,
+    date: row.date,
+  };
+}
+
+// Type for SOL ETF holdings metadata stored in Supabase
+interface SolEtfMetadata {
+  holdings?: Array<{
+    ticker: string;
+    issuer: string;
+    coin: string;
+    flows: number | null;
+    aum: number | null;
+  }>;
+}
+
+/**
+ * Get SOL ETF holdings from Supabase (stored by daily cron)
+ */
+async function getSolEtfHoldings() {
+  const supabase = createServerClient();
+
+  const { data, error } = await supabase
+    .from("metrics")
+    .select("date, value, metadata")
+    .eq("key", "etf_holdings_sol")
+    .order("date", { ascending: false })
+    .limit(1);
+
+  if (error || !data || data.length === 0) {
+    console.error("[chain] getSolEtfHoldings error:", error);
+    return {
+      totalSol: null,
+      totalUsd: null,
+      holdings: null,
+      date: null,
+    };
+  }
+
+  const row = data[0] as MetricsRowWithMetadata;
+  const metadata = row.metadata as SolEtfMetadata | null;
+
+  return {
+    totalSol: null, // Not tracked directly, would need price to calculate
+    totalUsd: row.value,
+    holdings: metadata?.holdings?.map(h => ({
+      ticker: h.ticker,
+      issuer: h.issuer,
+      usd: h.aum ?? 0,
+    })) ?? null,
+    date: row.date,
+  };
+}
+
+// Type for SOL DAT holdings metadata stored in Supabase
+interface SolDatMetadata {
+  totalUsd?: number;
+  supplyPct?: number;
+  companies?: Array<{
+    name: string;
+    holdings: number;
+    holdingsUsd: number;
+    supplyPct: number;
+  }>;
+}
+
+/**
+ * Get SOL DAT holdings from Supabase (stored by daily cron)
+ */
+async function getSolDatHoldings() {
+  const supabase = createServerClient();
+
+  const { data, error } = await supabase
+    .from("metrics")
+    .select("date, value, metadata")
+    .eq("key", "dat_holdings_sol")
+    .order("date", { ascending: false })
+    .limit(1);
+
+  if (error || !data || data.length === 0) {
+    console.error("[chain] getSolDatHoldings error:", error);
+    return {
+      totalSol: null,
+      totalUsd: null,
+      supplyPct: null,
+      companies: null,
+      date: null,
+    };
+  }
+
+  const row = data[0] as MetricsRowWithMetadata;
+  const metadata = row.metadata as SolDatMetadata | null;
+
+  return {
+    totalSol: row.value,
     totalUsd: metadata?.totalUsd ?? null,
     supplyPct: metadata?.supplyPct ?? null,
     companies: metadata?.companies ?? null,

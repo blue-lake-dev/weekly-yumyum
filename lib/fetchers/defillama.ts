@@ -264,17 +264,17 @@ export async function fetchChainTvlWithSparkline(chain: string): Promise<TvlSpar
     // Get last 8 days (need 8 to calculate 7d change)
     const recentData = data.slice(-8);
 
-    // Current value (latest)
-    const current = recentData[recentData.length - 1].tvl / 1e9;
+    // Current value (latest) - raw USD
+    const current = recentData[recentData.length - 1].tvl;
 
-    // 7 days ago value (first of 8)
-    const previous = recentData[0].tvl / 1e9;
+    // 7 days ago value (first of 8) - raw USD
+    const previous = recentData[0].tvl;
 
     // Calculate 7d change
     const change7d = previous > 0 ? ((current - previous) / previous) * 100 : null;
 
-    // Sparkline: last 7 days (skip first, take last 7)
-    const sparkline = recentData.slice(-7).map(d => d.tvl / 1e9);
+    // Sparkline: last 7 days (skip first, take last 7) - raw USD
+    const sparkline = recentData.slice(-7).map(d => d.tvl);
 
     return {
       current,

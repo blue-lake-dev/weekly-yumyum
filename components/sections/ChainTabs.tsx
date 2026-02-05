@@ -36,12 +36,16 @@ interface BtcData {
 
 interface SolData {
   chain: "sol";
-  price7d: { change: number | null; sparkline: number[] };
-  supply: { total: number | null; circulating: number | null; staked: number | null; stakingPct: number | null };
+  price7d: { change: number | null; sparkline: number[]; high: number | null; low: number | null };
+  supply: { total: number | null; circulating: number | null };
+  staking: { staked: number | null; stakingPct: number | null; apy: number | null };
   inflation: { annualRatePct: number | null; epoch: number | null };
+  fees: { daily: number | null; history: Array<{ date: string; feesSol: number }> };
   tvl: { total: number | null; change7d: number | null; sparkline: number[] };
-  stablecoins: { total: number | null; change7d: number | null };
+  stablecoins: { total: number | null; change7d: number | null; sparkline: number[] };
   etfFlows: { today: number | null; history: Array<{ date: string; value: number | null }> };
+  etfHoldings: { totalSol: number | null; totalUsd: number | null; holdings: Array<{ ticker: string; issuer: string; usd: number }> | null };
+  datHoldings: { totalSol: number | null; totalUsd: number | null; supplyPct: number | null; companies: Array<{ name: string; holdings: number; holdingsUsd: number; supplyPct: number }> | null };
 }
 
 const chainLabels: Record<Chain, string> = {
@@ -663,13 +667,130 @@ function HoldingsCard({
   );
 }
 
-// ETF Flow Card for ETH tab (with summary stats)
+// Holdings Card for SOL tab (ETF + DAT holdings with tabs)
+function SolHoldingsCard({
+  etfHoldings,
+  datHoldings,
+}: {
+  etfHoldings: SolData["etfHoldings"];
+  datHoldings: SolData["datHoldings"];
+}) {
+  const [activeTab, setActiveTab] = useState<"etf" | "dat">("etf");
+
+  return (
+    <div className="flex-1 rounded-xl bg-white border border-[#E5E7EB] p-3">
+      {/* Header: Label + Tabs */}
+      <div className="flex items-center justify-between mb-3">
+        <p className="font-semibold text-sm text-[#6B7280]">기관 보유량</p>
+        <div className="flex gap-1">
+          <button
+            onClick={() => setActiveTab("etf")}
+            className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+              activeTab === "etf"
+                ? "bg-[#9945FF] text-white"
+                : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"
+            }`}
+          >
+            ETF
+          </button>
+          <button
+            onClick={() => setActiveTab("dat")}
+            className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+              activeTab === "dat"
+                ? "bg-[#9945FF] text-white"
+                : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"
+            }`}
+          >
+            기업
+          </button>
+        </div>
+      </div>
+
+      {/* Column Headers */}
+      <div className="grid grid-cols-[24px_1fr_100px] gap-2 text-[10px] text-[#9CA3AF] uppercase tracking-wide pb-1.5 border-b border-[#E5E7EB] mb-1 pr-2">
+        <span>#</span>
+        <span>이름</span>
+        <span className="text-right">보유량</span>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === "etf" ? (
+        <div>
+          {/* Holdings List */}
+          <div className="max-h-36 overflow-y-auto pr-2">
+            {etfHoldings.holdings?.map((h, index) => (
+              <div
+                key={h.ticker}
+                className={`grid grid-cols-[24px_1fr_100px] gap-2 text-xs py-1.5 ${
+                  index % 2 === 1 ? "bg-[#F9FAFB]" : ""
+                }`}
+              >
+                <span className="text-[#9CA3AF]">{index + 1}.</span>
+                <span className="text-[#171717] truncate">{h.issuer}</span>
+                <span className="tabular-nums text-[#171717] text-right">
+                  {h.usd > 0 ? formatUsd(h.usd, 1) : "—"}
+                </span>
+              </div>
+            )) ?? (
+              <p className="text-xs text-[#9CA3AF] py-2">데이터 없음</p>
+            )}
+          </div>
+          {/* Footer: Totals */}
+          <div className="border-t border-[#E5E7EB] pt-2 mt-1 flex items-center justify-between text-sm pr-2">
+            <span className="text-[#6B7280]">총 보유</span>
+            <span className="font-semibold tabular-nums text-[#171717]">
+              {formatUsd(etfHoldings.totalUsd, 1)}
+            </span>
+          </div>
+        </div>
+      ) : (
+        <div>
+          {/* Companies List */}
+          <div className="max-h-36 overflow-y-auto pr-2">
+            {datHoldings.companies?.map((c, index) => (
+              <div
+                key={c.name}
+                className={`grid grid-cols-[24px_1fr_100px] gap-2 text-xs py-1.5 ${
+                  index % 2 === 1 ? "bg-[#F9FAFB]" : ""
+                }`}
+              >
+                <span className="text-[#9CA3AF]">{index + 1}.</span>
+                <span className="text-[#171717] truncate">{c.name}</span>
+                <span className="tabular-nums text-[#171717] text-right">
+                  {formatMillions(c.holdings)}
+                </span>
+              </div>
+            )) ?? (
+              <p className="text-xs text-[#9CA3AF] py-2">데이터 없음</p>
+            )}
+          </div>
+          {/* Footer: Totals */}
+          <div className="border-t border-[#E5E7EB] pt-2 mt-1 flex items-center justify-between text-sm pr-2">
+            <span className="text-[#6B7280]">총 보유</span>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold tabular-nums text-[#171717]">
+                {formatMillions(datHoldings.totalSol)} SOL
+              </span>
+              <span className="text-[#9CA3AF] tabular-nums text-xs">
+                총 공급량 대비 {datHoldings.supplyPct?.toFixed(2) ?? "—"}%
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ETF Flow Card with summary stats (reusable for ETH/SOL)
 function EtfFlowCard({
   history,
   today,
+  color = "#627EEA",
 }: {
   history: Array<{ date: string; value: number | null }>;
   today: number | null;
+  color?: string;
 }) {
   const chartData = toFlowChartData(history);
 
@@ -683,11 +804,11 @@ function EtfFlowCard({
 
       {/* Summary Stats */}
       <div className="flex items-baseline gap-6 mb-3">
-        <p className={`text-xl font-bold tabular-nums ${getFlowColor(today)}`}>
+        <p className="text-xl font-bold tabular-nums" style={{ color: today === null ? "#6B7280" : today >= 0 ? color : "#DC2626" }}>
           {formatFlowValue(today)}
           <span className="text-xs text-[#9CA3AF] font-normal ml-1">1일</span>
         </p>
-        <p className={`text-xl font-bold tabular-nums ${getFlowColor(cumulative7d)}`}>
+        <p className="text-xl font-bold tabular-nums" style={{ color: cumulative7d >= 0 ? color : "#DC2626" }}>
           {formatFlowValue(cumulative7d)}
           <span className="text-xs text-[#9CA3AF] font-normal ml-1">7일</span>
         </p>
@@ -713,8 +834,8 @@ function EtfFlowCard({
                   <div className="rounded-lg bg-white border border-[#E5E7EB] px-3 py-2 text-sm shadow-lg">
                     <p className="text-[#6B7280] mb-1">{label}</p>
                     <p className="flex items-center gap-1.5">
-                      <span className={`w-2 h-2 rounded-full ${value >= 0 ? "bg-[#627EEA]" : "bg-[#DC2626]"}`} />
-                      <span className={`font-medium tabular-nums ${value >= 0 ? "text-[#627EEA]" : "text-[#DC2626]"}`}>
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: value >= 0 ? color : "#DC2626" }} />
+                      <span className="font-medium tabular-nums" style={{ color: value >= 0 ? color : "#DC2626" }}>
                         {value >= 0 ? "+" : "-"}{formatUsd(Math.abs(value), 0)}
                       </span>
                     </p>
@@ -727,7 +848,7 @@ function EtfFlowCard({
               {chartData.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={entry.value >= 0 ? "#627EEA" : "#DC2626"}
+                  fill={entry.value >= 0 ? color : "#DC2626"}
                 />
               ))}
             </Bar>
@@ -802,15 +923,54 @@ export function ChainTabs({ activeChain, onChainChange }: ChainTabsProps) {
 function ChainSkeleton() {
   return (
     <div className="space-y-2">
-      {/* Row 1: 2-col grid */}
-      <div className="grid grid-cols-2 gap-2">
-        <Skeleton className="h-44 rounded-xl" />
-        <Skeleton className="h-44 rounded-xl" />
+      {/* Row 1: Price card (full width) */}
+      <div className="rounded-xl bg-white border border-[#E5E7EB] p-3">
+        <div className="flex items-start justify-between mb-2">
+          <div>
+            <Skeleton className="h-4 w-16 mb-2" />
+            <Skeleton className="h-7 w-32" />
+          </div>
+          <div className="text-right">
+            <Skeleton className="h-4 w-28 mb-1" />
+            <Skeleton className="h-4 w-28" />
+          </div>
+        </div>
+        <Skeleton className="h-28 w-full rounded-lg" />
       </div>
-      {/* Row 2: 2-col grid */}
-      <div className="grid grid-cols-2 gap-2">
-        <Skeleton className="h-44 rounded-xl" />
-        <Skeleton className="h-44 rounded-xl" />
+
+      {/* Row 2: 3-col stat cards */}
+      <div className="grid grid-cols-3 gap-2">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="rounded-xl bg-white border border-[#E5E7EB] p-3 min-h-[140px]">
+            <Skeleton className="h-4 w-20 mb-3" />
+            <Skeleton className="h-8 w-24 mb-2" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+        ))}
+      </div>
+
+      {/* Row 3: 2-col chart cards */}
+      <div className="flex gap-2">
+        {[1, 2].map((i) => (
+          <div key={i} className="flex-1 rounded-xl bg-white border border-[#E5E7EB] p-3">
+            <div className="mb-2">
+              <Skeleton className="h-4 w-20 mb-2" />
+              <Skeleton className="h-6 w-24" />
+            </div>
+            <Skeleton className="h-28 w-full rounded-lg" />
+          </div>
+        ))}
+      </div>
+
+      {/* Row 4: 2-col cards (ETF + Holdings) */}
+      <div className="flex gap-2">
+        {[1, 2].map((i) => (
+          <div key={i} className="flex-1 rounded-xl bg-white border border-[#E5E7EB] p-3">
+            <Skeleton className="h-4 w-24 mb-3" />
+            <Skeleton className="h-6 w-32 mb-3" />
+            <Skeleton className="h-32 w-full rounded-lg" />
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -924,7 +1084,7 @@ function EthContent({ data }: { data: EthData }) {
         <div className="rounded-xl bg-white border border-[#E5E7EB] p-3 flex flex-col justify-between min-h-[140px]">
           {/* Top row: Label + ETH logo */}
           <div className="flex items-start justify-between">
-            <p className="font-semibold text-sm text-[#6B7280]">ETH 공급량</p>
+            <p className="font-semibold text-sm text-[#6B7280]">ETH 유통량</p>
             <Image
               src="/assets/pixels/ethereum.png"
               alt="ETH"
@@ -985,9 +1145,9 @@ function EthContent({ data }: { data: EthData }) {
               <p className="text-sm text-[#6B7280]">
                 {formatEthAmount(data.staking.totalStaked)} ETH
               </p>
-              {data.staking.apr && (
+              {data.staking.apy && (
                 <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium text-[#16A34A] bg-[#DCFCE7] rounded">
-                  APR {formatPercent(data.staking.apr * 100, false)}
+                  APY {formatPercent(data.staking.apy * 100, false)}
                 </span>
               )}
             </div>
@@ -1084,35 +1244,273 @@ function EthContent({ data }: { data: EthData }) {
 }
 
 function SolContent({ data }: { data: SolData }) {
+  const { data: tickers = [] } = useTicker();
+  const solTicker = tickers.find((t) => t.symbol.toUpperCase() === "SOL");
+  const currentPrice = solTicker?.price ?? null;
+  const change7d = formatChange7d(data.price7d.change);
+
   return (
     <div className="space-y-2">
-      {/* Price Sparkline */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold text-[#171717]">7일 가격 추이</h3>
-          <span className={`text-sm font-medium tabular-nums ${(data.price7d.change ?? 0) >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
-            {formatPercent(data.price7d.change)}
-          </span>
+      {/* Row 1: Price */}
+      <div className="rounded-xl bg-white border border-[#E5E7EB] p-3">
+        {/* Header: Label + High/Low */}
+        <div className="flex items-start justify-between mb-2">
+          <div>
+            <p className="font-semibold text-sm text-[#6B7280]">SOL 가격</p>
+            <div className="flex items-baseline gap-2">
+              <p className="text-2xl font-bold tabular-nums text-[#171717]">
+                {currentPrice ? `$${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+              </p>
+              <span className={`text-sm font-medium tabular-nums ${change7d.color}`}>
+                <span className="text-[10px]">{change7d.arrow}</span> {change7d.value} <span className="text-[#9CA3AF]">7일</span>
+              </span>
+            </div>
+          </div>
+          <div className="text-right text-sm">
+            <p className="text-[#6B7280]">
+              7일 고가 <span className="font-semibold tabular-nums text-[#171717]">${data.price7d.high?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? "—"}</span>
+            </p>
+            <p className="text-[#6B7280]">
+              7일 저가 <span className="font-semibold tabular-nums text-[#171717]">${data.price7d.low?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? "—"}</span>
+            </p>
+          </div>
         </div>
-        <div className="h-24">
+        {/* Sparkline */}
+        <div className="h-28">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={toSparklineData(data.price7d.sparkline)}>
-              <Area type="monotone" dataKey="value" stroke="#00FFA3" fill="#00FFA3" fillOpacity={0.2} />
+            <AreaChart data={toSparklineDataWithDates(data.price7d.sparkline)} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+              <YAxis domain={["dataMin - 5", "dataMax + 5"]} hide />
+              <Tooltip
+                cursor={{ stroke: "#9945FF", strokeWidth: 1, strokeDasharray: "4 4" }}
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null;
+                  const item = payload[0].payload as { value: number; date: string };
+                  return (
+                    <div className="rounded-lg bg-white border border-[#E5E7EB] px-3 py-2 text-sm shadow-lg">
+                      <p className="text-[#6B7280] mb-1">{item.date}</p>
+                      <p className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-[#9945FF]" />
+                        <span className="text-[#171717] font-medium tabular-nums">
+                          ${item.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </p>
+                    </div>
+                  );
+                }}
+              />
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke="#9945FF"
+                fill="#9945FF"
+                fillOpacity={0.15}
+                dot={false}
+                activeDot={false}
+              />
             </AreaChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-4 gap-2">
-        <StatCard label="스테이킹" value={data.supply.stakingPct ? `${data.supply.stakingPct.toFixed(1)}%` : "—"} subValue={formatMillions(data.supply.staked) + " SOL"} />
-        <StatCard label="TVL" value={formatBillions(data.tvl.total)} change={data.tvl.change7d} />
-        <StatCard label="스테이블코인" value={formatBillions(data.stablecoins.total)} change={data.stablecoins.change7d} />
-        <StatCard label="인플레이션율" value={data.inflation.annualRatePct ? `${data.inflation.annualRatePct.toFixed(2)}%` : "—"} />
+      {/* Row 2: Supply, Staking, Inflation cards */}
+      <div className="grid grid-cols-3 gap-2">
+        {/* Card 1: SOL Supply */}
+        <div className="rounded-xl bg-white border border-[#E5E7EB] p-3 flex flex-col justify-between min-h-[140px]">
+          {/* Top row: Label + SOL logo */}
+          <div className="flex items-start justify-between">
+            <p className="font-semibold text-sm text-[#6B7280]">SOL 유통량</p>
+            <Image
+              src="/assets/pixels/solana.png"
+              alt="SOL"
+              width={48}
+              height={48}
+            />
+          </div>
+          {/* Bottom: Large number */}
+          <p className="text-3xl font-bold tabular-nums text-[#171717]">
+            {formatMillions(data.supply.circulating)}
+            <span className="text-lg font-medium text-[#6B7280] ml-1">SOL</span>
+          </p>
+        </div>
+
+        {/* Card 2: Staking */}
+        <div className="rounded-xl bg-white border border-[#E5E7EB] p-3 min-h-[140px]">
+          <p className="font-semibold text-sm text-[#6B7280] mb-3">스테이킹</p>
+          <div className="flex items-center justify-between">
+            {/* Donut Chart - Purple for SOL */}
+            <div className="relative w-20 h-20 flex-shrink-0">
+              <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                {/* Background track */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="none"
+                  stroke="#E5E7EB"
+                  strokeWidth="12"
+                />
+                {/* Progress arc */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="none"
+                  stroke="#9945FF"
+                  strokeWidth="12"
+                  strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 40}
+                  strokeDashoffset={
+                    2 * Math.PI * 40 * (1 - (data.staking.stakingPct ?? 0) / 100)
+                  }
+                />
+              </svg>
+              {/* Center text */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-sm font-semibold tabular-nums text-[#171717]">
+                  {data.staking.stakingPct ? `${data.staking.stakingPct.toFixed(1)}%` : "—"}
+                </span>
+              </div>
+            </div>
+            {/* Stats */}
+            <div className="text-right">
+              <p className="text-2xl font-bold tabular-nums text-[#171717]">
+                {data.staking.stakingPct ? `${data.staking.stakingPct.toFixed(1)}%` : "—"}
+              </p>
+              <p className="text-sm text-[#6B7280]">
+                {formatMillions(data.staking.staked)} SOL
+              </p>
+              {data.staking.apy && (
+                <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium text-[#16A34A] bg-[#DCFCE7] rounded">
+                  APY {formatPercent(data.staking.apy * 100, false)}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Inflation */}
+        <div className="rounded-xl bg-white border border-[#E5E7EB] p-3 min-h-[140px] flex flex-col justify-between">
+          <p className="font-semibold text-sm text-[#6B7280]">인플레이션</p>
+          {/* Annual Rate */}
+          <p className="text-2xl font-bold tabular-nums text-[#171717]">
+            {data.inflation.annualRatePct ? `${data.inflation.annualRatePct.toFixed(2)}%` : "—"}
+            <span className="text-sm font-medium text-[#6B7280] ml-1">/yr</span>
+          </p>
+        </div>
       </div>
 
-      {/* ETF Flow Chart */}
-      <EtfFlowChart history={data.etfFlows.history} today={data.etfFlows.today} color="#00FFA3" />
+      {/* Row 3: TVL + Stablecoins */}
+      <div className="flex gap-2">
+        {/* TVL Card */}
+        <div className="flex-1 rounded-xl bg-white border border-[#E5E7EB] p-3">
+          <div className="mb-2">
+            <p className="font-semibold text-sm text-[#6B7280]">총 예치량</p>
+            <div className="flex items-baseline gap-2">
+              <p className="text-lg font-bold tabular-nums text-[#171717]">
+                {formatBillions(data.tvl.total)}
+              </p>
+              {data.tvl.change7d !== null && (
+                <span className={`text-xs font-medium tabular-nums ${data.tvl.change7d >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
+                  <span className="text-[9px]">{data.tvl.change7d >= 0 ? "▲" : "▼"}</span> {Math.abs(data.tvl.change7d).toFixed(2)}% <span className="text-[#9CA3AF]">7일</span>
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="h-28">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={toSparklineDataWithDates(data.tvl.sparkline)} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                <YAxis domain={["dataMin * 0.95", "dataMax * 1.05"]} hide />
+                <Tooltip
+                  cursor={{ stroke: "#171717", strokeWidth: 1, strokeDasharray: "4 4" }}
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null;
+                    const item = payload[0].payload as { value: number; date: string };
+                    return (
+                      <div className="rounded-lg bg-white border border-[#E5E7EB] px-3 py-2 text-sm shadow-lg">
+                        <p className="text-[#6B7280] mb-1">{item.date}</p>
+                        <p className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-[#171717]" />
+                          <span className="text-[#171717] font-medium tabular-nums">
+                            ${(item.value / 1e9).toFixed(2)}B
+                          </span>
+                        </p>
+                      </div>
+                    );
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#171717"
+                  fill="#171717"
+                  fillOpacity={0.15}
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={false}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Stablecoins Card */}
+        <div className="flex-1 rounded-xl bg-white border border-[#E5E7EB] p-3">
+          <div className="mb-2">
+            <p className="font-semibold text-sm text-[#6B7280]">스테이블코인</p>
+            <div className="flex items-baseline gap-2">
+              <p className="text-lg font-bold tabular-nums text-[#171717]">
+                {formatBillions(data.stablecoins.total)}
+              </p>
+              {data.stablecoins.change7d !== null && (
+                <span className={`text-xs font-medium tabular-nums ${data.stablecoins.change7d >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
+                  <span className="text-[9px]">{data.stablecoins.change7d >= 0 ? "▲" : "▼"}</span> {Math.abs(data.stablecoins.change7d).toFixed(2)}% <span className="text-[#9CA3AF]">7일</span>
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="h-28">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={toSparklineDataWithDates(data.stablecoins.sparkline)} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                <YAxis domain={["dataMin * 0.95", "dataMax * 1.05"]} hide />
+                <Tooltip
+                  cursor={{ stroke: "#00FFA3", strokeWidth: 1, strokeDasharray: "4 4" }}
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null;
+                    const item = payload[0].payload as { value: number; date: string };
+                    return (
+                      <div className="rounded-lg bg-white border border-[#E5E7EB] px-3 py-2 text-sm shadow-lg">
+                        <p className="text-[#6B7280] mb-1">{item.date}</p>
+                        <p className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-[#00FFA3]" />
+                          <span className="text-[#171717] font-medium tabular-nums">
+                            ${(item.value / 1e9).toFixed(2)}B
+                          </span>
+                        </p>
+                      </div>
+                    );
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#00FFA3"
+                  fill="#00FFA3"
+                  fillOpacity={0.15}
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={false}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* Row 4: ETF Flows + Holdings */}
+      <div className="flex gap-2">
+        <EtfFlowCard history={data.etfFlows.history} today={data.etfFlows.today} color="#9945FF" />
+        <SolHoldingsCard etfHoldings={data.etfHoldings} datHoldings={data.datHoldings} />
+      </div>
     </div>
   );
 }

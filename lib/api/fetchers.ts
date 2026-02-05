@@ -105,7 +105,7 @@ export interface EthData {
   chain: "eth";
   price7d: { change: number | null; sparkline: number[]; high: number | null; low: number | null };
   supply: { circulating: number | null; totalBurnt: number | null };
-  staking: { totalStaked: number | null; validatorCount: number | null; stakingRatio: number | null; apr: number | null };
+  staking: { totalStaked: number | null; validatorCount: number | null; stakingRatio: number | null; apy: number | null };
   inflation: { issuance7d: number | null; burn7d: number | null; netSupplyChange7d: number | null; supplyGrowthPct: number | null; isDeflationary: boolean | null };
   burn: { last24h: number | null; last7d: number | null; sinceMerge: number | null; supplyGrowthPct: number | null; isDeflationary: boolean | null };
   l2Tvl: { dates: string[]; chains: Array<{ name: string; values: number[]; current: number }>; totals: { current: number; previous: number; change7d: number | null } };
@@ -117,12 +117,16 @@ export interface EthData {
 
 export interface SolData {
   chain: "sol";
-  price7d: { change: number | null; sparkline: number[] };
-  supply: { total: number | null; circulating: number | null; staked: number | null; stakingPct: number | null };
+  price7d: { change: number | null; sparkline: number[]; high: number | null; low: number | null };
+  supply: { total: number | null; circulating: number | null };
+  staking: { staked: number | null; stakingPct: number | null; apy: number | null };
   inflation: { annualRatePct: number | null; epoch: number | null };
+  fees: { daily: number | null; history: Array<{ date: string; feesSol: number }> };
   tvl: { total: number | null; change7d: number | null; sparkline: number[] };
-  stablecoins: { total: number | null; change7d: number | null };
+  stablecoins: { total: number | null; change7d: number | null; sparkline: number[] };
   etfFlows: EtfFlow;
+  etfHoldings: { totalSol: number | null; totalUsd: number | null; holdings: Array<{ ticker: string; issuer: string; usd: number }> | null };
+  datHoldings: { totalSol: number | null; totalUsd: number | null; supplyPct: number | null; companies: Array<{ name: string; holdings: number; holdingsUsd: number; supplyPct: number }> | null };
 }
 
 export type ChainData = BtcData | EthData | SolData;

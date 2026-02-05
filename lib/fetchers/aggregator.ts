@@ -1,7 +1,8 @@
 import { createServerClient } from "@/lib/supabase";
 import type { MetricInsert } from "@/lib/database.types";
 import { fetchEtfFlows } from "./farside";
-import { fetchDatHoldings } from "./dat-scraper";
+import { fetchDatHoldings, fetchSolDatHoldings } from "./dat-scraper";
+import { fetchSolEtfHoldings } from "./defillama-etf";
 
 // Get today's date in YYYY-MM-DD format
 function getToday(): string {
@@ -89,7 +90,7 @@ export async function fetchAndStoreMetrics(): Promise<FetchResult> {
   // Fetch DAT (Digital Asset Treasury) Holdings - ETH corporate/institutional holdings
   // Unlike ETF flows, this is a cumulative snapshot that updates daily
   try {
-    console.log("[aggregator] Fetching DAT holdings...");
+    console.log("[aggregator] Fetching ETH DAT holdings...");
     const datHoldings = await fetchDatHoldings();
 
     if (datHoldings.totalEth && !datHoldings.error) {
@@ -103,14 +104,64 @@ export async function fetchAndStoreMetrics(): Promise<FetchResult> {
           companies: datHoldings.companies,
         },
       });
-      console.log(`[aggregator] DAT holdings: ${datHoldings.totalEth} ETH, ${datHoldings.companies?.length ?? 0} companies`);
+      console.log(`[aggregator] ETH DAT holdings: ${datHoldings.totalEth} ETH, ${datHoldings.companies?.length ?? 0} companies`);
     } else {
-      console.log("[aggregator] DAT holdings fetch returned no data");
-      if (datHoldings.error) errors.push(`dat: ${datHoldings.error}`);
+      console.log("[aggregator] ETH DAT holdings fetch returned no data");
+      if (datHoldings.error) errors.push(`dat_eth: ${datHoldings.error}`);
     }
   } catch (e) {
-    console.error("[aggregator] DAT holdings error:", e);
-    errors.push(`dat: ${e}`);
+    console.error("[aggregator] ETH DAT holdings error:", e);
+    errors.push(`dat_eth: ${e}`);
+  }
+
+  // Fetch SOL ETF Holdings from DeFiLlama
+  try {
+    console.log("[aggregator] Fetching SOL ETF holdings...");
+    const solEtfHoldings = await fetchSolEtfHoldings();
+
+    if (solEtfHoldings.holdings && !solEtfHoldings.error) {
+      metrics.push({
+        date: today,
+        key: "etf_holdings_sol",
+        value: solEtfHoldings.totalAum,
+        metadata: {
+          holdings: solEtfHoldings.holdings,
+        },
+      });
+      console.log(`[aggregator] SOL ETF holdings: $${(solEtfHoldings.totalAum ?? 0) / 1e6}M, ${solEtfHoldings.holdings.length} funds`);
+    } else {
+      console.log("[aggregator] SOL ETF holdings fetch returned no data");
+      if (solEtfHoldings.error) errors.push(`etf_sol: ${solEtfHoldings.error}`);
+    }
+  } catch (e) {
+    console.error("[aggregator] SOL ETF holdings error:", e);
+    errors.push(`etf_sol: ${e}`);
+  }
+
+  // Fetch SOL DAT Holdings from DeFiLlama
+  try {
+    console.log("[aggregator] Fetching SOL DAT holdings...");
+    const solDatHoldings = await fetchSolDatHoldings();
+
+    if (solDatHoldings.totalHoldings && !solDatHoldings.error) {
+      metrics.push({
+        date: today,
+        key: "dat_holdings_sol",
+        value: solDatHoldings.totalHoldings,
+        metadata: {
+          totalUsd: solDatHoldings.totalUsd,
+          supplyPct: solDatHoldings.supplyPct,
+          companies: solDatHoldings.companies,
+        },
+      });
+      console.log(`[aggregator] SOL DAT holdings: ${solDatHoldings.totalHoldings} SOL, ${solDatHoldings.companies?.length ?? 0} companies`);
+    } else {
+      console.log("[aggregator] SOL DAT holdings fetch returned no data");
+      if (solDatHoldings.error) errors.push(`dat_sol: ${solDatHoldings.error}`);
+    }
+  } catch (e) {
+    console.error("[aggregator] SOL DAT holdings error:", e);
+    errors.push(`dat_sol: ${e}`);
   }
 
   // Store metrics in Supabase

@@ -2,12 +2,21 @@ import { launchBrowser } from "./browser";
 
 export interface DatCompany {
   name: string;
-  holdings: number; // ETH amount
+  holdings: number; // Token amount (ETH or SOL)
   holdingsUsd: number;
   supplyPct: number;
 }
 
 export interface DatHoldingsData {
+  totalHoldings: number | null; // Token amount (ETH or SOL)
+  totalUsd: number | null;
+  supplyPct: number | null;
+  companies: DatCompany[] | null;
+  error?: string;
+}
+
+// Legacy interface for backwards compatibility
+export interface EthDatHoldingsData {
   totalEth: number | null;
   totalUsd: number | null;
   supplyPct: number | null;
@@ -50,11 +59,14 @@ function parsePct(value: string): number {
 }
 
 /**
- * Scrape ETH DAT (Digital Asset Treasury) holdings from DeFiLlama
- * This fetches corporate/institutional ETH holdings (not DAO treasuries)
- * URL: https://defillama.com/digital-asset-treasuries/ethereum
+ * Scrape DAT (Digital Asset Treasury) holdings from DeFiLlama
+ * This fetches corporate/institutional holdings (not DAO treasuries)
+ *
+ * @param chain - "ethereum" or "solana"
  */
-export async function fetchDatHoldings(): Promise<DatHoldingsData> {
+export async function fetchDatHoldingsByChain(
+  chain: "ethereum" | "solana"
+): Promise<DatHoldingsData> {
   const browser = await launchBrowser();
 
   try {
@@ -63,7 +75,7 @@ export async function fetchDatHoldings(): Promise<DatHoldingsData> {
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     );
 
-    const url = "https://defillama.com/digital-asset-treasuries/ethereum";
+    const url = `https://defillama.com/digital-asset-treasuries/${chain}`;
     console.log(`[dat-scraper] Navigating to ${url}...`);
 
     await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
@@ -115,17 +127,20 @@ export async function fetchDatHoldings(): Promise<DatHoldingsData> {
         for (let i = 0; i < 5 && rowEl; i++) {
           const text = rowEl.textContent || "";
 
-          if (text.includes(name) && text.includes("ETH") && text.includes("%")) {
+          // Check for ETH or SOL token
+          const hasToken = text.includes("ETH") || text.includes("SOL");
+          if (text.includes(name) && hasToken && text.includes("%")) {
             const afterName = text.substring(text.indexOf(name) + name.length);
 
-            const holdingsMatch = afterName.match(/^\s*([\d,]+\.?\d*[mk]?)\s*ETH/i);
+            // Match holdings for ETH or SOL
+            const holdingsMatch = afterName.match(/^\s*([\d,]+\.?\d*[mk]?)\s*(ETH|SOL)/i);
             const usdMatch = afterName.match(/\$([\d.]+[bm])/i);
             const supplyMatch = afterName.match(/\$[\d.]+\s+([\d.]+)%/);
 
             if (holdingsMatch && usdMatch) {
               companies.push({
                 name,
-                holdings: holdingsMatch[1] + " ETH",
+                holdings: holdingsMatch[1] + " " + holdingsMatch[2].toUpperCase(),
                 holdingsUsd: "$" + usdMatch[1],
                 supplyPct: supplyMatch ? supplyMatch[1] + "%" : "",
               });
@@ -141,7 +156,7 @@ export async function fetchDatHoldings(): Promise<DatHoldingsData> {
     });
 
     // Parse the scraped data
-    const totalEth = parseHoldingsValue(data.totalHoldings);
+    const totalHoldings = parseHoldingsValue(data.totalHoldings);
     const totalUsd = parseUsdValue(data.totalUsdValue);
     const supplyPct = parsePct(data.circulatingSupplyPct);
 
@@ -155,10 +170,11 @@ export async function fetchDatHoldings(): Promise<DatHoldingsData> {
     // Sort companies by holdings (descending)
     companies.sort((a, b) => b.holdings - a.holdings);
 
-    console.log(`[dat-scraper] Extracted: ${totalEth} ETH, $${totalUsd}, ${supplyPct}%, ${companies.length} companies`);
+    const tokenSymbol = chain === "ethereum" ? "ETH" : "SOL";
+    console.log(`[dat-scraper] Extracted: ${totalHoldings} ${tokenSymbol}, $${totalUsd}, ${supplyPct}%, ${companies.length} companies`);
 
     return {
-      totalEth: totalEth || null,
+      totalHoldings: totalHoldings || null,
       totalUsd: totalUsd || null,
       supplyPct: supplyPct || null,
       companies: companies.length > 0 ? companies : null,
@@ -166,7 +182,7 @@ export async function fetchDatHoldings(): Promise<DatHoldingsData> {
   } catch (error) {
     console.error("[dat-scraper] Error:", error);
     return {
-      totalEth: null,
+      totalHoldings: null,
       totalUsd: null,
       supplyPct: null,
       companies: null,
@@ -175,4 +191,25 @@ export async function fetchDatHoldings(): Promise<DatHoldingsData> {
   } finally {
     await browser.close();
   }
+}
+
+/**
+ * Fetch ETH DAT holdings (legacy wrapper for backwards compatibility)
+ */
+export async function fetchDatHoldings(): Promise<EthDatHoldingsData> {
+  const data = await fetchDatHoldingsByChain("ethereum");
+  return {
+    totalEth: data.totalHoldings,
+    totalUsd: data.totalUsd,
+    supplyPct: data.supplyPct,
+    companies: data.companies,
+    error: data.error,
+  };
+}
+
+/**
+ * Fetch SOL DAT holdings
+ */
+export async function fetchSolDatHoldings(): Promise<DatHoldingsData> {
+  return fetchDatHoldingsByChain("solana");
 }

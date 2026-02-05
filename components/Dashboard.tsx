@@ -41,7 +41,7 @@ export function Dashboard() {
 
         {/* ❹ 얌얌의 한마디 - Streaming */}
         <ErrorBoundary>
-          <Suspense fallback={<SectionSkeleton height="h-28" />}>
+          <Suspense fallback={<YumyumCommentSkeleton />}>
             <YumyumComment />
           </Suspense>
         </ErrorBoundary>
@@ -73,6 +73,32 @@ function SectionSkeleton({ height }: { height: string }) {
       <Skeleton className="h-5 w-32 mb-3" />
       <Skeleton className="h-full w-full" />
     </div>
+  );
+}
+
+function YumyumCommentSkeleton() {
+  return (
+    <section className="mb-3">
+      {/* Section Header - Outside card */}
+      <Skeleton className="h-6 w-28 mb-3" />
+
+      {/* Card */}
+      <div className="rounded-xl bg-white border border-[#E5E7EB] p-3 shadow-sm">
+        <div className="flex items-start gap-4">
+          {/* Mascot placeholder */}
+          <Skeleton className="w-20 h-20 rounded-lg flex-shrink-0" />
+
+          {/* Speech bubble placeholder */}
+          <div className="flex-1">
+            <div className="bg-[#F6F7F9] rounded-lg p-4">
+              <Skeleton className="h-4 w-full mb-2" />
+              <Skeleton className="h-4 w-3/4 mb-2" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 

@@ -459,7 +459,16 @@ Dashboard → ✏️ 수동 입력 → /api/update-manual → Vercel KV 업데�
   - [x] 툴팁: L1/L2 breakdown 표시
 - [x] ChainTabs 섹션 (ETH 탭 - 나머지)
   - [x] Supply, Staking, Burn 통계
-  - [ ] ETF flows + holdings (탭 뷰)
+  - [x] ETF flows + holdings (탭 뷰)
+- [x] ChainTabs 섹션 (SOL 탭)
+  - [x] SOL 가격 차트 (7d 스파크라인, 고가/저가)
+  - [x] Supply, Staking (도넛 차트), Inflation 카드
+  - [x] TVL + Stablecoins 차트 (스파크라인)
+  - [x] ETF flows + holdings (탭 뷰)
+  - [x] SOL ETF/DAT → Supabase 저장 (cron)
+- [x] Skeleton 개선
+  - [x] YumyumComment: 타이틀 외부, 마스코트+말풍선 구조
+  - [x] ChainTabs: 4행 카드 구조 (Price, Stats, Charts, Holdings)
 - [x] MoreTabs 섹션 (RWA)
   - [x] RWA 총액 + 30일 변동률
   - [x] Stacked area chart (rwa.xyz CSV → Supabase Storage)
