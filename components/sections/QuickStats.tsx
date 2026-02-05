@@ -59,7 +59,7 @@ export function QuickStats() {
                         false,
                       )}
                     </span>
-                    <span className="text-[#9CA3AF] ml-1">24h</span>
+                    <span className="text-[#9CA3AF] ml-1">24시간</span>
                   </p>
                 )}
               </div>

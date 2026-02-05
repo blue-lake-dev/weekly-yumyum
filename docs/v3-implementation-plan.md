@@ -358,23 +358,19 @@ Rules: Factual, concise, no emojis, no price predictions, casual tone (반말 OK
 
 ### Component: `components/v3/MoreTabs.tsx`
 
-**Tabs:** [파생상품] [RWA]
+**Tabs:** [RWA] (파생상품 deferred)
 
-#### 파생상품 Tab:
+#### 파생상품 Tab: ⏸️ DEFERRED
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│         롱/숏 비율                                    펀딩비 (8h)    │
-│ BTC   [🐂████████████░░░░░░🐻] 58%/42%              +0.012%        │
-│ ETH   [🐂███████████░░░░░░░🐻] 54%/46%              +0.008%        │
-│ SOL   [🐂██████░░░░░░░░░░░░🐻] 32%/68%              -0.005%        │
-└─────────────────────────────────────────────────────────────────────┘
-```
+Reason: Free APIs (Binance, OKX, Bybit) only provide account-based Long/Short ratios,
+not position-weighted ratios. Position-weighted data (like Coinglass shows) requires
+paid API ($29+/mo) or complex aggregation from multiple exchange Open Interest data.
 
-**Data:**
-- Source: Binance Futures API
-- Long/Short: 5 min cache
-- Funding Rate: 15 min cache
-- No storage
+Will revisit when:
+- Coinglass API becomes affordable/free
+- Alternative free data source becomes available
+- Budget allows for paid API subscription
+```
 
 #### RWA Tab:
 ```
@@ -392,9 +388,11 @@ Rules: Factual, concise, no emojis, no price predictions, casual tone (반말 OK
 ```
 
 **Data:**
-- RWA by Chain: DeFiLlama (15 min cache)
-- RWA by Category: rwa.xyz CSV (manual upload)
-- No storage
+- RWA by Chain: DeFiLlama API (15 min cache)
+- RWA by Category: rwa.xyz CSV stored in **Supabase Storage** (`rwa-data` bucket)
+  - Filename format: `rwa-market-overview-YYYY-MM-DD.csv`
+  - API auto-detects latest file by date in filename
+  - Upload new CSV to bucket → chart updates automatically
 
 **Hook:** `use-derivatives.ts`, `use-rwa.ts`
 
@@ -552,7 +550,7 @@ Hooks use `refetchInterval` to auto-refresh data while the page is open:
 | Dune API | SOL fees, ETF holdings | Free (with key) | ✅ Done |
 | Farside | ETF flows (scraper) | Free | ✅ Done |
 | Claude API | AI summary | ~$0.01/day | ⏸️ Deferred |
-| rwa.xyz | RWA by category (CSV) | Free | TODO |
+| rwa.xyz | RWA by category (CSV → Supabase Storage) | Free | ✅ Done |
 
 ### 9.8 Backfill (Run Once)
 
@@ -629,7 +627,7 @@ lib/hooks/         # Data fetching hooks
 - [x] 37. Create `lib/hooks/use-gainers-losers.ts` - ❸
 - [x] 38. Create `lib/hooks/use-summary.ts` - ❹
 - [x] 39. Create `lib/hooks/use-chain-data.ts` - ❺
-- [x] 40. Create `lib/hooks/use-derivatives.ts` - ❻
+- [ ] 40. Create `lib/hooks/use-derivatives.ts` - ❻ (DEFERRED - no free position-weighted API)
 - [x] 41. Create `lib/hooks/use-rwa.ts` - ❻
 - [x] 42. Update `app/page.tsx` - assemble all sections (home = dashboard)
 
@@ -686,7 +684,7 @@ lib/hooks/         # Data fetching hooks
 - [x] `lib/hooks/use-gainers-losers.ts` - ❸ 오늘의 코인
 - [x] `lib/hooks/use-summary.ts` - ❹ 얌얌의 한마디
 - [x] `lib/hooks/use-chain-data.ts` - ❺ Chain Tabs
-- [x] `lib/hooks/use-derivatives.ts` - ❻ 파생상품
+- [ ] `lib/hooks/use-derivatives.ts` - ❻ 파생상품 (DEFERRED)
 - [x] `lib/hooks/use-rwa.ts` - ❻ RWA
 
 ### Components - UI (Primitives)
@@ -759,6 +757,11 @@ lib/hooks/         # Data fetching hooks
 - **2026-02-02**: Fixed hydration mismatch in Footer (suppressHydrationWarning)
 - **2026-02-02**: Fixed gainers/losers API error handling (return empty arrays instead of throwing)
 - **2026-02-02**: Cleanup - removed unused formatNumber, BASE_URL; use shared formatters from utils/format.ts
+- **2026-02-05**: Implemented RWA section with stacked area chart (rwa.xyz CSV data)
+- **2026-02-05**: Added RWA by Chain horizontal bar chart (DeFiLlama API)
+- **2026-02-05**: Moved RWA CSV to Supabase Storage (`rwa-data` bucket) with auto-detection of latest file
+- **2026-02-05**: Deferred Derivatives section (Binance API only provides account-based ratios, not position-weighted)
+- **2026-02-05**: Fixed QuickStats Korean localization (24h → 24시간)
 - **2026-02-01**: Added auto-refresh polling (`refetchInterval`) to ticker (1m), gainers/losers (15m), quick stats (30m), derivatives (5m)
 - **2026-02-01**: Completed all frontend components and hooks (Phase 3 & 4)
 - **2026-02-01**: Adopted streaming hydration pattern (TanStack Query v5 + Suspense)

@@ -460,6 +460,11 @@ Dashboard → ✏️ 수동 입력 → /api/update-manual → Vercel KV 업데�
 - [x] ChainTabs 섹션 (ETH 탭 - 나머지)
   - [x] Supply, Staking, Burn 통계
   - [ ] ETF flows + holdings (탭 뷰)
+- [x] MoreTabs 섹션 (RWA)
+  - [x] RWA 총액 + 30일 변동률
+  - [x] Stacked area chart (rwa.xyz CSV → Supabase Storage)
+  - [x] RWA by Chain 수평 바 차트 (DeFiLlama API)
+  - [x] Auto-detect latest CSV by date in filename
 - [ ] Gainers/Losers 섹션
-- [ ] 파생상품 섹션
+- [ ] 파생상품 섹션 (deferred - free API 미지원)
 - [ ] 배포 (Vercel production)

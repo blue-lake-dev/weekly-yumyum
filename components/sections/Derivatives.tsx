@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 interface DerivativeItem {
   longPct: number;
   shortPct: number;
@@ -17,9 +19,9 @@ interface DerivativesProps {
 }
 
 const symbols = [
-  { key: "btc" as const, label: "BTC", icon: "₿" },
-  { key: "eth" as const, label: "ETH", icon: "Ξ" },
-  { key: "sol" as const, label: "SOL", icon: "◎" },
+  { key: "btc" as const, label: "BTC", image: "/assets/pixels/bitcoin.png" },
+  { key: "eth" as const, label: "ETH", image: "/assets/pixels/ethereum.png" },
+  { key: "sol" as const, label: "SOL", image: "/assets/pixels/solana.png" },
 ];
 
 export function Derivatives({ data }: DerivativesProps) {
@@ -32,61 +34,65 @@ export function Derivatives({ data }: DerivativesProps) {
   }
 
   return (
-    <div className="space-y-3">
-      {/* Header */}
-      <div className="flex items-center text-xs text-[#6B7280] font-medium">
-        <div className="w-16" />
-        <div className="flex-1 text-center">롱/숏 비율</div>
-        <div className="w-24 text-right">펀딩비 (8h)</div>
+    <div className="space-y-4">
+      {/* Column Headers */}
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-[#6B7280]">롱/숏 비율</span>
+        <span className="text-sm font-medium text-[#6B7280]">펀딩비</span>
       </div>
 
       {/* Rows */}
-      {symbols.map(({ key, label, icon }) => {
+      {symbols.map(({ key, label, image }) => {
         const item = data[key];
         if (!item) {
           return (
-            <div key={key} className="flex items-center">
-              <div className="w-16 flex items-center gap-1 font-medium text-[#171717]">
-                <span>{icon}</span>
-                <span>{label}</span>
-              </div>
+            <div key={key} className="flex items-center gap-3">
+              <Image src={image} alt={label} width={32} height={32} className="flex-shrink-0" />
+              <span className="text-sm font-semibold text-[#171717] w-10">{label}</span>
               <div className="flex-1 text-center text-sm text-[#9CA3AF]">데이터 없음</div>
-              <div className="w-24" />
             </div>
           );
         }
 
-        const fundingColor = parseFloat(item.fundingRatePct) >= 0 ? "text-[#16A34A]" : "text-[#DC2626]";
+        const fundingValue = parseFloat(item.fundingRatePct);
+        const fundingColor = fundingValue >= 0 ? "text-[#16A34A]" : "text-[#DC2626]";
 
         return (
-          <div key={key} className="flex items-center gap-2">
-            {/* Symbol */}
-            <div className="w-16 flex items-center gap-1 font-medium text-[#171717]">
-              <span>{icon}</span>
-              <span>{label}</span>
-            </div>
+          <div key={key} className="flex items-center gap-3">
+            {/* Coin Image */}
+            <Image src={image} alt={label} width={32} height={32} className="flex-shrink-0" />
 
-            {/* Long/Short Bar */}
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-[#16A34A] w-8">🐂</span>
-                <div className="flex-1 h-4 bg-[#FEE2E2] rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#16A34A] rounded-full transition-all"
-                    style={{ width: `${item.longPct}%` }}
-                  />
+            {/* Main Content - 80% width */}
+            <div className="w-[80%]">
+              {/* Row above bar: Symbol + percentages */}
+              <div className="flex items-center justify-between mb-1">
+                {/* Left: Symbol + Long % */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-[#171717]">{label}</span>
+                  <span className="text-sm font-medium text-[#16A34A] tabular-nums">{item.longPct}%</span>
                 </div>
-                <span className="text-xs text-[#DC2626] w-8 text-right">🐻</span>
+                {/* Right: Short % */}
+                <span className="text-sm font-medium text-[#DC2626] tabular-nums">{item.shortPct}%</span>
               </div>
-              <div className="flex justify-between text-xs text-[#6B7280] mt-0.5">
-                <span>{item.longPct}%</span>
-                <span>{item.shortPct}%</span>
+
+              {/* Bar with liquid animation */}
+              <div className="h-4 bg-[#FECACA] rounded-full overflow-hidden relative">
+                {/* Long (green) portion */}
+                <div
+                  className="absolute inset-y-0 left-0 bg-[#16A34A] rounded-l-full transition-all duration-700 ease-in-out"
+                  style={{ width: `${item.longPct}%` }}
+                />
+                {/* Short (red) portion - always fills remaining */}
+                <div
+                  className="absolute inset-y-0 right-0 bg-[#DC2626] rounded-r-full transition-all duration-700 ease-in-out"
+                  style={{ width: `${item.shortPct}%` }}
+                />
               </div>
             </div>
 
-            {/* Funding Rate */}
-            <div className={`w-24 text-right text-sm font-medium tabular-nums ${fundingColor}`}>
-              {parseFloat(item.fundingRatePct) >= 0 ? "+" : ""}{item.fundingRatePct}%
+            {/* Funding Rate - pushed to right */}
+            <div className={`ml-auto text-right text-base font-semibold tabular-nums ${fundingColor}`}>
+              {fundingValue >= 0 ? "+" : ""}{item.fundingRatePct}%
             </div>
           </div>
         );
