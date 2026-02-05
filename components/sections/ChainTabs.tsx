@@ -188,10 +188,7 @@ function TvlChart({ data }: TvlChartProps) {
           // Total with L1/L2 breakdown
           <>
             <div className="flex items-center justify-between gap-3 py-0.5">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#171717]" />
-                <span className="text-[#171717] font-medium">Total</span>
-              </div>
+              <span className="text-[#171717] font-medium">Total</span>
               <span className="text-[#171717] font-medium tabular-nums">${(d._l1 + d._l2).toFixed(2)}B</span>
             </div>
             <div className="border-t border-[#E5E7EB] mt-1.5 pt-1.5">
@@ -399,10 +396,7 @@ function StablecoinsChart({ data }: StablecoinsChartProps) {
           // Total with L1/L2 breakdown
           <>
             <div className="flex items-center justify-between gap-3 py-0.5">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#10B981]" />
-                <span className="text-[#171717] font-medium">Total</span>
-              </div>
+              <span className="text-[#171717] font-medium">Total</span>
               <span className="text-[#171717] font-medium tabular-nums">${(d._l1 + d._l2).toFixed(2)}B</span>
             </div>
             <div className="border-t border-[#E5E7EB] mt-1.5 pt-1.5">
@@ -716,7 +710,7 @@ function EtfFlowCard({
                 if (!active || !payload?.length) return null;
                 const value = payload[0].payload.value;
                 return (
-                  <div className="rounded-lg bg-white border border-[#E5E7EB] px-3 py-2 text-xs shadow-lg">
+                  <div className="rounded-lg bg-white border border-[#E5E7EB] px-3 py-2 text-sm shadow-lg">
                     <p className="text-[#6B7280] mb-1">{label}</p>
                     <p className="flex items-center gap-1.5">
                       <span className={`w-2 h-2 rounded-full ${value >= 0 ? "bg-[#627EEA]" : "bg-[#DC2626]"}`} />
@@ -898,7 +892,7 @@ function EthContent({ data }: { data: EthData }) {
                   if (!active || !payload?.length) return null;
                   const item = payload[0].payload as { value: number; date: string };
                   return (
-                    <div className="rounded-lg bg-white border border-[#E5E7EB] px-3 py-2 text-xs shadow-lg">
+                    <div className="rounded-lg bg-white border border-[#E5E7EB] px-3 py-2 text-sm shadow-lg">
                       <p className="text-[#6B7280] mb-1">{item.date}</p>
                       <p className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-[#627EEA]" />
@@ -1185,7 +1179,7 @@ function EtfFlowChart({
                 if (!active || !payload?.length) return null;
                 const value = payload[0].payload.value;
                 return (
-                  <div className="rounded-lg bg-white border border-[#E5E7EB] px-3 py-2 text-xs shadow-lg">
+                  <div className="rounded-lg bg-white border border-[#E5E7EB] px-3 py-2 text-sm shadow-lg">
                     <p className="text-[#6B7280] mb-1">{label}</p>
                     <p className="flex items-center gap-1.5">
                       <span className={`w-2 h-2 rounded-full ${value >= 0 ? "bg-[#627EEA]" : "bg-[#DC2626]"}`} />
