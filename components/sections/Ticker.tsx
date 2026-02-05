@@ -42,7 +42,6 @@ export function Ticker() {
   const { data: tickers = [] } = useTicker();
   const prevPricesRef = useRef<Map<string, number>>(new Map());
   const [flashStates, setFlashStates] = useState<FlashState>({});
-  const [expanded, setExpanded] = useState(false);
 
   // Detect price changes and trigger flash animations
   useEffect(() => {
@@ -79,12 +78,11 @@ export function Ticker() {
     }
   }, [tickers]);
 
-
   if (tickers.length === 0) {
     return <div className="w-full bg-[#DEE1E5] h-10 animate-pulse" />;
   }
 
-  const renderTickerItem = (ticker: typeof tickers[0]) => {
+  const renderTickerItem = (ticker: typeof tickers[0], index: number, isDuplicate: boolean) => {
     const changeColor =
       ticker.change24h === null
         ? "text-[#6B7280]"
@@ -99,11 +97,13 @@ export function Ticker() {
       : "";
 
     const { arrow, value } = formatChange(ticker.change24h);
-
     const priceText = formatPrice(ticker.price);
 
     return (
-      <div key={ticker.symbol} className="flex items-center gap-1 whitespace-nowrap">
+      <div
+        key={isDuplicate ? `${ticker.symbol}-dup-${index}` : ticker.symbol}
+        className="flex items-center gap-1 whitespace-nowrap"
+      >
         <Image
           src={ticker.image}
           alt={ticker.name}
@@ -126,26 +126,22 @@ export function Ticker() {
   };
 
   return (
-    <div className="w-full bg-[#DEE1E5]">
-      <div className={`flex gap-4 px-4 py-2.5 ${expanded ? "items-start" : "items-center"}`}>
+    <div className="w-full bg-[#DEE1E5] overflow-hidden">
+      <div className="flex items-center gap-4 px-4 py-2.5">
         {/* Fixed label */}
         <div className="flex-shrink-0 font-medium text-[#171717]">
           ⭐️ Top 10
         </div>
 
-        {/* Ticker items */}
-        <div className={`flex-1 flex items-center gap-x-8 gap-y-2 ${expanded ? "flex-wrap" : "overflow-hidden"}`}>
-          {tickers.map((ticker) => renderTickerItem(ticker))}
+        {/* Scrolling marquee container */}
+        <div className="flex-1 overflow-hidden">
+          <div className="flex items-center gap-8 animate-marquee">
+            {/* First set of tickers */}
+            {tickers.map((ticker, index) => renderTickerItem(ticker, index, false))}
+            {/* Duplicate for seamless loop */}
+            {tickers.map((ticker, index) => renderTickerItem(ticker, index, true))}
+          </div>
         </div>
-
-        {/* Expand/collapse button */}
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="flex-shrink-0 text-xs text-[#6B7280] hover:text-[#171717] transition-colors"
-          aria-label={expanded ? "Collapse" : "Expand"}
-        >
-          {expanded ? "▲" : "▼"}
-        </button>
       </div>
     </div>
   );
