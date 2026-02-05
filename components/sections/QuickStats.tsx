@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { Area, AreaChart, ResponsiveContainer, YAxis } from "recharts";
 import { QuickStatCard } from "@/components/ui/QuickStatCard";
@@ -11,16 +12,29 @@ import { formatPercent, formatUsd } from "@/lib/utils/format";
 
 export function QuickStats() {
   const { data, isLoading } = useQuickStats();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [hasOverflow, setHasOverflow] = useState(false);
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (scrollRef.current) {
+        setHasOverflow(scrollRef.current.scrollWidth > scrollRef.current.clientWidth);
+      }
+    };
+    checkOverflow();
+    window.addEventListener("resize", checkOverflow);
+    return () => window.removeEventListener("resize", checkOverflow);
+  }, [data]);
 
   if (isLoading || !data) {
     return (
       <section className="mb-3">
         <h2 className="mb-3 font-bold text-lg text-[#171717]">빠른 현황</h2>
-        <div className="flex gap-2 overflow-x-auto lg:overflow-visible scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto scrollbar-touch-hide">
           {[1, 2, 3, 4, 5].map((i) => (
             <Skeleton
               key={i}
-              className="h-32 min-w-[160px] flex-shrink-0 rounded-xl"
+              className="h-32 flex-1 flex-shrink-0 rounded-xl"
             />
           ))}
         </div>
@@ -32,9 +46,9 @@ export function QuickStats() {
     <section className="mb-3">
       <h2 className="mb-3 font-bold text-lg text-[#171717]">얌얌 시황</h2>
 
-      {/* Horizontal scroll container with fade on mobile */}
+      {/* Horizontal scroll container with fade when overflowing */}
       <div className="relative">
-        <div className="flex gap-2 overflow-x-auto scrollbar-touch-hide">
+        <div ref={scrollRef} className="flex gap-2 overflow-x-auto scrollbar-touch-hide">
           {/* Card 1: Total Market Cap */}
           <QuickStatCard label="암호화폐 시총">
             <div className="flex-1 flex items-center justify-center text-center">
@@ -89,7 +103,7 @@ export function QuickStats() {
           </QuickStatCard>
 
           {/* Card 3: Dominance */}
-          <QuickStatCard label="BTC Dominance" className="min-w-[180px]">
+          <QuickStatCard label="BTC Dominance">
             <div className="flex-1 flex flex-col justify-center space-y-1.5">
               {/* BTC row */}
               <div className="flex items-center justify-between">
@@ -133,7 +147,7 @@ export function QuickStats() {
           </QuickStatCard>
 
           {/* Card 4: Stablecoins */}
-          <QuickStatCard label="스테이블코인 시총" className="min-w-[180px]">
+          <QuickStatCard label="스테이블코인 시총">
             <div className="flex flex-col flex-1">
               <div>
                 <p className="text-2xl font-semibold text-[#171717] tabular-nums tracking-tight">
@@ -207,7 +221,6 @@ export function QuickStats() {
           <QuickStatCard
             label="ETF 자금흐름"
             subtitle={data.etfFlows.date ?? undefined}
-            className="min-w-[160px]"
           >
             <div className="flex-1 flex flex-col justify-center space-y-2">
               {/* BTC ETF */}
@@ -298,8 +311,10 @@ export function QuickStats() {
           </QuickStatCard>
         </div>
 
-        {/* Right fade indicator to hint more content */}
-        <div className="absolute right-0 top-0 bottom-2 w-12 bg-gradient-to-l from-[#F6F7F9] to-transparent pointer-events-none" />
+        {/* Right fade indicator to hint more content (only when scrollable) */}
+        {hasOverflow && (
+          <div className="absolute right-0 top-0 bottom-2 w-12 bg-gradient-to-l from-[#F6F7F9] to-transparent pointer-events-none" />
+        )}
       </div>
     </section>
   );

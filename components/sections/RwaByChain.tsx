@@ -68,7 +68,7 @@ export function RwaByChain() {
 
   return (
     <div className="w-full h-full flex flex-col">
-      <p className="text-sm text-[#6B7280] mb-3">체인별 RWA</p>
+      <p className="font-semibold text-sm text-[#6B7280] mb-3">체인별 RWA</p>
       <div className="flex-1 flex flex-col justify-center space-y-2.5">
         {data.chains.map((chain) => (
           <div key={chain.name} className="space-y-1">

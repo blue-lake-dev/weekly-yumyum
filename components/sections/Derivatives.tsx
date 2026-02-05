@@ -37,8 +37,8 @@ export function Derivatives({ data }: DerivativesProps) {
     <div className="space-y-4">
       {/* Column Headers */}
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-[#6B7280]">롱/숏 비율</span>
-        <span className="text-sm font-medium text-[#6B7280]">펀딩비</span>
+        <span className="font-semibold text-sm text-[#6B7280]">롱/숏 비율</span>
+        <span className="font-semibold text-sm text-[#6B7280]">펀딩비</span>
       </div>
 
       {/* Rows */}

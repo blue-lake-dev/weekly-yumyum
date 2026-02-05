@@ -96,10 +96,9 @@ function CoinCard({
     <div className="flex-1 min-w-0 rounded-xl bg-white border border-[#E5E7EB] shadow-sm overflow-hidden">
       {/* Card Header */}
       <div className="px-4 py-3">
-        <h3 className="text-sm">
-          <span className="font-bold text-[#171717]">Top 10 </span>
-          <span className={`font-semibold ${titleColor}`}>{title}</span>
-        </h3>
+        <p className="font-semibold text-sm text-[#6B7280]">
+          Top 10 <span className={titleColor}>{title}</span>
+        </p>
       </div>
 
       {/* Coin List */}

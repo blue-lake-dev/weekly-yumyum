@@ -133,7 +133,7 @@ export function RwaSection() {
     <div className="space-y-4">
       {/* Header: Total + Changes */}
       <div>
-        <p className="text-sm text-[#6B7280] mb-1">RWA 총액</p>
+        <p className="font-semibold text-sm text-[#6B7280] mb-1">RWA 총액</p>
         <div className="flex items-baseline gap-3">
           <p className="text-3xl font-bold text-[#171717] tabular-nums">
             {formatBillions(data.latest.total)}
@@ -176,7 +176,7 @@ export function RwaSection() {
                   0
                 );
                 return (
-                  <div className="rounded-lg bg-white border border-[#E5E7EB] px-3 py-2 text-xs shadow-lg">
+                  <div className="rounded-lg bg-white border border-[#E5E7EB] px-3 py-2 text-sm shadow-lg">
                     <p className="text-[#6B7280] font-medium mb-2">{point?.fullDate}</p>
                     <p className="text-[#171717] font-bold mb-2">
                       Total: {formatBillions(total)}
@@ -189,18 +189,18 @@ export function RwaSection() {
                         .map((p) => (
                           <div
                             key={p.dataKey}
-                            className="flex items-center justify-between gap-2"
+                            className="flex items-center justify-between gap-3"
                           >
                             <div className="flex items-center gap-1.5">
                               <span
                                 className="w-2 h-2 rounded-full flex-shrink-0"
                                 style={{ backgroundColor: p.color }}
                               />
-                              <span className="text-[#6B7280] truncate">
+                              <span className="text-[#6B7280]">
                                 {SHORT_NAMES[p.dataKey as string] || p.dataKey}
                               </span>
                             </div>
-                            <span className="text-[#171717] tabular-nums">
+                            <span className="text-[#171717] font-medium tabular-nums">
                               {formatBillions(p.value as number)}
                             </span>
                           </div>

@@ -20,14 +20,14 @@ export function QuickStatCard({
   return (
     <div
       className={`
-        flex-shrink-0 min-w-[160px]
+        flex-shrink-0 flex-1 min-w-[160px]
         rounded-xl bg-white p-4 shadow-sm
         flex flex-col
         ${className}
       `}
     >
       <div className="mb-2">
-        <p className="font-semibold text-xs text-[#6B7280]">{label}</p>
+        <p className="font-semibold text-sm text-[#6B7280]">{label}</p>
         {subtitle && <p className="text-[10px] text-[#9CA3AF]">{subtitle}</p>}
       </div>
       {children}
