@@ -48,14 +48,13 @@ export function YumyumComment() {
 
       {/* Card */}
       <div className="rounded-xl bg-white border border-[#E5E7EB] p-3 shadow-sm">
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-3 sm:gap-4">
           {/* Mascot - flipped to face right */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 relative">
             <Image
               src="/assets/pixels/doge-suit-grey-glasses.png"
               alt="얌얌"
-              width={80}
-              height={80}
+              fill
               className="object-contain"
               style={{ transform: "scaleX(-1)" }}
             />

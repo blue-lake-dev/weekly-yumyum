@@ -52,6 +52,15 @@ body {
   box-shadow: none !important;
 }
 
+/* Mobile side drawer slide-in */
+@keyframes slide-in-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+.animate-slide-in-right {
+  animation: slide-in-right 0.2s ease-out;
+}
+
 /* Ticker marquee - seamless horizontal scroll */
 @keyframes marquee {
   0% { transform: translateX(0); }
@@ -140,7 +149,7 @@ body {
   .scrollbar-touch-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
-    padding-bottom: 0; /* No padding when scrollbar hidden */
+    padding-bottom: 8px; /* Match desktop padding for card shadow visibility */
   }
   .scrollbar-touch-hide::-webkit-scrollbar {
     display: none;

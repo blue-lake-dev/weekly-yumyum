@@ -41,9 +41,9 @@ function CoinRow({
   const changeColor = type === "gainer" ? "text-[#16A34A]" : "text-[#DC2626]";
 
   return (
-    <div className="flex items-center gap-2 py-2 px-3 mx-2 hover:bg-[#F6F7F9] rounded-lg transition-colors">
+    <div className="flex items-center gap-1.5 sm:gap-2 py-1.5 sm:py-2 px-1.5 sm:px-3 mx-1 sm:mx-2 hover:bg-[#F6F7F9] rounded-lg transition-colors">
       {/* Rank */}
-      <span className="w-5 text-sm font-medium text-[#9CA3AF] tabular-nums">
+      <span className="w-4 sm:w-5 text-xs sm:text-sm font-medium text-[#9CA3AF] tabular-nums">
         {rank}
       </span>
 
@@ -53,13 +53,13 @@ function CoinRow({
         alt={coin.name}
         width={24}
         height={24}
-        className="rounded-full"
+        className="rounded-full w-5 h-5 sm:w-6 sm:h-6"
         placeholder="blur"
         blurDataURL={COIN_IMAGE_PLACEHOLDER}
       />
 
       {/* Symbol */}
-      <span className="text-sm font-semibold text-[#171717]">
+      <span className="text-xs sm:text-sm font-semibold text-[#171717]">
         {coin.symbol}
       </span>
 
@@ -67,10 +67,10 @@ function CoinRow({
       <div className="flex-1" />
 
       {/* Price + Change grouped tightly */}
-      <span className="text-sm font-semibold text-[#171717] tabular-nums">
+      <span className="hidden sm:inline text-sm font-semibold text-[#171717] tabular-nums">
         {formatPrice(coin.price)}
       </span>
-      <span className={`text-sm font-medium tabular-nums w-[58px] text-right ${changeColor}`}>
+      <span className={`text-xs sm:text-sm font-medium tabular-nums text-right ${changeColor}`}>
         {formatPercent(coin.change, true)}
       </span>
     </div>
@@ -95,7 +95,7 @@ function CoinCard({
   return (
     <div className="flex-1 min-w-0 rounded-xl bg-white border border-[#E5E7EB] shadow-sm overflow-hidden">
       {/* Card Header */}
-      <div className="px-4 py-3">
+      <div className="px-3 sm:px-4 py-2 sm:py-3">
         <p className="font-semibold text-sm text-[#6B7280]">
           Top 10 <span className={titleColor}>{title}</span>
         </p>
@@ -151,7 +151,7 @@ export function TodaysCoin() {
       </div>
 
       {/* Two Cards Side by Side */}
-      <div className="flex flex-col sm:flex-row gap-2">
+      <div className="flex gap-2">
         <CoinCard
           title="gainers"
           titleColor="text-[#16A34A]"

@@ -44,7 +44,7 @@ export default function AboutPage() {
 
       <main className="bg-[#F6F7F9]">
         {/* ❶ Banner - rush_more with dark gradient overlay */}
-        <section className="relative mx-auto max-w-5xl h-[360px] overflow-hidden">
+        <section className="relative mx-auto max-w-5xl h-[280px] sm:h-[360px] overflow-hidden">
           <Image
             src="/assets/pixels/rush_more.webp"
             alt="얌얌코인 배너"
@@ -54,7 +54,7 @@ export default function AboutPage() {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30" />
           <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center text-white">
-            <h1 className="text-2xl sm:text-3xl font-bold mb-3">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3">
               🍭 돈 되는 코인 정보만 편식하자.
             </h1>
             <p className="text-sm sm:text-base text-white/80">
@@ -107,7 +107,7 @@ export default function AboutPage() {
                   alt="신호등"
                   width={280}
                   height={280}
-                  className="rounded-2xl"
+                  className="rounded-2xl max-w-full h-auto"
                 />
               </div>
               <div className="space-y-2 text-[#374151] text-sm sm:text-base leading-relaxed max-w-lg mx-auto">
@@ -135,7 +135,7 @@ export default function AboutPage() {
                   alt="불 vs 베어"
                   width={360}
                   height={280}
-                  className="rounded-2xl"
+                  className="rounded-2xl max-w-full h-auto"
                 />
               </div>
               <div className="space-y-2 text-[#374151] text-sm sm:text-base leading-relaxed max-w-lg mx-auto">

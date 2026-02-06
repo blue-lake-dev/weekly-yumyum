@@ -15,7 +15,7 @@ export default function CalendarPage() {
           alt="Crypto Calendar Coming Soon"
           width={480}
           height={480}
-          className="rounded-2xl"
+          className="rounded-2xl max-w-full h-auto"
           priority
         />
         <p className="mt-4 text-sm text-[#6B7280]">

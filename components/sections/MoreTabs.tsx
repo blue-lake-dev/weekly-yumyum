@@ -23,14 +23,14 @@ export function MoreTabs() {
       </div>
 
       {/* Content - Two cards side by side */}
-      <div className="mt-2 flex items-stretch gap-3">
+      <div className="mt-2 flex flex-col sm:flex-row items-stretch gap-3">
         {/* RWA Chart Card */}
         <div className="flex-1 rounded-xl bg-white border border-[#E5E7EB] p-4 shadow-sm">
           <RwaSection />
         </div>
 
         {/* RWA by Chain Card */}
-        <div className="w-[280px] flex-shrink-0 rounded-xl bg-white border border-[#E5E7EB] p-4 shadow-sm">
+        <div className="w-full sm:w-[280px] sm:flex-shrink-0 rounded-xl bg-white border border-[#E5E7EB] p-4 shadow-sm">
           <RwaByChain />
         </div>
       </div>

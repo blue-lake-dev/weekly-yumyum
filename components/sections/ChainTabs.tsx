@@ -900,7 +900,7 @@ export function ChainTabs() {
       <h2 className="mb-1 font-bold text-lg text-[#171717]">체인별 현황</h2>
 
       {/* Tabs - underline style like Header nav */}
-      <div className="flex items-center gap-6 border-b border-[#E5E7EB]">
+      <div className="flex items-center gap-3 sm:gap-6 border-b border-[#E5E7EB]">
         {chains.map((chain) => {
           const isActive = activeChain === chain;
           return (
@@ -908,7 +908,7 @@ export function ChainTabs() {
               key={chain}
               onMouseEnter={() => prefetchChain(chain)}
               onClick={() => setActiveChain(chain)}
-              className={`group relative flex items-center gap-2.5 py-2 text-base font-medium transition-colors ${
+              className={`group relative flex items-center gap-1.5 sm:gap-2.5 py-2 text-sm sm:text-base font-medium transition-colors ${
                 isActive
                   ? "text-[#171717] font-semibold"
                   : "text-[#6B7280] hover:text-[#171717]"
@@ -919,7 +919,7 @@ export function ChainTabs() {
                 alt={chainLabels[chain]}
                 width={32}
                 height={32}
-                className={`object-contain transition-opacity ${isActive ? "opacity-100" : "opacity-40 group-hover:opacity-100"}`}
+                className={`w-6 h-6 sm:w-8 sm:h-8 object-contain transition-opacity ${isActive ? "opacity-100" : "opacity-40 group-hover:opacity-100"}`}
               />
               {chainLabels[chain]}
               {isActive && (
@@ -961,7 +961,7 @@ function ChainSkeleton() {
       {/* Row 2: 3-col stat cards */}
       <div className="grid grid-cols-3 gap-2">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="rounded-xl bg-white border border-[#E5E7EB] p-3 min-h-[140px]">
+          <div key={i} className="rounded-xl bg-white border border-[#E5E7EB] p-2 sm:p-3 min-h-[100px] sm:min-h-[140px]">
             <Skeleton className="h-4 w-20 mb-3" />
             <Skeleton className="h-8 w-24 mb-2" />
             <Skeleton className="h-4 w-16" />
@@ -970,7 +970,7 @@ function ChainSkeleton() {
       </div>
 
       {/* Row 3: 2-col chart cards */}
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         {[1, 2].map((i) => (
           <div key={i} className="flex-1 rounded-xl bg-white border border-[#E5E7EB] p-3">
             <div className="mb-2">
@@ -983,7 +983,7 @@ function ChainSkeleton() {
       </div>
 
       {/* Row 4: 2-col cards (ETF + Holdings) */}
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         {[1, 2].map((i) => (
           <div key={i} className="flex-1 rounded-xl bg-white border border-[#E5E7EB] p-3">
             <Skeleton className="h-4 w-24 mb-3" />
@@ -1031,7 +1031,7 @@ function BtcContent() {
   return (
     <div className="space-y-2">
       {/* Row 1: Price + Mayer Multiple */}
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         {/* Price Card */}
         <BtcPriceCard data={priceQuery.data} isLoading={forceLoading || priceQuery.isLoading} />
         {/* Mayer Multiple Card */}
@@ -1053,7 +1053,7 @@ function BtcContent() {
       </div>
 
       {/* Row 3: ETF Flows + Holdings */}
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <BtcEtfFlowCard data={holdingsQuery.data} isLoading={forceLoading || holdingsQuery.isLoading} />
         <BtcHoldingsCard data={holdingsQuery.data} isLoading={forceLoading || holdingsQuery.isLoading} />
       </div>
@@ -1128,7 +1128,7 @@ function BtcPriceCard({ data, isLoading }: { data?: BtcPriceData; isLoading: boo
           <div className="flex items-center gap-3">
             <div>
               <p className="font-semibold text-sm text-[#6B7280] mb-1">BTC 가격</p>
-              <p className="text-2xl font-bold tabular-nums text-[#171717]">
+              <p className="text-xl sm:text-2xl font-bold tabular-nums text-[#171717]">
                 {data?.price ? `$${data.price.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : "—"}
               </p>
             </div>
@@ -1250,19 +1250,19 @@ function BtcMiningCostCard({
   const cost = data?.miningCost.productionCost;
 
   return (
-    <div className="rounded-xl bg-white border border-[#E5E7EB] p-3">
-      <p className="font-semibold text-sm text-[#6B7280] mb-1">채굴 원가</p>
+    <div className="rounded-xl bg-white border border-[#E5E7EB] p-2 sm:p-3">
+      <p className="font-semibold text-xs sm:text-sm text-[#6B7280] mb-1">채굴 원가</p>
       {isLoading ? (
         <div className="flex items-center justify-center h-10">
           <Spinner size="md" />
         </div>
       ) : (
-        <div className="flex items-center gap-2">
-          <p className="text-2xl font-bold tabular-nums text-[#171717]">
+        <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+          <p className="text-lg sm:text-2xl font-bold tabular-nums text-[#171717]">
             {cost ? `$${cost.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : "—"}
           </p>
           {price && cost && (
-            <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+            <span className={`text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded ${
               price > cost ? "bg-[#DCFCE7] text-[#16A34A]" : "bg-[#FEE2E2] text-[#DC2626]"
             }`}>
               {price > cost ? "수익 구간" : "손실 구간"}
@@ -1287,25 +1287,25 @@ function BtcMempoolCard({ data, isLoading }: { data?: BtcNetworkData; isLoading:
   const config = mempool?.congestionLevel ? congestionConfig[mempool.congestionLevel] : null;
 
   return (
-    <div className="rounded-xl bg-white border border-[#E5E7EB] p-3">
-      <p className="font-semibold text-sm text-[#6B7280] mb-2">네트워크 상태</p>
+    <div className="rounded-xl bg-white border border-[#E5E7EB] p-2 sm:p-3">
+      <p className="font-semibold text-xs sm:text-sm text-[#6B7280] mb-1 sm:mb-2">네트워크 상태</p>
       {isLoading ? (
         <div className="flex items-center justify-center h-12">
           <Spinner size="md" />
         </div>
       ) : (
         <>
-          <div className="flex items-center gap-2 mb-1">
-            <p className="text-sm text-[#6B7280]">
-              권장 수수료: <span className="font-bold tabular-nums text-[#171717]">{mempool?.fees.economy ?? "—"} sat/vB</span>
+          <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-1">
+            <p className="text-xs sm:text-sm text-[#6B7280]">
+              <span className="hidden sm:inline">권장 수수료: </span><span className="font-bold tabular-nums text-[#171717]">{mempool?.fees.economy ?? "—"} sat/vB</span>
             </p>
             {config && (
-              <span className={`text-xs font-medium px-2 py-0.5 rounded ${config.bg} ${config.text}`}>
+              <span className={`text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded ${config.bg} ${config.text}`}>
                 {config.label}
               </span>
             )}
           </div>
-          <p className="text-xs text-[#6B7280] tabular-nums">
+          <p className="hidden sm:block text-xs text-[#6B7280] tabular-nums">
             대기 용량: {mempool?.pendingVsize ? `${mempool.pendingVsize.toFixed(1)} vMB` : "—"}
           </p>
         </>
@@ -1326,31 +1326,31 @@ function BtcHashrateCard({ data, isLoading }: { data?: BtcNetworkData; isLoading
   const sparklineMax = sparklineData.length > 0 ? Math.max(...sparklineData.map(d => d.value)) : 0;
 
   return (
-    <div className="rounded-xl bg-white border border-[#E5E7EB] p-3">
-      <p className="font-semibold text-sm text-[#6B7280] mb-1">해시레이트</p>
+    <div className="rounded-xl bg-white border border-[#E5E7EB] p-2 sm:p-3">
+      <p className="font-semibold text-xs sm:text-sm text-[#6B7280] mb-1">해시레이트</p>
       {isLoading ? (
         <div className="flex items-center justify-center h-10">
           <Spinner size="md" />
         </div>
       ) : (
         <>
-          <div className="flex items-center gap-2">
-            <p className="text-2xl font-bold tabular-nums text-[#171717]">
+          <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+            <p className="text-lg sm:text-2xl font-bold tabular-nums text-[#171717]">
               {hashrate?.current ? hashrate.current.toFixed(0) : "—"}
             </p>
-            <span className="text-sm text-[#6B7280]">EH/s</span>
+            <span className="text-xs sm:text-sm text-[#6B7280]">EH/s</span>
             {change !== null && change !== undefined && (
               <>
-                <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded ${badgeColor}`}>
+                <span className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded ${badgeColor}`}>
                   <span className="text-[10px]">{arrow}</span>
                   {Math.abs(change).toFixed(1)}%
                 </span>
-                <span className="text-[10px] text-[#9CA3AF]">30일</span>
+                <span className="hidden sm:inline text-[10px] text-[#9CA3AF]">30일</span>
               </>
             )}
           </div>
           {sparklineData.length > 0 && (
-            <div className="w-full h-14 mt-2">
+            <div className="hidden sm:block w-full h-14 mt-2">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={sparklineData}>
                   <YAxis domain={[sparklineMin * 0.99, sparklineMax * 1.01]} hide />
@@ -1555,7 +1555,7 @@ function EthContent() {
       </div>
 
       {/* Row 3: TVL + Stablecoins (side by side) */}
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         {chartsQuery.isLoading ? (
           <>
             <div className="flex-1 rounded-xl bg-white border border-[#E5E7EB] p-3 h-[260px] flex items-center justify-center">
@@ -1574,7 +1574,7 @@ function EthContent() {
       </div>
 
       {/* Row 4: ETF Flows + Holdings (side by side) */}
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         {holdingsQuery.isLoading ? (
           <>
             <div className="flex-1 rounded-xl bg-white border border-[#E5E7EB] p-3 h-[200px] flex items-center justify-center">
@@ -1616,7 +1616,7 @@ function EthPriceCard({ data, isLoading }: { data?: EthPriceData; isLoading: boo
         <div>
           <p className="font-semibold text-sm text-[#6B7280]">ETH 가격</p>
           <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-bold tabular-nums text-[#171717]">
+            <p className="text-xl sm:text-2xl font-bold tabular-nums text-[#171717]">
               {currentPrice ? `$${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
             </p>
             <ChangeBadge value={data?.price7d.change ?? null} label="7일" />
@@ -1631,7 +1631,7 @@ function EthPriceCard({ data, isLoading }: { data?: EthPriceData; isLoading: boo
           </p>
         </div>
       </div>
-      <div className="h-28">
+      <div className="h-20 sm:h-28">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={toSparklineDataWithDates(data?.price7d.sparkline ?? [])} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
             <YAxis domain={["dataMin - 50", "dataMax + 50"]} hide />
@@ -1673,14 +1673,14 @@ function EthPriceCard({ data, isLoading }: { data?: EthPriceData; isLoading: boo
 function EthSupplyCard({ data, isLoading }: { data?: EthStatsData; isLoading: boolean }) {
   if (isLoading) {
     return (
-      <div className="rounded-xl bg-white border border-[#E5E7EB] p-3 flex items-center justify-center min-h-[140px]">
+      <div className="rounded-xl bg-white border border-[#E5E7EB] p-2 sm:p-3 flex items-center justify-center min-h-[100px] sm:min-h-[140px]">
         <Spinner size="md" />
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl bg-white border border-[#E5E7EB] p-3 flex flex-col justify-between min-h-[140px]">
+    <div className="rounded-xl bg-white border border-[#E5E7EB] p-2 sm:p-3 flex flex-col justify-between min-h-[100px] sm:min-h-[140px]">
       <div className="flex items-start justify-between">
         <p className="font-semibold text-sm text-[#6B7280]">ETH 유통량</p>
         <Image
@@ -1688,11 +1688,12 @@ function EthSupplyCard({ data, isLoading }: { data?: EthStatsData; isLoading: bo
           alt="ETH"
           width={48}
           height={48}
+          className="hidden sm:block"
         />
       </div>
-      <p className="text-3xl font-bold tabular-nums text-[#171717]">
+      <p className="text-xl sm:text-3xl font-bold tabular-nums text-[#171717]">
         {formatEthAmount(data?.supply.circulating ?? null)}
-        <span className="text-lg font-medium text-[#6B7280] ml-1">ETH</span>
+        <span className="text-xs sm:text-lg font-medium text-[#6B7280] ml-1">ETH</span>
       </p>
     </div>
   );
@@ -1701,17 +1702,17 @@ function EthSupplyCard({ data, isLoading }: { data?: EthStatsData; isLoading: bo
 function EthStakingCard({ data, isLoading }: { data?: EthStatsData; isLoading: boolean }) {
   if (isLoading) {
     return (
-      <div className="rounded-xl bg-white border border-[#E5E7EB] p-3 flex items-center justify-center min-h-[140px]">
+      <div className="rounded-xl bg-white border border-[#E5E7EB] p-2 sm:p-3 flex items-center justify-center min-h-[100px] sm:min-h-[140px]">
         <Spinner size="md" />
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl bg-white border border-[#E5E7EB] p-3 min-h-[140px]">
-      <p className="font-semibold text-sm text-[#6B7280] mb-3">스테이킹</p>
+    <div className="rounded-xl bg-white border border-[#E5E7EB] p-2 sm:p-3 min-h-[100px] sm:min-h-[140px]">
+      <p className="font-semibold text-sm text-[#6B7280] mb-2 sm:mb-3">스테이킹</p>
       <div className="flex items-center justify-between">
-        <div className="relative w-20 h-20 flex-shrink-0">
+        <div className="relative w-20 h-20 flex-shrink-0 hidden sm:block">
           <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
             <circle cx="50" cy="50" r="40" fill="none" stroke="#E5E7EB" strokeWidth="12" />
             <circle
@@ -1727,15 +1728,15 @@ function EthStakingCard({ data, isLoading }: { data?: EthStatsData; isLoading: b
             </span>
           </div>
         </div>
-        <div className="text-right">
-          <p className="text-2xl font-bold tabular-nums text-[#171717]">
+        <div className="text-right sm:text-right text-left w-full sm:w-auto">
+          <p className="text-lg sm:text-2xl font-bold tabular-nums text-[#171717]">
             {formatPercent(data?.staking.stakingRatio ?? null, false, 1)}
           </p>
-          <p className="text-sm text-[#6B7280]">
+          <p className="text-xs sm:text-sm text-[#6B7280]">
             {formatEthAmount(data?.staking.totalStaked ?? null)} ETH
           </p>
           {data?.staking.apy && (
-            <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium text-[#16A34A] bg-[#DCFCE7] rounded">
+            <span className="inline-block mt-1 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-medium text-[#16A34A] bg-[#DCFCE7] rounded">
               APY {formatPercent(data.staking.apy * 100, false)}
             </span>
           )}
@@ -1748,7 +1749,7 @@ function EthStakingCard({ data, isLoading }: { data?: EthStatsData; isLoading: b
 function EthInflationCard({ data, isLoading }: { data?: EthStatsData; isLoading: boolean }) {
   if (isLoading) {
     return (
-      <div className="rounded-xl bg-white border border-[#E5E7EB] p-3 flex items-center justify-center min-h-[140px]">
+      <div className="rounded-xl bg-white border border-[#E5E7EB] p-2 sm:p-3 flex items-center justify-center min-h-[100px] sm:min-h-[140px]">
         <Spinner size="md" />
       </div>
     );
@@ -1760,11 +1761,11 @@ function EthInflationCard({ data, isLoading }: { data?: EthStatsData; isLoading:
   const isDeflation = inflation?.isDeflationary;
 
   return (
-    <div className="rounded-xl bg-white border border-[#E5E7EB] p-3 min-h-[140px] flex flex-col justify-between">
+    <div className="rounded-xl bg-white border border-[#E5E7EB] p-2 sm:p-3 min-h-[100px] sm:min-h-[140px] flex flex-col justify-between">
       <p className="font-semibold text-sm text-[#6B7280]">인플레이션</p>
-      <div className="flex items-baseline gap-2">
+      <div className="flex flex-wrap items-baseline gap-1 sm:gap-2">
         <p
-          className={`text-2xl font-bold tabular-nums ${
+          className={`text-lg sm:text-2xl font-bold tabular-nums ${
             growthPct !== null && growthPct !== undefined
               ? growthPct <= 0 ? "text-[#627EEA]" : "text-[#DC2626]"
               : "text-[#171717]"
@@ -1773,7 +1774,7 @@ function EthInflationCard({ data, isLoading }: { data?: EthStatsData; isLoading:
           {growthPct !== null && growthPct !== undefined
             ? `${formatPercent(growthPct)}`
             : "—"}
-          <span className="text-base font-medium text-[#6B7280] ml-1">/yr</span>
+          <span className="text-xs sm:text-base font-medium text-[#6B7280] ml-1">/yr</span>
         </p>
         {isDeflation !== null && isDeflation !== undefined && (
           <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
@@ -1809,7 +1810,7 @@ function SolPriceCard({ data, isLoading }: { data?: SolPriceData; isLoading: boo
         <div>
           <p className="font-semibold text-sm text-[#6B7280]">SOL 가격</p>
           <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-bold tabular-nums text-[#171717]">
+            <p className="text-xl sm:text-2xl font-bold tabular-nums text-[#171717]">
               {currentPrice ? `$${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
             </p>
             <ChangeBadge value={data.price7d.change} label="7일" />
@@ -1825,7 +1826,7 @@ function SolPriceCard({ data, isLoading }: { data?: SolPriceData; isLoading: boo
         </div>
       </div>
       {/* Sparkline */}
-      <div className="h-28">
+      <div className="h-20 sm:h-28">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={toSparklineDataWithDates(data.price7d.sparkline)} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
             <YAxis domain={["dataMin - 5", "dataMax + 5"]} hide />
@@ -1867,21 +1868,21 @@ function SolPriceCard({ data, isLoading }: { data?: SolPriceData; isLoading: boo
 function SolSupplyCard({ data, isLoading }: { data?: SolStatsData; isLoading: boolean }) {
   if (isLoading || !data) {
     return (
-      <div className="rounded-xl bg-white border border-[#E5E7EB] p-3 min-h-[140px] flex items-center justify-center">
+      <div className="rounded-xl bg-white border border-[#E5E7EB] p-2 sm:p-3 min-h-[100px] sm:min-h-[140px] flex items-center justify-center">
         <Spinner size="md" />
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl bg-white border border-[#E5E7EB] p-3 flex flex-col justify-between min-h-[140px]">
+    <div className="rounded-xl bg-white border border-[#E5E7EB] p-2 sm:p-3 flex flex-col justify-between min-h-[100px] sm:min-h-[140px]">
       <div className="flex items-start justify-between">
         <p className="font-semibold text-sm text-[#6B7280]">SOL 유통량</p>
-        <Image src="/assets/pixels/solana.png" alt="SOL" width={48} height={48} />
+        <Image src="/assets/pixels/solana.png" alt="SOL" width={48} height={48} className="hidden sm:block" />
       </div>
-      <p className="text-3xl font-bold tabular-nums text-[#171717]">
+      <p className="text-xl sm:text-3xl font-bold tabular-nums text-[#171717]">
         {formatMillions(data.supply.circulating)}
-        <span className="text-lg font-medium text-[#6B7280] ml-1">SOL</span>
+        <span className="text-xs sm:text-lg font-medium text-[#6B7280] ml-1">SOL</span>
       </p>
     </div>
   );
@@ -1890,17 +1891,17 @@ function SolSupplyCard({ data, isLoading }: { data?: SolStatsData; isLoading: bo
 function SolStakingCard({ data, isLoading }: { data?: SolStatsData; isLoading: boolean }) {
   if (isLoading || !data) {
     return (
-      <div className="rounded-xl bg-white border border-[#E5E7EB] p-3 min-h-[140px] flex items-center justify-center">
+      <div className="rounded-xl bg-white border border-[#E5E7EB] p-2 sm:p-3 min-h-[100px] sm:min-h-[140px] flex items-center justify-center">
         <Spinner size="md" />
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl bg-white border border-[#E5E7EB] p-3 min-h-[140px]">
-      <p className="font-semibold text-sm text-[#6B7280] mb-3">스테이킹</p>
+    <div className="rounded-xl bg-white border border-[#E5E7EB] p-2 sm:p-3 min-h-[100px] sm:min-h-[140px]">
+      <p className="font-semibold text-sm text-[#6B7280] mb-2 sm:mb-3">스테이킹</p>
       <div className="flex items-center justify-between">
-        <div className="relative w-20 h-20 flex-shrink-0">
+        <div className="relative w-20 h-20 flex-shrink-0 hidden sm:block">
           <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
             <circle cx="50" cy="50" r="40" fill="none" stroke="#E5E7EB" strokeWidth="12" />
             <circle
@@ -1916,15 +1917,15 @@ function SolStakingCard({ data, isLoading }: { data?: SolStatsData; isLoading: b
             </span>
           </div>
         </div>
-        <div className="text-right">
-          <p className="text-2xl font-bold tabular-nums text-[#171717]">
+        <div className="text-right sm:text-right text-left w-full sm:w-auto">
+          <p className="text-lg sm:text-2xl font-bold tabular-nums text-[#171717]">
             {data.staking.stakingPct ? `${data.staking.stakingPct.toFixed(1)}%` : "—"}
           </p>
-          <p className="text-sm text-[#6B7280]">
+          <p className="text-xs sm:text-sm text-[#6B7280]">
             {formatMillions(data.staking.staked)} SOL
           </p>
           {data.staking.apy && (
-            <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium text-[#16A34A] bg-[#DCFCE7] rounded">
+            <span className="inline-block mt-1 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-medium text-[#16A34A] bg-[#DCFCE7] rounded">
               APY {formatPercent(data.staking.apy * 100, false)}
             </span>
           )}
@@ -1937,18 +1938,18 @@ function SolStakingCard({ data, isLoading }: { data?: SolStatsData; isLoading: b
 function SolInflationCard({ data, isLoading }: { data?: SolStatsData; isLoading: boolean }) {
   if (isLoading || !data) {
     return (
-      <div className="rounded-xl bg-white border border-[#E5E7EB] p-3 min-h-[140px] flex items-center justify-center">
+      <div className="rounded-xl bg-white border border-[#E5E7EB] p-2 sm:p-3 min-h-[100px] sm:min-h-[140px] flex items-center justify-center">
         <Spinner size="md" />
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl bg-white border border-[#E5E7EB] p-3 min-h-[140px] flex flex-col justify-between">
+    <div className="rounded-xl bg-white border border-[#E5E7EB] p-2 sm:p-3 min-h-[100px] sm:min-h-[140px] flex flex-col justify-between">
       <p className="font-semibold text-sm text-[#6B7280]">인플레이션</p>
-      <p className="text-2xl font-bold tabular-nums text-[#171717]">
+      <p className="text-lg sm:text-2xl font-bold tabular-nums text-[#171717]">
         {data.inflation.annualRatePct ? `${data.inflation.annualRatePct.toFixed(2)}%` : "—"}
-        <span className="text-base font-medium text-[#6B7280] ml-1">/yr</span>
+        <span className="text-xs sm:text-base font-medium text-[#6B7280] ml-1">/yr</span>
       </p>
     </div>
   );
@@ -1979,7 +1980,7 @@ function SolContent() {
       </div>
 
       {/* Row 3: TVL + Stablecoins */}
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         {chartsQuery.isLoading ? (
           <>
             <div className="flex-1 rounded-xl bg-white border border-[#E5E7EB] p-3 h-[200px] flex items-center justify-center">
@@ -2109,7 +2110,7 @@ function SolContent() {
       </div>
 
       {/* Row 4: ETF Flows + Holdings */}
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         {holdingsQuery.isLoading ? (
           <>
             <div className="flex-1 rounded-xl bg-white border border-[#E5E7EB] p-3 h-[200px] flex items-center justify-center">
