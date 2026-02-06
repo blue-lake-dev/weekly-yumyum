@@ -41,9 +41,10 @@ async function getEtfFlowHistory(days: number) {
       .limit(days);
 
     if (data && data.length > 0) {
+      const rows = data as Array<{ date: string; value: number | null }>;
       return {
-        today: data[0].value,
-        history: data.map((row: { date: string; value: number | null }) => ({
+        today: rows[0].value,
+        history: rows.map((row) => ({
           date: row.date,
           value: row.value,
         })),

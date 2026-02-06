@@ -49,21 +49,6 @@ import type {
 import { formatEthAmount, formatPercent, formatCompactNumber, formatUsd, formatFlow } from "@/lib/utils/format";
 
 
-// Data types for each chain
-interface BtcData {
-  chain: "btc";
-  price7d: { change: number | null; sparkline: number[]; high: number | null; low: number | null };
-  supply: { circulating: number | null; maxSupply: number | null; percentMined: number | null };
-  mayerMultiple: { current: number | null; ma200: number | null; interpretation: "oversold" | "fair" | "overbought" | null };
-  mempool: { pendingTxCount: number | null; pendingVsize: number | null; fees: { fastest: number | null; halfHour: number | null; hour: number | null; economy: number | null }; congestionLevel: "low" | "moderate" | "high" | "extreme" | null };
-  hashrate: { current: number | null; change30d: number | null; sparkline: number[] };
-  miningCost: { productionCost: number | null; date: string | null };
-  companyHoldings: { totalBtc: number | null; totalUsd: number | null; companies: Array<{ name: string; symbol: string; holdings: number; value: number }> | null };
-  etfFlows: { today: number | null; history: Array<{ date: string; value: number | null }> };
-  etfHoldings: { totalBtc: number | null; totalUsd: number | null; holdings: Array<{ ticker: string; issuer: string; btc: number; usd: number }> | null };
-}
-
-
 
 const chainLabels: Record<Chain, string> = {
   btc: "BTC",
@@ -280,6 +265,7 @@ function TvlChart({ data }: TvlChartProps) {
                   strokeWidth={2}
                   dot={false}
                   activeDot={false}
+                  isAnimationActive={false}
                 />
               ))
             ) : (
@@ -293,6 +279,7 @@ function TvlChart({ data }: TvlChartProps) {
                 strokeWidth={2}
                 dot={false}
                 activeDot={false}
+                isAnimationActive={false}
               />
             )}
           </AreaChart>
@@ -484,6 +471,7 @@ function StablecoinsChart({ data }: StablecoinsChartProps) {
                   strokeWidth={2}
                   dot={false}
                   activeDot={false}
+                  isAnimationActive={false}
                 />
               ))
             ) : (
@@ -497,6 +485,7 @@ function StablecoinsChart({ data }: StablecoinsChartProps) {
                 strokeWidth={2}
                 dot={false}
                 activeDot={false}
+                isAnimationActive={false}
               />
             )}
           </AreaChart>
@@ -854,7 +843,7 @@ function EtfFlowCard({
                   }}
                 />
                 <ReferenceLine y={0} stroke="#E5E7EB" strokeWidth={1} />
-                <Bar dataKey="value" radius={[2, 2, 2, 2]}>
+                <Bar dataKey="value" radius={[2, 2, 2, 2]} isAnimationActive={false}>
                   {chartData.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
@@ -1157,6 +1146,7 @@ function BtcPriceCard({ data, isLoading }: { data?: BtcPriceData; isLoading: boo
                       strokeWidth={1.5}
                       dot={(props) => <SparklineDot {...props} dataLength={sparklineData.length} />}
                       activeDot={false}
+                      isAnimationActive={false}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -1391,6 +1381,7 @@ function BtcHashrateCard({ data, isLoading }: { data?: BtcNetworkData; isLoading
                     strokeWidth={1.5}
                     dot={false}
                     activeDot={{ r: 3, fill: "#F7931A" }}
+                    isAnimationActive={false}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -1670,6 +1661,7 @@ function EthPriceCard({ data, isLoading }: { data?: EthPriceData; isLoading: boo
               fillOpacity={0.15}
               dot={false}
               activeDot={false}
+              isAnimationActive={false}
             />
           </AreaChart>
         </ResponsiveContainer>
@@ -1863,6 +1855,7 @@ function SolPriceCard({ data, isLoading }: { data?: SolPriceData; isLoading: boo
               fillOpacity={0.15}
               dot={false}
               activeDot={false}
+              isAnimationActive={false}
             />
           </AreaChart>
         </ResponsiveContainer>
@@ -2048,6 +2041,7 @@ function SolContent() {
                       strokeWidth={2}
                       dot={false}
                       activeDot={false}
+                      isAnimationActive={false}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -2104,6 +2098,7 @@ function SolContent() {
                       strokeWidth={2}
                       dot={false}
                       activeDot={false}
+                      isAnimationActive={false}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -2135,92 +2130,3 @@ function SolContent() {
   );
 }
 
-function StatCard({
-  label,
-  value,
-  subValue,
-  change,
-  highlight
-}: {
-  label: string;
-  value: string;
-  subValue?: string;
-  change?: number | null;
-  highlight?: "deflationary";
-}) {
-  return (
-    <div className="bg-[#F6F7F9] rounded-lg p-3">
-      <p className="text-xs text-[#6B7280] mb-1">{label}</p>
-      <p className={`text-lg font-semibold tabular-nums ${highlight === "deflationary" ? "text-[#16A34A]" : "text-[#171717]"}`}>
-        {value}
-        {highlight === "deflationary" && <span className="ml-1 text-xs">🔥</span>}
-      </p>
-      {subValue && <p className="text-xs text-[#9CA3AF]">{subValue}</p>}
-      {change !== undefined && change !== null && (
-        <p className={`text-xs font-medium tabular-nums ${change >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
-          {formatPercent(change)} (7일)
-        </p>
-      )}
-    </div>
-  );
-}
-
-function EtfFlowChart({
-  history,
-  today,
-  color
-}: {
-  history: Array<{ date: string; value: number | null }>;
-  today: number | null;
-  color: string;
-}) {
-  const chartData = toFlowChartData(history);
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-semibold text-[#171717]">ETF 자금흐름 (7일)</h3>
-        {today !== null && (
-          <span className={`text-sm font-medium tabular-nums ${today >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
-            오늘: {today >= 0 ? "+" : "-"}{formatUsd(Math.abs(today), 0)}
-          </span>
-        )}
-      </div>
-      <div className="h-24">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData}>
-            <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#6B7280" }} />
-            <YAxis hide />
-            <Tooltip
-              cursor={false}
-              content={({ active, payload, label }) => {
-                if (!active || !payload?.length) return null;
-                const value = payload[0].payload.value;
-                return (
-                  <div className="rounded-lg bg-white border border-[#E5E7EB] px-3 py-2 text-sm shadow-lg">
-                    <p className="text-[#6B7280] mb-1">{label}</p>
-                    <p className="flex items-center gap-1.5">
-                      <span className={`w-2 h-2 rounded-full ${value >= 0 ? "bg-[#627EEA]" : "bg-[#DC2626]"}`} />
-                      <span className={`font-medium tabular-nums ${value >= 0 ? "text-[#627EEA]" : "text-[#DC2626]"}`}>
-                        {value >= 0 ? "+" : "-"}{formatUsd(Math.abs(value), 0)}
-                      </span>
-                    </p>
-                  </div>
-                );
-              }}
-            />
-            <ReferenceLine y={0} stroke="#E5E7EB" />
-            <Bar dataKey="value" radius={[2, 2, 2, 2]}>
-              {chartData.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={entry.value >= 0 ? color : "#DC2626"}
-                />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  );
-}

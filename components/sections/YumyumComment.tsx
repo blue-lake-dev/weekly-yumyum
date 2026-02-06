@@ -1,50 +1,45 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import Image from "next/image";
 import { useSummarySuspense } from "@/lib/hooks/use-summary";
 
-// Typewriter effect hook
-function useTypewriter(text: string, speed: number = 30) {
-  const [displayedText, setDisplayedText] = useState("");
-  const [isComplete, setIsComplete] = useState(false);
-
-  useEffect(() => {
-    if (!text) {
-      setDisplayedText("");
-      setIsComplete(true);
-      return;
-    }
-
-    setDisplayedText("");
-    setIsComplete(false);
-    let index = 0;
-
-    const interval = setInterval(() => {
-      if (index < text.length) {
-        setDisplayedText(text.slice(0, index + 1));
-        index++;
-      } else {
-        setIsComplete(true);
-        clearInterval(interval);
-      }
-    }, speed);
-
-    return () => clearInterval(interval);
-  }, [text, speed]);
-
-  return { displayedText, isComplete };
-}
-
 export function YumyumComment() {
   const { data } = useSummarySuspense();
+  const summary = data?.summary ?? "오늘의 코멘트를 준비 중입니다...";
 
-  const summary = data?.summary ?? null;
+  const textRef = useRef<HTMLSpanElement>(null);
+  const cursorRef = useRef<HTMLSpanElement>(null);
 
-  const { displayedText, isComplete } = useTypewriter(
-    summary || "오늘의 코멘트를 준비 중입니다...",
-    25
-  );
+  useEffect(() => {
+    const el = textRef.current;
+    const cursor = cursorRef.current;
+    if (!el) return;
+
+    el.textContent = "";
+    if (cursor) cursor.style.display = "inline-block";
+
+    let i = 0;
+    let cancelled = false;
+    let lastTime = 0;
+
+    const tick = (now: number) => {
+      if (cancelled) return;
+      if (now - lastTime >= 25) {
+        el.textContent += summary.charAt(i);
+        lastTime = now;
+        i++;
+      }
+      if (i < summary.length) {
+        requestAnimationFrame(tick);
+      } else {
+        if (cursor) cursor.style.display = "none";
+      }
+    };
+    requestAnimationFrame(tick);
+
+    return () => { cancelled = true; };
+  }, [summary]);
 
   return (
     <section className="mb-3">
@@ -81,10 +76,11 @@ export function YumyumComment() {
             {/* Bubble */}
             <div className="bg-[#F6F7F9] rounded-lg p-4">
               <p className="text-sm text-[#171717] leading-relaxed">
-                {displayedText}
-                {!isComplete && (
-                  <span className="inline-block w-0.5 h-4 bg-[#171717] ml-0.5 animate-pulse" />
-                )}
+                <span ref={textRef} />
+                <span
+                  ref={cursorRef}
+                  className="inline-block w-0.5 h-4 bg-[#171717] ml-0.5 animate-pulse align-middle"
+                />
               </p>
             </div>
           </div>

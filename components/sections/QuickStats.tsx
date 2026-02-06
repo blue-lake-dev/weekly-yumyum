@@ -209,6 +209,7 @@ export function QuickStats() {
                         strokeWidth={1.5}
                         fill="url(#sparkGradKey)"
                         activeDot={false}
+                        isAnimationActive={false}
                       />
                     </AreaChart>
                   </ResponsiveContainer>

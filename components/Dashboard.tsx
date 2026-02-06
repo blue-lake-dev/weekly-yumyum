@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { useInViewMount } from "@/lib/hooks/use-in-view-mount";
 
 // Blocking sections (data is awaited on server)
 import { Ticker } from "@/components/sections/Ticker";
@@ -18,43 +19,72 @@ import { MoreTabs } from "@/components/sections/MoreTabs";
 
 
 export function Dashboard() {
+  // Mount sections when they enter the viewport
+  const [todaysCoinRef, showTodaysCoin] = useInViewMount();
+  const [commentRef, showComment] = useInViewMount();
+  const [chainTabsRef, showChainTabs] = useInViewMount();
+  const [moreTabsRef, showMoreTabs] = useInViewMount();
 
   return (
     <div className="min-h-screen bg-[#F6F7F9]">
       <Header />
 
       {/* ❶ Ticker - Full width, attached to header */}
-      <Ticker />
+<Ticker />
 
       <main className="mx-auto max-w-5xl px-4 pt-3 pb-6">
         {/* ❷ Quick Stats - Blocking (instant) */}
         <QuickStats />
 
         {/* ❸ 오늘의 코인 - Streaming */}
-        <ErrorBoundary>
-          <Suspense fallback={<TodaysCoinSkeleton />}>
-            <TodaysCoin />
-          </Suspense>
-        </ErrorBoundary>
+        <div ref={todaysCoinRef}>
+          {showTodaysCoin ? (
+            <ErrorBoundary>
+              <Suspense fallback={<TodaysCoinSkeleton />}>
+                <TodaysCoin />
+              </Suspense>
+            </ErrorBoundary>
+          ) : (
+            <TodaysCoinSkeleton />
+          )}
+        </div>
 
         {/* ❹ 얌얌의 한마디 - Streaming */}
-        <ErrorBoundary>
-          <Suspense fallback={<YumyumCommentSkeleton />}>
-            <YumyumComment />
-          </Suspense>
-        </ErrorBoundary>
+        <div ref={commentRef}>
+          {showComment ? (
+            <ErrorBoundary>
+              <Suspense fallback={<YumyumCommentSkeleton />}>
+                <YumyumComment />
+              </Suspense>
+            </ErrorBoundary>
+          ) : (
+            <YumyumCommentSkeleton />
+          )}
+        </div>
 
         {/* ❺ Chain Tabs - Suspense handled internally */}
-        <ErrorBoundary>
-          <ChainTabs />
-        </ErrorBoundary>
+        <div ref={chainTabsRef}>
+          {showChainTabs ? (
+            <ErrorBoundary>
+              <ChainTabs />
+            </ErrorBoundary>
+          ) : (
+            <SectionSkeleton height="h-64" />
+          )}
+        </div>
 
         {/* ❻ 더보기 - Streaming */}
-        <ErrorBoundary>
-          <Suspense fallback={<SectionSkeleton height="h-48" />}>
-            <MoreTabs />
-          </Suspense>
-        </ErrorBoundary>
+        <div ref={moreTabsRef}>
+          {showMoreTabs ? (
+            <ErrorBoundary>
+              <Suspense fallback={<SectionSkeleton height="h-48" />}>
+                <MoreTabs />
+              </Suspense>
+            </ErrorBoundary>
+          ) : (
+            <SectionSkeleton height="h-48" />
+          )}
+        </div>
       </main>
 
       <Footer />

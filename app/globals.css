@@ -60,6 +60,7 @@ body {
 .animate-marquee {
   width: max-content;
   animation: marquee 60s linear infinite;
+  will-change: transform;
 }
 .animate-marquee:hover {
   animation-play-state: paused;
@@ -82,10 +83,12 @@ body {
 .animate-flash-up .price-flash-overlay {
   color: #16A34A;
   animation: opacity-fade 4.5s linear forwards;
+  will-change: opacity;
 }
 .animate-flash-down .price-flash-overlay {
   color: #DC2626;
   animation: opacity-fade 4.5s linear forwards;
+  will-change: opacity;
 }
 
 /* Sparkline dot fade-in (appears after chart animation) */

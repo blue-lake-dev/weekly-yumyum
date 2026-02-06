@@ -474,6 +474,21 @@ Dashboard → ✏️ 수동 입력 → /api/update-manual → Vercel KV 업데�
   - [x] Stacked area chart (rwa.xyz CSV → Supabase Storage)
   - [x] RWA by Chain 수평 바 차트 (DeFiLlama API)
   - [x] Auto-detect latest CSV by date in filename
+- [x] ChainTabs 섹션 (BTC 탭)
+  - [x] BTC 가격 차트 (7d 스파크라인, 고가/저가)
+  - [x] Mayer Multiple, Mempool, Hashrate, Mining Cost 카드
+  - [x] ETF flows + holdings (탭 뷰)
+  - [x] Company holdings (DAT)
+- [x] Split endpoints (useQueries per-card streaming)
+  - [x] BTC: price / network / indicators / holdings
+  - [x] ETH: price / stats / charts / holdings
+  - [x] SOL: price / stats / charts / holdings
+- [x] 퍼포먼스 최적화
+  - [x] IntersectionObserver 기반 lazy mount (useInViewMount)
+  - [x] Ref-based typewriter (zero re-renders)
+  - [x] Chart animations disabled (isAnimationActive={false})
+  - [x] will-change CSS for marquee/flash animations
+- [x] Calendar Coming Soon 페이지
 - [ ] Gainers/Losers 섹션
 - [ ] 파생상품 섹션 (deferred - free API 미지원)
 - [ ] 배포 (Vercel production)

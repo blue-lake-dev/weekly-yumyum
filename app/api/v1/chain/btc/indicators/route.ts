@@ -16,9 +16,10 @@ async function getMiningCost(): Promise<{ productionCost: number | null; date: s
       .limit(1);
 
     if (data && data.length > 0) {
+      const row = data[0] as { date: string; value: number | null };
       return {
-        productionCost: data[0].value,
-        date: data[0].date,
+        productionCost: row.value,
+        date: row.date,
       };
     }
     return { productionCost: null, date: null };

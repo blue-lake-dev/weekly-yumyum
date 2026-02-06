@@ -17,9 +17,10 @@ async function getEtfFlows(): Promise<{ today: number | null; history: Array<{ d
       .limit(30);
 
     if (data && data.length > 0) {
+      const rows = data as Array<{ date: string; value: number | null }>;
       return {
-        today: data[0].value,
-        history: data.map((d) => ({ date: d.date, value: d.value })),
+        today: rows[0].value,
+        history: rows.map((d) => ({ date: d.date, value: d.value })),
       };
     }
     return { today: null, history: [] };
