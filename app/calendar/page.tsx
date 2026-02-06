@@ -3,12 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 
 export default function CalendarPage() {
   return (
     <>
       <Header />
-      <div className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center px-4 bg-[#F6F7F9]">
+      <div className="flex min-h-[calc(100vh-3.5rem-5rem)] flex-col items-center justify-center px-4 bg-[#F6F7F9]">
         <Image
           src="/assets/pixels/crypto_calendar_coming_soon.webp"
           alt="Crypto Calendar Coming Soon"
@@ -23,6 +24,7 @@ export default function CalendarPage() {
           </Link>
         </p>
       </div>
+      <Footer />
     </>
   );
 }

@@ -489,6 +489,7 @@ Dashboard → ✏️ 수동 입력 → /api/update-manual → Vercel KV 업데�
   - [x] Chart animations disabled (isAnimationActive={false})
   - [x] will-change CSS for marquee/flash animations
 - [x] Calendar Coming Soon 페이지
+- [x] About 페이지 (배너, 프로필, 채널 링크, fade-in 애니메이션)
 - [ ] Gainers/Losers 섹션
 - [ ] 파생상품 섹션 (deferred - free API 미지원)
 - [ ] 배포 (Vercel production)
