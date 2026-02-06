@@ -334,21 +334,45 @@ Rules: Factual, concise, no emojis, no price predictions, casual tone (반말 OK
 - Note: SOL is always inflationary (issuance >> burn), so no burn/issuance display
 
 #### BTC Tab Content:
-- No inflation section (fixed supply)
-- No TVL (no native DeFi)
-- Halving countdown: Current block reward → next reward, progress bar
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ 비트코인 현재가: $64,378 -23.1%                                      │
+│ 7일 고점: $84,141 │ 7일 저점: $62,853                                │
+│ [═══════════ 7-DAY AREA CHART ═══════════]                          │
+├─────────────────────────────────────────────────────────────────────┤
+│ Mayer Multiple: 0.63 (Oversold)                                     │
+│ 200일 이동평균: $102,835                                             │
+├─────────────────────────────────────────────────────────────────────┤
+│ 채굴 원가: $XX,XXX │ 멤풀: 23,599 txs (Low) │ 해시레이트: 894 EH/s    │
+│                   │ 수수료: 2 sat/vB        │ 30일 변화: -17.4%      │
+├─────────────────────────────────────────────────────────────────────┤
+│ 기관 보유: 1.14M BTC ($73.4B) - Strategy, MARA, XXI...              │
+├─────────────────────────────────────────────────────────────────────┤
+│ BTC ETF 자금흐름 [═══════ 7-DAY BAR CHART ═══════]                  │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+- Row 1: Price chart (7d sparkline, high/low)
+- Row 2: Mayer Multiple (price/200d MA) with interpretation
+- Row 3: Mining Cost, Mempool stats (pending tx, fees, congestion), Hashrate (30d sparkline)
+- Row 4: Company Holdings (top 10 public companies)
+- Row 5: ETF Flows + Holdings
 
 **Data Sources:**
 | Data | ETH | SOL | BTC |
 |------|-----|-----|-----|
-| Price + Chart | Supabase (7d) | Supabase (7d) | Supabase (7d) |
+| Price + Chart | CoinGecko (7d) | CoinGecko (7d) | CoinGecko (7d) |
 | Supply | Etherscan | Solana RPC | CoinGecko |
 | Staking | Beacon | Solana RPC | N/A |
 | TVL | DeFiLlama | DeFiLlama | N/A |
 | Inflation | ultrasound.money (burn/issuance) | Solana RPC (rate) + Solana.FM (fees) | N/A |
 | Stablecoins | DeFiLlama | DeFiLlama | N/A |
 | ETF Flow | Supabase (7d) | Supabase (7d) | Supabase (7d) |
-| Holdings | Farside + DeFiLlama | Farside + DeFiLlama | Farside + DeFiLlama |
+| Holdings | Dune + DeFiLlama DAT | DeFiLlama ETF + DAT | Dune + CoinGecko Treasuries |
+| Mayer Multiple | N/A | N/A | CoinGecko (200d prices) |
+| Mempool | N/A | N/A | mempool.space |
+| Hashrate | N/A | N/A | Blockchain.com (30d) |
+| Mining Cost | N/A | N/A | MacroMicro (scraper) |
 
 **Hook:** `use-chain-data.ts`
 
@@ -441,7 +465,7 @@ Will revisit when:
 
 | File | Purpose | Status |
 |------|---------|--------|
-| `lib/fetchers/coingecko.ts` | Prices, dominance, gainers/losers, supply | ✅ Done |
+| `lib/fetchers/coingecko.ts` | Prices, dominance, gainers/losers, supply, Mayer Multiple, company holdings | ✅ Done |
 | `lib/fetchers/coinmarketcap.ts` | BTC/ETH dominance | ✅ Done |
 | `lib/fetchers/binance.ts` | Long/Short, Funding | ✅ Done |
 | `lib/fetchers/defillama.ts` | TVL, Stablecoins, RWA | ✅ Done |
@@ -451,6 +475,9 @@ Will revisit when:
 | `lib/fetchers/ultrasound.ts` | ETH burn data | ✅ Done |
 | `lib/fetchers/alternative.ts` | Fear & Greed | ✅ Done |
 | `lib/fetchers/dune.ts` | ETF holdings (Dune queries) | ✅ Done |
+| `lib/fetchers/mempool.ts` | BTC mempool stats, fees | ✅ Done |
+| `lib/fetchers/blockchain-com.ts` | BTC hashrate (30d sparkline) | ✅ Done |
+| `lib/fetchers/macromicro.ts` | BTC mining cost (scraper) | ✅ Done |
 | `lib/fetchers/claude.ts` | AI summary | ⏸️ Deferred |
 | `lib/fetchers/aggregator.ts` | Daily cron orchestrator | ✅ Done |
 
@@ -654,7 +681,7 @@ lib/hooks/         # Data fetching hooks
 - [x] Update `lib/database.types.ts`
 
 ### Fetchers (Backend) - Source-Based Naming
-- [x] `lib/fetchers/coingecko.ts` - Prices, gainers/losers, supply
+- [x] `lib/fetchers/coingecko.ts` - Prices, gainers/losers, supply, Mayer Multiple, company holdings
 - [x] `lib/fetchers/coinmarketcap.ts` - BTC/ETH dominance
 - [x] `lib/fetchers/binance.ts` - Derivatives (Long/Short, Funding)
 - [x] `lib/fetchers/defillama.ts` - TVL, Stablecoins, RWA
@@ -664,6 +691,9 @@ lib/hooks/         # Data fetching hooks
 - [x] `lib/fetchers/ultrasound.ts` - ETH burn
 - [x] `lib/fetchers/alternative.ts` - Fear & Greed
 - [x] `lib/fetchers/dune.ts` - ETF holdings (Dune queries)
+- [x] `lib/fetchers/mempool.ts` - BTC mempool stats, fees
+- [x] `lib/fetchers/blockchain-com.ts` - BTC hashrate (30d sparkline)
+- [x] `lib/fetchers/macromicro.ts` - BTC mining cost (scraper)
 - [x] `lib/fetchers/aggregator.ts` - Daily cron orchestrator
 - [ ] `lib/fetchers/claude.ts` - AI summary (DEFERRED)
 
@@ -783,4 +813,7 @@ lib/hooks/         # Data fetching hooks
 - **2026-01-31**: Switched SOL fees from Solana.FM (down) to Dune API (query 6625740)
 - **2026-01-31**: Removed sol_burn/sol_issuance (fetch live instead), merged solana-fm.ts into solana.ts
 - **2026-01-31**: Merged v3-plan-final.md into implementation plan
+- **2026-02-06**: Added BTC tab fetchers - Mayer Multiple (CoinGecko), Mempool stats (mempool.space), Hashrate 30d sparkline (Blockchain.com), Mining Cost scraper (MacroMicro), Company Holdings (CoinGecko Treasuries)
+- **2026-02-06**: Updated `/api/v1/chain/btc` to include all new BTC metrics
+- **2026-02-06**: Added daily mining cost scraping to aggregator
 - **2026-01-30**: V3 Final spec created

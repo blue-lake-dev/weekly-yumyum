@@ -2,7 +2,14 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 
 // Import fetchers
-import { fetchCoinSupply, fetchPriceSparkline } from "@/lib/fetchers/coingecko";
+import {
+  fetchCoinSupply,
+  fetchPriceSparkline,
+  fetchMayerMultiple,
+  fetchBtcCompanyHoldings,
+} from "@/lib/fetchers/coingecko";
+import { fetchMempoolStats } from "@/lib/fetchers/mempool";
+import { fetchBtcHashrate } from "@/lib/fetchers/blockchain-com";
 import { fetchEthBurnIssuance } from "@/lib/fetchers/ultrasound";
 import { fetchEthStaking, fetchEthStakingRewards } from "@/lib/fetchers/beaconchain";
 import {
@@ -12,7 +19,7 @@ import {
   fetchL2StablecoinStacked,
 } from "@/lib/fetchers/defillama";
 import { fetchSolanaSupply, fetchSolanaInflation, fetchSolanaDailyFees } from "@/lib/fetchers/solana";
-import { fetchEthEtfHoldings } from "@/lib/fetchers/dune";
+import { fetchEthEtfHoldings, fetchBtcEtfHoldings } from "@/lib/fetchers/dune";
 
 type ChainParam = "btc" | "eth" | "sol";
 
@@ -64,26 +71,61 @@ export async function GET(
 
 /**
  * BTC Chain Data
- * - 7d price sparkline + change (current price from ticker API)
- * - Circulating supply from CoinGecko
+ * - 7d price sparkline + change + high/low
+ * - Mayer Multiple (price / 200d MA)
+ * - Mempool stats (pending tx, fees, congestion)
+ * - Hashrate with 30d sparkline
+ * - Mining cost (from Supabase, scraped weekly)
+ * - Company holdings (public treasuries)
  * - ETF flows (7d history for chart)
+ * - ETF holdings (from Dune)
  */
 async function getBtcData() {
   console.log("[chain/btc] Fetching BTC data...");
 
-  const [sparklineData, supplyData, etfFlows] = await Promise.all([
+  const [
+    sparklineData,
+    supplyData,
+    mayerMultipleData,
+    mempoolData,
+    hashrateData,
+    miningCost,
+    companyHoldings,
+    etfFlows,
+    etfHoldings,
+  ] = await Promise.all([
     fetchPriceSparkline("bitcoin"),
     fetchCoinSupply("bitcoin"),
+    fetchMayerMultiple(),
+    fetchMempoolStats(),
+    fetchBtcHashrate(),
+    getMiningCostFromSupabase(),
+    fetchBtcCompanyHoldings(),
     getEtfFlowHistory("etf_flow_btc", 7),
+    fetchBtcEtfHoldings(),
   ]);
 
   console.log("[chain/btc] Sparkline points:", sparklineData.sparkline.length);
   console.log("[chain/btc] Supply:", supplyData.circulatingSupply?.toLocaleString());
+  console.log("[chain/btc] Mayer Multiple:", mayerMultipleData.current?.toFixed(2), `(${mayerMultipleData.interpretation})`);
+  console.log("[chain/btc] Mempool:", mempoolData.pendingTxCount?.toLocaleString(), "txs,", mempoolData.congestionLevel);
+  console.log("[chain/btc] Hashrate:", hashrateData.current?.toFixed(2), "EH/s");
+  console.log("[chain/btc] Mining cost:", miningCost.productionCost ? `$${miningCost.productionCost.toLocaleString()}` : "N/A");
+  console.log("[chain/btc] Company holdings:", companyHoldings.totalBtc?.toLocaleString(), "BTC");
   console.log("[chain/btc] ETF flows:", etfFlows.length, "days");
+  console.log("[chain/btc] ETF holdings:", etfHoldings.totalBtc?.toLocaleString(), "BTC");
 
   // Calculate percent mined
   const percentMined = supplyData.circulatingSupply && supplyData.maxSupply
     ? (supplyData.circulatingSupply / supplyData.maxSupply) * 100
+    : null;
+
+  // Calculate 7d high/low from sparkline
+  const high7d = sparklineData.sparkline.length > 0
+    ? Math.max(...sparklineData.sparkline)
+    : null;
+  const low7d = sparklineData.sparkline.length > 0
+    ? Math.min(...sparklineData.sparkline)
     : null;
 
   return {
@@ -91,15 +133,52 @@ async function getBtcData() {
     price7d: {
       change: sparklineData.change7d,
       sparkline: sparklineData.sparkline,
+      high: high7d,
+      low: low7d,
     },
     supply: {
       circulating: supplyData.circulatingSupply,
       maxSupply: supplyData.maxSupply,
       percentMined,
     },
+    mayerMultiple: {
+      current: mayerMultipleData.current,
+      ma200: mayerMultipleData.ma200,
+      interpretation: mayerMultipleData.interpretation,
+    },
+    mempool: {
+      pendingTxCount: mempoolData.pendingTxCount,
+      pendingVsize: mempoolData.pendingVsize,
+      fees: mempoolData.fees,
+      congestionLevel: mempoolData.congestionLevel,
+    },
+    hashrate: {
+      current: hashrateData.current,
+      change30d: hashrateData.change30d,
+      sparkline: hashrateData.sparkline,
+    },
+    miningCost: {
+      productionCost: miningCost.productionCost,
+      date: miningCost.date,
+    },
+    companyHoldings: {
+      totalBtc: companyHoldings.totalBtc,
+      totalUsd: companyHoldings.totalUsd,
+      companies: companyHoldings.companies?.slice(0, 10).map(c => ({
+        name: c.name,
+        symbol: c.symbol,
+        holdings: c.holdings,
+        value: c.value,
+      })) ?? null,
+    },
     etfFlows: {
       today: etfFlows[0]?.value ?? null,
       history: etfFlows,
+    },
+    etfHoldings: {
+      totalBtc: etfHoldings.totalBtc,
+      totalUsd: etfHoldings.totalUsd,
+      holdings: etfHoldings.holdings,
     },
     timestamp: new Date().toISOString(),
   };
@@ -523,6 +602,41 @@ async function getSolDatHoldings() {
     totalUsd: metadata?.totalUsd ?? null,
     supplyPct: metadata?.supplyPct ?? null,
     companies: metadata?.companies ?? null,
+    date: row.date,
+  };
+}
+
+// Type for mining cost stored in Supabase
+interface MiningCostRow {
+  date: string;
+  value: number | null;
+}
+
+/**
+ * Get BTC mining cost from Supabase (stored weekly by cron)
+ */
+async function getMiningCostFromSupabase() {
+  const supabase = createServerClient();
+
+  const { data, error } = await supabase
+    .from("metrics")
+    .select("date, value")
+    .eq("key", "btc_mining_cost")
+    .order("date", { ascending: false })
+    .limit(1);
+
+  if (error || !data || data.length === 0) {
+    console.log("[chain/btc] No mining cost data in Supabase");
+    return {
+      productionCost: null,
+      date: null,
+    };
+  }
+
+  const row = data[0] as MiningCostRow;
+
+  return {
+    productionCost: row.value,
     date: row.date,
   };
 }

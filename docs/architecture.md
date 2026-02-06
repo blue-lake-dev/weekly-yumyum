@@ -199,7 +199,7 @@ lib/
 
 | File | Data Source |
 |------|-------------|
-| `coingecko.ts` | CoinGecko API |
+| `coingecko.ts` | CoinGecko API (prices, supply, Mayer Multiple, company holdings) |
 | `defillama.ts` | DeFiLlama API |
 | `binance.ts` | Binance Futures API |
 | `farside.ts` | Farside.co.uk (scraper) |
@@ -210,6 +210,9 @@ lib/
 | `coinmarketcap.ts` | CoinMarketCap API |
 | `dune.ts` | Dune Analytics API |
 | `claude.ts` | Anthropic Claude API |
+| `mempool.ts` | Mempool.space API (BTC mempool stats, fees) |
+| `blockchain-com.ts` | Blockchain.com API (BTC hashrate) |
+| `macromicro.ts` | MacroMicro scraper (BTC mining cost) |
 
 ### Special Files
 

@@ -491,3 +491,160 @@ export async function fetchGlobalMetrics(): Promise<GlobalMetricsData> {
     };
   }
 }
+
+// ============================================================================
+// Mayer Multiple (BTC specific)
+// ============================================================================
+
+export interface MayerMultipleData {
+  current: number | null;        // Mayer Multiple value
+  btcPrice: number | null;       // Current BTC price
+  ma200: number | null;          // 200-day moving average
+  interpretation: "oversold" | "fair" | "overbought" | null;
+  error?: string;
+}
+
+/**
+ * Fetch Mayer Multiple for BTC
+ * Mayer Multiple = Current Price / 200-day Simple Moving Average
+ *
+ * Interpretation:
+ * - < 1.0: Oversold (price below 200-day average)
+ * - 1.0 - 2.4: Fair value range
+ * - > 2.4: Overbought (historically high, potential bubble)
+ */
+export async function fetchMayerMultiple(): Promise<MayerMultipleData> {
+  try {
+    // Fetch 200 days of price data
+    const data = await fetchWithTimeout<MarketChartResponse>(
+      `${COINGECKO_API}/coins/bitcoin/market_chart?vs_currency=usd&days=200&interval=daily`,
+      5000,
+      86400 // 1 day cache - 200d MA barely changes
+    );
+
+    if (!data.prices || data.prices.length < 100) {
+      throw new Error("Not enough price data for 200-day average");
+    }
+
+    // Extract prices
+    const prices = data.prices.map(p => p[1]);
+
+    // Current price is the last entry
+    const btcPrice = prices[prices.length - 1];
+
+    // Calculate 200-day Simple Moving Average
+    const ma200 = prices.reduce((sum, p) => sum + p, 0) / prices.length;
+
+    // Calculate Mayer Multiple
+    const current = ma200 > 0 ? btcPrice / ma200 : null;
+
+    // Determine interpretation
+    let interpretation: "oversold" | "fair" | "overbought" | null = null;
+    if (current !== null) {
+      if (current < 1.0) {
+        interpretation = "oversold";
+      } else if (current <= 2.4) {
+        interpretation = "fair";
+      } else {
+        interpretation = "overbought";
+      }
+    }
+
+    console.log(`[coingecko] Mayer Multiple: ${current?.toFixed(2)} (${interpretation})`);
+    console.log(`[coingecko] BTC Price: $${btcPrice?.toLocaleString()}, 200d MA: $${ma200?.toLocaleString()}`);
+
+    return {
+      current,
+      btcPrice,
+      ma200,
+      interpretation,
+    };
+  } catch (error) {
+    console.error("[coingecko] fetchMayerMultiple error:", error);
+    return {
+      current: null,
+      btcPrice: null,
+      ma200: null,
+      interpretation: null,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+// ============================================================================
+// BTC Company Holdings (Public Treasuries)
+// ============================================================================
+
+interface CompanyTreasuryResponse {
+  total_holdings: number;
+  total_value_usd: number;
+  market_cap_dominance: number;
+  companies: Array<{
+    name: string;
+    symbol: string;
+    country: string;
+    total_holdings: number;
+    total_entry_value_usd: number;
+    total_current_value_usd: number;
+    percentage_of_total_supply: number;
+  }>;
+}
+
+export interface BtcCompanyHolding {
+  name: string;
+  symbol: string;
+  country: string;
+  holdings: number;          // BTC amount
+  value: number;             // Current USD value
+  percentOfSupply: number;   // % of total BTC supply
+}
+
+export interface BtcCompanyHoldingsData {
+  totalBtc: number | null;
+  totalUsd: number | null;
+  marketCapDominance: number | null;
+  companies: BtcCompanyHolding[] | null;
+  error?: string;
+}
+
+/**
+ * Fetch public company BTC holdings from CoinGecko
+ * Returns aggregate stats and top companies holding BTC
+ */
+export async function fetchBtcCompanyHoldings(): Promise<BtcCompanyHoldingsData> {
+  try {
+    const data = await fetchWithTimeout<CompanyTreasuryResponse>(
+      `${COINGECKO_API}/companies/public_treasury/bitcoin`,
+      5000,
+      3600 // 1 hour cache - corporate holdings don't change frequently
+    );
+
+    const companies: BtcCompanyHolding[] = data.companies.map(c => ({
+      name: c.name,
+      symbol: c.symbol,
+      country: c.country,
+      holdings: c.total_holdings,
+      value: c.total_current_value_usd,
+      percentOfSupply: c.percentage_of_total_supply,
+    }));
+
+    console.log(`[coingecko] BTC Company Holdings: ${data.total_holdings.toLocaleString()} BTC`);
+    console.log(`[coingecko] Top holder: ${companies[0]?.name} (${companies[0]?.holdings.toLocaleString()} BTC)`);
+
+    return {
+      totalBtc: data.total_holdings,
+      totalUsd: data.total_value_usd,
+      marketCapDominance: data.market_cap_dominance,
+      companies,
+    };
+  } catch (error) {
+    console.error("[coingecko] fetchBtcCompanyHoldings error:", error);
+    return {
+      totalBtc: null,
+      totalUsd: null,
+      marketCapDominance: null,
+      companies: null,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}

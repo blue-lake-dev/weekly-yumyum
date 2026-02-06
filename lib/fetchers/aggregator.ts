@@ -3,6 +3,7 @@ import type { MetricInsert } from "@/lib/database.types";
 import { fetchEtfFlows } from "./farside";
 import { fetchDatHoldings, fetchSolDatHoldings } from "./dat-scraper";
 import { fetchSolEtfHoldings } from "./defillama-etf";
+import { fetchBtcMiningCost } from "./macromicro";
 
 // Get today's date in YYYY-MM-DD format
 function getToday(): string {
@@ -162,6 +163,30 @@ export async function fetchAndStoreMetrics(): Promise<FetchResult> {
   } catch (e) {
     console.error("[aggregator] SOL DAT holdings error:", e);
     errors.push(`dat_sol: ${e}`);
+  }
+
+  // Fetch BTC Mining Cost (daily scrape from MacroMicro)
+  try {
+    console.log("[aggregator] Fetching BTC mining cost...");
+    const miningCost = await fetchBtcMiningCost();
+
+    if (miningCost.productionCost && !miningCost.error) {
+      metrics.push({
+        date: today,
+        key: "btc_mining_cost",
+        value: miningCost.productionCost,
+        metadata: {
+          scrapedAt: miningCost.scrapedAt,
+        },
+      });
+      console.log(`[aggregator] BTC mining cost: $${miningCost.productionCost.toLocaleString()}`);
+    } else {
+      console.log("[aggregator] BTC mining cost fetch returned no data");
+      if (miningCost.error) errors.push(`btc_mining_cost: ${miningCost.error}`);
+    }
+  } catch (e) {
+    console.error("[aggregator] BTC mining cost error:", e);
+    errors.push(`btc_mining_cost: ${e}`);
   }
 
   // Store metrics in Supabase
