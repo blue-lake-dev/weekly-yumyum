@@ -13,7 +13,9 @@ export async function GET(request: Request) {
   const limit = Math.min(Math.max(parseInt(limitParam || "10", 10), 1), 20);
 
   try {
+    console.log("[/api/v1/gainers-losers] Fetching with limit:", limit);
     const data = await fetchGainersLosers(limit);
+    console.log("[/api/v1/gainers-losers] Result: gainers=%d losers=%d error=%s", data.gainers.length, data.losers.length, data.error || "none");
 
     if (data.error) {
       return NextResponse.json(

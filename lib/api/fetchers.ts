@@ -277,15 +277,23 @@ export async function fetchQuickStats(): Promise<QuickStatsData> {
 
 export async function fetchGainersLosers(): Promise<GainersLosersData> {
   try {
-    const res = await fetch(getUrl("/api/v1/gainers-losers"));
+    const url = getUrl("/api/v1/gainers-losers");
+    console.log("[fetchGainersLosers] Calling:", url);
+    const res = await fetch(url);
+    console.log("[fetchGainersLosers] Status:", res.status);
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("[fetchGainersLosers] Error response:", text);
+      return { gainers: [], losers: [] };
+    }
     const json = await res.json();
-    // Return data even if API returned error status (with empty arrays)
+    console.log("[fetchGainersLosers] Gainers:", json.gainers?.length, "Losers:", json.losers?.length);
     return {
       gainers: json.gainers || [],
       losers: json.losers || [],
     };
-  } catch {
-    // Network error - return empty data
+  } catch (err) {
+    console.error("[fetchGainersLosers] Network error:", err);
     return { gainers: [], losers: [] };
   }
 }
