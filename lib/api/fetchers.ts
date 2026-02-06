@@ -204,6 +204,62 @@ export interface BtcHoldingsData {
   };
 }
 
+// ============ ETH Split Endpoint Types ============
+
+export interface EthPriceData {
+  price7d: {
+    change: number | null;
+    sparkline: number[];
+    high: number | null;
+    low: number | null;
+  };
+}
+
+export interface EthStatsData {
+  supply: { circulating: number | null; totalBurnt: number | null };
+  staking: { totalStaked: number | null; validatorCount: number | null; stakingRatio: number | null; apy: number | null };
+  inflation: { issuance7d: number | null; burn7d: number | null; netSupplyChange7d: number | null; supplyGrowthPct: number | null; isDeflationary: boolean | null };
+}
+
+export interface EthChartsData {
+  l2Tvl: { dates: string[]; chains: Array<{ name: string; values: number[]; current: number }>; totals: { current: number; previous: number; change7d: number | null } };
+  l2Stablecoins: { dates: string[]; chains: Array<{ name: string; values: number[]; current: number }>; totals: { current: number; previous: number; change7d: number | null } };
+}
+
+export interface EthHoldingsData {
+  etfFlows: EtfFlow;
+  etfHoldings: { totalEth: number | null; totalUsd: number | null; holdings: Array<{ ticker: string; issuer: string; eth: number; usd: number; percentage: number }> | null };
+  datHoldings: { totalEth: number | null; totalUsd: number | null; supplyPct: number | null; companies: Array<{ name: string; holdings: number; holdingsUsd: number; supplyPct: number }> | null; date: string | null };
+}
+
+// ============ SOL Split Endpoint Types ============
+
+export interface SolPriceData {
+  price7d: {
+    change: number | null;
+    sparkline: number[];
+    high: number | null;
+    low: number | null;
+  };
+}
+
+export interface SolStatsData {
+  supply: { total: number | null; circulating: number | null };
+  staking: { staked: number | null; stakingPct: number | null; apy: number | null };
+  inflation: { annualRatePct: number | null; epoch: number | null };
+}
+
+export interface SolChartsData {
+  tvl: { total: number | null; change7d: number | null; sparkline: number[] };
+  stablecoins: { total: number | null; change7d: number | null; sparkline: number[] };
+}
+
+export interface SolHoldingsData {
+  etfFlows: EtfFlow;
+  etfHoldings: { totalSol: number | null; totalUsd: number | null; holdings: Array<{ ticker: string; issuer: string; usd: number }> | null; date: string | null };
+  datHoldings: { totalSol: number | null; totalUsd: number | null; supplyPct: number | null; companies: Array<{ name: string; holdings: number; holdingsUsd: number; supplyPct: number }> | null; date: string | null };
+}
+
 // ============ Fetchers ============
 
 export async function fetchTicker(): Promise<TickerItem[]> {
@@ -283,6 +339,58 @@ export async function fetchBtcHoldings(): Promise<BtcHoldingsData> {
   return res.json();
 }
 
+// ============ ETH Split Endpoint Fetchers ============
+
+export async function fetchEthPrice(): Promise<EthPriceData> {
+  const res = await fetch(getUrl("/api/v1/chain/eth/price"));
+  if (!res.ok) throw new Error("Failed to fetch ETH price");
+  return res.json();
+}
+
+export async function fetchEthStats(): Promise<EthStatsData> {
+  const res = await fetch(getUrl("/api/v1/chain/eth/stats"));
+  if (!res.ok) throw new Error("Failed to fetch ETH stats");
+  return res.json();
+}
+
+export async function fetchEthCharts(): Promise<EthChartsData> {
+  const res = await fetch(getUrl("/api/v1/chain/eth/charts"));
+  if (!res.ok) throw new Error("Failed to fetch ETH charts");
+  return res.json();
+}
+
+export async function fetchEthHoldings(): Promise<EthHoldingsData> {
+  const res = await fetch(getUrl("/api/v1/chain/eth/holdings"));
+  if (!res.ok) throw new Error("Failed to fetch ETH holdings");
+  return res.json();
+}
+
+// ============ SOL Split Endpoint Fetchers ============
+
+export async function fetchSolPrice(): Promise<SolPriceData> {
+  const res = await fetch(getUrl("/api/v1/chain/sol/price"));
+  if (!res.ok) throw new Error("Failed to fetch SOL price");
+  return res.json();
+}
+
+export async function fetchSolStats(): Promise<SolStatsData> {
+  const res = await fetch(getUrl("/api/v1/chain/sol/stats"));
+  if (!res.ok) throw new Error("Failed to fetch SOL stats");
+  return res.json();
+}
+
+export async function fetchSolCharts(): Promise<SolChartsData> {
+  const res = await fetch(getUrl("/api/v1/chain/sol/charts"));
+  if (!res.ok) throw new Error("Failed to fetch SOL charts");
+  return res.json();
+}
+
+export async function fetchSolHoldings(): Promise<SolHoldingsData> {
+  const res = await fetch(getUrl("/api/v1/chain/sol/holdings"));
+  if (!res.ok) throw new Error("Failed to fetch SOL holdings");
+  return res.json();
+}
+
 // ============ Query Keys ============
 
 export const queryKeys = {
@@ -298,4 +406,14 @@ export const queryKeys = {
   btcNetwork: ["btc", "network"] as const,
   btcIndicators: ["btc", "indicators"] as const,
   btcHoldings: ["btc", "holdings"] as const,
+  // ETH split endpoints
+  ethPrice: ["eth", "price"] as const,
+  ethStats: ["eth", "stats"] as const,
+  ethCharts: ["eth", "charts"] as const,
+  ethHoldings: ["eth", "holdings"] as const,
+  // SOL split endpoints
+  solPrice: ["sol", "price"] as const,
+  solStats: ["sol", "stats"] as const,
+  solCharts: ["sol", "charts"] as const,
+  solHoldings: ["sol", "holdings"] as const,
 };

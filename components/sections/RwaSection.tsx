@@ -57,11 +57,22 @@ function formatBillions(value: number): string {
   return `$${value.toFixed(0)}`;
 }
 
-function formatChange(value: number | null): { text: string; color: string } {
-  if (value === null) return { text: "—", color: "text-[#6B7280]" };
-  const sign = value >= 0 ? "+" : "";
-  const color = value >= 0 ? "text-[#16A34A]" : "text-[#DC2626]";
-  return { text: `${sign}${value.toFixed(1)}%`, color };
+function ChangeBadge({ value, label }: { value: number | null; label: string }) {
+  if (value === null) return <span className="text-xs text-[#6B7280]">—</span>;
+  const isPositive = value >= 0;
+  const arrow = isPositive ? "▲" : "▼";
+  const bgColor = isPositive ? "bg-[#DCFCE7]" : "bg-[#FEE2E2]";
+  const textColor = isPositive ? "text-[#16A34A]" : "text-[#DC2626]";
+  return (
+    <span className="inline-flex items-center gap-1">
+      <span className={`inline-flex items-center px-1.5 py-0.5 rounded ${bgColor}`}>
+        <span className={`text-xs font-medium tabular-nums ${textColor}`}>
+          <span className="text-[10px]">{arrow}</span>{Math.abs(value).toFixed(1)}%
+        </span>
+      </span>
+      <span className="text-[10px] text-[#9CA3AF]">{label}</span>
+    </span>
+  );
 }
 
 export function RwaSection() {
@@ -102,8 +113,6 @@ export function RwaSection() {
     );
   }
 
-  const d30 = formatChange(data.changes.d30);
-
   // Format chart data - add Korean date for tooltip
   const chartData = data.data.map((d) => ({
     ...d,
@@ -138,10 +147,7 @@ export function RwaSection() {
           <p className="text-3xl font-bold text-[#171717] tabular-nums">
             {formatBillions(data.latest.total)}
           </p>
-          <span className={`text-sm font-medium tabular-nums ${d30.color}`}>
-            {d30.text}
-            <span className="text-[#9CA3AF] ml-0.5">30일</span>
-          </span>
+          <ChangeBadge value={data.changes.d30} label="30일" />
         </div>
       </div>
 

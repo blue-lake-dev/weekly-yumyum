@@ -135,11 +135,15 @@ export function Ticker() {
 
         {/* Scrolling marquee container */}
         <div className="flex-1 overflow-hidden">
-          <div className="flex items-center gap-8 animate-marquee">
-            {/* First set of tickers */}
-            {tickers.map((ticker, index) => renderTickerItem(ticker, index, false))}
+          <div className="flex animate-marquee">
+            {/* First set */}
+            <div className="flex items-center gap-4 shrink-0 pr-4">
+              {tickers.map((ticker, index) => renderTickerItem(ticker, index, false))}
+            </div>
             {/* Duplicate for seamless loop */}
-            {tickers.map((ticker, index) => renderTickerItem(ticker, index, true))}
+            <div className="flex items-center gap-4 shrink-0 pr-4">
+              {tickers.map((ticker, index) => renderTickerItem(ticker, index, true))}
+            </div>
           </div>
         </div>
       </div>
