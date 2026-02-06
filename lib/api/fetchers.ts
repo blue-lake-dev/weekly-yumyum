@@ -96,9 +96,15 @@ interface EtfFlow {
 
 export interface BtcData {
   chain: "btc";
-  price7d: { change: number | null; sparkline: number[] };
+  price7d: { change: number | null; sparkline: number[]; high: number | null; low: number | null };
   supply: { circulating: number | null; maxSupply: number | null; percentMined: number | null };
+  mayerMultiple: { current: number | null; ma200: number | null; interpretation: "oversold" | "fair" | "overbought" | null };
+  mempool: { pendingTxCount: number | null; pendingVsize: number | null; fees: { fastest: number | null; halfHour: number | null; hour: number | null; economy: number | null }; congestionLevel: "low" | "moderate" | "high" | "extreme" | null };
+  hashrate: { current: number | null; change30d: number | null; sparkline: number[] };
+  miningCost: { productionCost: number | null; date: string | null };
+  companyHoldings: { totalBtc: number | null; totalUsd: number | null; companies: Array<{ name: string; symbol: string; holdings: number; value: number }> | null };
   etfFlows: EtfFlow;
+  etfHoldings: { totalBtc: number | null; totalUsd: number | null; holdings: Array<{ ticker: string; issuer: string; btc: number; usd: number }> | null };
 }
 
 export interface EthData {
@@ -131,6 +137,72 @@ export interface SolData {
 
 export type ChainData = BtcData | EthData | SolData;
 export type Chain = "btc" | "eth" | "sol";
+
+// ============ BTC Split Endpoint Types ============
+
+export interface BtcPriceData {
+  price: number | null;
+  change1h: number | null;
+  change24h: number | null;
+  change7d: number | null;
+  volume24h: number | null;
+  high24h: number | null;
+  low24h: number | null;
+  sparkline7d: number[];
+}
+
+export interface BtcNetworkData {
+  mempool: {
+    pendingTxCount: number | null;
+    pendingVsize: number | null;
+    fees: {
+      fastest: number | null;
+      halfHour: number | null;
+      hour: number | null;
+      economy: number | null;
+    };
+    congestionLevel: "low" | "moderate" | "high" | "extreme" | null;
+  };
+  hashrate: {
+    current: number | null;
+    change30d: number | null;
+    sparkline: number[];
+  };
+}
+
+export interface BtcIndicatorsData {
+  mayerMultiple: {
+    current: number | null;
+    ma200: number | null;
+    interpretation: "oversold" | "fair" | "overbought" | null;
+  };
+  miningCost: {
+    productionCost: number | null;
+    date: string | null;
+  };
+  supply: {
+    circulating: number | null;
+    maxSupply: number | null;
+    percentMined: number | null;
+  };
+}
+
+export interface BtcHoldingsData {
+  etfFlows: {
+    today: number | null;
+    history: Array<{ date: string; value: number | null }>;
+  };
+  etfHoldings: {
+    totalBtc: number | null;
+    totalUsd: number | null;
+    holdings: Array<{ ticker: string; issuer: string; btc: number; usd: number }> | null;
+  };
+  companyHoldings: {
+    totalBtc: number | null;
+    totalUsd: number | null;
+    companies: Array<{ name: string; symbol: string; holdings: number; value: number }> | null;
+  };
+}
 
 // ============ Fetchers ============
 
@@ -185,6 +257,32 @@ export async function fetchRwa(): Promise<RwaData> {
   return { total: null, byChain: {} };
 }
 
+// ============ BTC Split Endpoint Fetchers ============
+
+export async function fetchBtcPrice(): Promise<BtcPriceData> {
+  const res = await fetch(getUrl("/api/v1/chain/btc/price"));
+  if (!res.ok) throw new Error("Failed to fetch BTC price");
+  return res.json();
+}
+
+export async function fetchBtcNetwork(): Promise<BtcNetworkData> {
+  const res = await fetch(getUrl("/api/v1/chain/btc/network"));
+  if (!res.ok) throw new Error("Failed to fetch BTC network");
+  return res.json();
+}
+
+export async function fetchBtcIndicators(): Promise<BtcIndicatorsData> {
+  const res = await fetch(getUrl("/api/v1/chain/btc/indicators"));
+  if (!res.ok) throw new Error("Failed to fetch BTC indicators");
+  return res.json();
+}
+
+export async function fetchBtcHoldings(): Promise<BtcHoldingsData> {
+  const res = await fetch(getUrl("/api/v1/chain/btc/holdings"));
+  if (!res.ok) throw new Error("Failed to fetch BTC holdings");
+  return res.json();
+}
+
 // ============ Query Keys ============
 
 export const queryKeys = {
@@ -195,4 +293,9 @@ export const queryKeys = {
   chain: (chain: Chain) => ["chain", chain] as const,
   derivatives: ["derivatives"] as const,
   rwa: ["rwa"] as const,
+  // BTC split endpoints
+  btcPrice: ["btc", "price"] as const,
+  btcNetwork: ["btc", "network"] as const,
+  btcIndicators: ["btc", "indicators"] as const,
+  btcHoldings: ["btc", "holdings"] as const,
 };

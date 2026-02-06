@@ -15,20 +15,41 @@ import {
   ReferenceLine,
 } from "recharts";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { useQueryClient } from "@tanstack/react-query";
+import { Spinner } from "@/components/ui/Spinner";
+import { useQueryClient, useQueries } from "@tanstack/react-query";
 import { useChainDataSuspense } from "@/lib/hooks/use-chain-data";
-import { fetchChainData, queryKeys } from "@/lib/api/fetchers";
+import {
+  fetchChainData,
+  fetchBtcPrice,
+  fetchBtcNetwork,
+  fetchBtcIndicators,
+  fetchBtcHoldings,
+  queryKeys,
+} from "@/lib/api/fetchers";
 import { useTicker } from "@/lib/hooks/use-ticker";
-import type { Chain, EthData } from "@/lib/api/fetchers";
-import { formatEthAmount, formatPercent, formatCompactNumber, formatUsd } from "@/lib/utils/format";
+import type {
+  Chain,
+  EthData,
+  BtcPriceData,
+  BtcNetworkData,
+  BtcIndicatorsData,
+  BtcHoldingsData,
+} from "@/lib/api/fetchers";
+import { formatEthAmount, formatPercent, formatCompactNumber, formatUsd, formatFlow } from "@/lib/utils/format";
 
 
 // Data types for each chain
 interface BtcData {
   chain: "btc";
-  price7d: { change: number | null; sparkline: number[] };
+  price7d: { change: number | null; sparkline: number[]; high: number | null; low: number | null };
   supply: { circulating: number | null; maxSupply: number | null; percentMined: number | null };
+  mayerMultiple: { current: number | null; ma200: number | null; interpretation: "oversold" | "fair" | "overbought" | null };
+  mempool: { pendingTxCount: number | null; pendingVsize: number | null; fees: { fastest: number | null; halfHour: number | null; hour: number | null; economy: number | null }; congestionLevel: "low" | "moderate" | "high" | "extreme" | null };
+  hashrate: { current: number | null; change30d: number | null; sparkline: number[] };
+  miningCost: { productionCost: number | null; date: string | null };
+  companyHoldings: { totalBtc: number | null; totalUsd: number | null; companies: Array<{ name: string; symbol: string; holdings: number; value: number }> | null };
   etfFlows: { today: number | null; history: Array<{ date: string; value: number | null }> };
+  etfHoldings: { totalBtc: number | null; totalUsd: number | null; holdings: Array<{ ticker: string; issuer: string; btc: number; usd: number }> | null };
 }
 
 
@@ -785,10 +806,12 @@ function EtfFlowCard({
   history,
   today,
   color = "#627EEA",
+  isLoading = false,
 }: {
   history: Array<{ date: string; value: number | null }>;
   today: number | null;
   color?: string;
+  isLoading?: boolean;
 }) {
   const chartData = toFlowChartData(history);
 
@@ -800,74 +823,88 @@ function EtfFlowCard({
       {/* Header */}
       <p className="font-semibold text-sm text-[#6B7280] mb-3">ETF 자금흐름</p>
 
-      {/* Summary Stats */}
-      <div className="flex items-baseline gap-6 mb-3">
-        <p className="text-xl font-bold tabular-nums" style={{ color: today === null ? "#6B7280" : today >= 0 ? color : "#DC2626" }}>
-          {formatFlowValue(today)}
-          <span className="text-xs text-[#9CA3AF] font-normal ml-1">1일</span>
-        </p>
-        <p className="text-xl font-bold tabular-nums" style={{ color: cumulative7d >= 0 ? color : "#DC2626" }}>
-          {formatFlowValue(cumulative7d)}
-          <span className="text-xs text-[#9CA3AF] font-normal ml-1">7일</span>
-        </p>
-      </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-[160px]">
+          <Spinner size="md" />
+        </div>
+      ) : (
+        <>
+          {/* Summary Stats */}
+          <div className="flex items-baseline gap-6 mb-3">
+            <p className="text-xl font-bold tabular-nums" style={{ color: today === null ? "#6B7280" : today >= 0 ? color : "#DC2626" }}>
+              {formatFlow(today)}
+              <span className="text-xs text-[#9CA3AF] font-normal ml-1">1일</span>
+            </p>
+            <p className="text-xl font-bold tabular-nums" style={{ color: cumulative7d >= 0 ? color : "#DC2626" }}>
+              {formatFlow(cumulative7d)}
+              <span className="text-xs text-[#9CA3AF] font-normal ml-1">7일</span>
+            </p>
+          </div>
 
-      {/* Bar Chart */}
-      <div className="h-32">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData}>
-            <XAxis
-              dataKey="date"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fontSize: 10, fill: "#9CA3AF" }}
-            />
-            <YAxis hide />
-            <Tooltip
-              cursor={false}
-              content={({ active, payload, label }) => {
-                if (!active || !payload?.length) return null;
-                const value = payload[0].payload.value;
-                return (
-                  <div className="rounded-lg bg-white border border-[#E5E7EB] px-3 py-2 text-sm shadow-lg">
-                    <p className="text-[#6B7280] mb-1">{label}</p>
-                    <p className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: value >= 0 ? color : "#DC2626" }} />
-                      <span className="font-medium tabular-nums" style={{ color: value >= 0 ? color : "#DC2626" }}>
-                        {value >= 0 ? "+" : "-"}{formatUsd(Math.abs(value), 0)}
-                      </span>
-                    </p>
-                  </div>
-                );
-              }}
-            />
-            <ReferenceLine y={0} stroke="#E5E7EB" strokeWidth={1} />
-            <Bar dataKey="value" radius={[2, 2, 2, 2]}>
-              {chartData.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={entry.value >= 0 ? color : "#DC2626"}
+          {/* Bar Chart */}
+          <div className="h-32">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData}>
+                <XAxis
+                  dataKey="date"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 10, fill: "#9CA3AF" }}
                 />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+                <YAxis hide />
+                <Tooltip
+                  cursor={false}
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload?.length) return null;
+                    const value = payload[0].payload.value;
+                    return (
+                      <div className="rounded-lg bg-white border border-[#E5E7EB] px-3 py-2 text-sm shadow-lg">
+                        <p className="text-[#6B7280] mb-1">{label}</p>
+                        <p className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: value >= 0 ? color : "#DC2626" }} />
+                          <span className="font-medium tabular-nums" style={{ color: value >= 0 ? color : "#DC2626" }}>
+                            {formatFlow(value)}
+                          </span>
+                        </p>
+                      </div>
+                    );
+                  }}
+                />
+                <ReferenceLine y={0} stroke="#E5E7EB" strokeWidth={1} />
+                <Bar dataKey="value" radius={[2, 2, 2, 2]}>
+                  {chartData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={entry.value >= 0 ? color : "#DC2626"}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
 // Content component that fetches data and renders appropriate chain content
 function ChainContent({ activeChain }: { activeChain: Chain }) {
+  // BTC uses useQueries pattern (fetches its own data)
+  if (activeChain === "btc") {
+    return <BtcContent />;
+  }
+
+  // ETH and SOL still use the old pattern for now
   const { data } = useChainDataSuspense(activeChain);
 
-  if (data.chain === "btc") {
-    return <BtcContent data={data} />;
-  } else if (data.chain === "eth") {
+  if (data.chain === "eth") {
     return <EthContent data={data} />;
-  } else {
+  } else if (data.chain === "sol") {
     return <SolContent data={data} />;
   }
+
+  return null;
 }
 
 export function ChainTabs() {
@@ -985,35 +1022,534 @@ function ChainSkeleton() {
   );
 }
 
-function BtcContent({ data }: { data: BtcData }) {
+function BtcContent() {
+  // Fetch all 4 endpoints in parallel using useQueries
+  const results = useQueries({
+    queries: [
+      {
+        queryKey: queryKeys.btcPrice,
+        queryFn: fetchBtcPrice,
+        staleTime: 30_000, // 30 seconds
+      },
+      {
+        queryKey: queryKeys.btcNetwork,
+        queryFn: fetchBtcNetwork,
+        staleTime: 60_000, // 1 minute
+      },
+      {
+        queryKey: queryKeys.btcIndicators,
+        queryFn: fetchBtcIndicators,
+        staleTime: 3600_000, // 1 hour
+      },
+      {
+        queryKey: queryKeys.btcHoldings,
+        queryFn: fetchBtcHoldings,
+        staleTime: 3600_000, // 1 hour
+      },
+    ],
+  });
+
+  const [priceQuery, networkQuery, indicatorsQuery, holdingsQuery] = results;
+
+  // TEMP: Force loading state to preview spinners
+  const forceLoading = false;
+
   return (
     <div className="space-y-2">
-      {/* Price Sparkline */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold text-[#171717]">7일 가격 추이</h3>
-          <span className={`text-sm font-medium tabular-nums ${(data.price7d.change ?? 0) >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
-            {formatPercent(data.price7d.change)}
-          </span>
-        </div>
-        <div className="h-24">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={toSparklineData(data.price7d.sparkline)}>
-              <Area type="monotone" dataKey="value" stroke="#F7931A" fill="#F7931A" fillOpacity={0.2} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+      {/* Row 1: Price + Mayer Multiple */}
+      <div className="flex gap-2">
+        {/* Price Card */}
+        <BtcPriceCard data={priceQuery.data} isLoading={forceLoading || priceQuery.isLoading} />
+        {/* Mayer Multiple Card */}
+        <BtcMayerCard data={indicatorsQuery.data} isLoading={forceLoading || indicatorsQuery.isLoading} />
       </div>
 
-      {/* Stats Grid */}
+      {/* Row 2: Mining Cost + Mempool + Hashrate */}
       <div className="grid grid-cols-3 gap-2">
-        <StatCard label="유통량" value={formatMillions(data.supply.circulating)} subValue="BTC" />
-        <StatCard label="최대 공급량" value={formatMillions(data.supply.maxSupply)} subValue="BTC" />
-        <StatCard label="채굴률" value={data.supply.percentMined ? `${data.supply.percentMined.toFixed(1)}%` : "—"} />
+        {/* Mining Cost */}
+        <BtcMiningCostCard
+          data={indicatorsQuery.data}
+          price={priceQuery.data?.price}
+          isLoading={forceLoading || indicatorsQuery.isLoading}
+        />
+        {/* Mempool */}
+        <BtcMempoolCard data={networkQuery.data} isLoading={forceLoading || networkQuery.isLoading} />
+        {/* Hashrate */}
+        <BtcHashrateCard data={networkQuery.data} isLoading={forceLoading || networkQuery.isLoading} />
       </div>
 
-      {/* ETF Flow Chart */}
-      <EtfFlowChart history={data.etfFlows.history} today={data.etfFlows.today} color="#F7931A" />
+      {/* Row 3: ETF Flows + Holdings */}
+      <div className="flex gap-2">
+        <BtcEtfFlowCard data={holdingsQuery.data} isLoading={forceLoading || holdingsQuery.isLoading} />
+        <BtcHoldingsCard data={holdingsQuery.data} isLoading={forceLoading || holdingsQuery.isLoading} />
+      </div>
+    </div>
+  );
+}
+
+// ============ BTC Card Components ============
+
+// Helper for formatting change badge
+function ChangeBadge({ value, label }: { value: number | null | undefined; label: string }) {
+  if (value === null || value === undefined) {
+    return <span className="text-xs text-[#6B7280]">—</span>;
+  }
+  const isPositive = value >= 0;
+  const arrow = isPositive ? "▲" : "▼";
+  const bgColor = isPositive ? "bg-[#DCFCE7]" : "bg-[#FEE2E2]";
+  const textColor = isPositive ? "text-[#16A34A]" : "text-[#DC2626]";
+
+  return (
+    <span className="inline-flex items-center gap-1">
+      <span className={`inline-flex items-center px-1.5 py-0.5 rounded ${bgColor}`}>
+        <span className={`text-xs font-medium tabular-nums ${textColor}`}>
+          <span className="text-[10px]">{arrow}</span>{Math.abs(value).toFixed(2)}%
+        </span>
+      </span>
+      <span className="text-[10px] text-[#9CA3AF]">{label}</span>
+    </span>
+  );
+}
+
+// Custom dot component for sparkline - only shows pulsing dot on last point
+function SparklineDot(props: { cx?: number; cy?: number; index?: number; dataLength: number }) {
+  const { cx, cy, index, dataLength } = props;
+  if (cx === undefined || cy === undefined || index === undefined) return null;
+  const isLast = index === dataLength - 1;
+  if (!isLast) return null;
+
+  return (
+    <g style={{ opacity: 0, animation: "fadeIn 0.3s ease-out 1.5s forwards" }}>
+      {/* Pulse ring */}
+      <circle cx={cx} cy={cy} r={4} fill="#F7931A" className="animate-slow-pulse" />
+      {/* Solid dot */}
+      <circle cx={cx} cy={cy} r={2} fill="#F7931A" />
+    </g>
+  );
+}
+
+function BtcPriceCard({ data, isLoading }: { data?: BtcPriceData; isLoading: boolean }) {
+  // Downsample sparkline for better display (take every 4th point from ~168 hourly points)
+  // Then append current price as the last point
+  const baseSparkline = data?.sparkline7d
+    ? data.sparkline7d.filter((_, i) => i % 4 === 0)
+    : [];
+  const sparklineWithCurrentPrice = data?.price
+    ? [...baseSparkline, data.price]
+    : baseSparkline;
+  const sparklineData = toSparklineData(sparklineWithCurrentPrice);
+
+  const sparklineMin = sparklineData.length > 0 ? Math.min(...sparklineData.map(d => d.value)) : 0;
+  const sparklineMax = sparklineData.length > 0 ? Math.max(...sparklineData.map(d => d.value)) : 0;
+
+  return (
+    <div className="flex-1 rounded-xl bg-white border border-[#E5E7EB] p-3">
+      {isLoading ? (
+        <div className="flex items-center justify-center h-20">
+          <Spinner size="md" />
+        </div>
+      ) : (
+        <>
+          {/* Row 1: Title + Price with Sparkline */}
+          <div className="flex items-center gap-3">
+            <div>
+              <p className="font-semibold text-sm text-[#6B7280] mb-1">BTC 가격</p>
+              <p className="text-2xl font-bold tabular-nums text-[#171717]">
+                {data?.price ? `$${data.price.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : "—"}
+              </p>
+            </div>
+            {sparklineData.length > 0 && (
+              <div className="w-25 h-10 flex items-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={sparklineData}>
+                    <YAxis domain={[sparklineMin * 0.99, sparklineMax * 1.01]} hide />
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#F7931A"
+                      fill="#F7931A"
+                      fillOpacity={0.2}
+                      strokeWidth={1.5}
+                      dot={(props) => <SparklineDot {...props} dataLength={sparklineData.length} />}
+                      activeDot={false}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+
+          {/* Row 2: 1h / 24h / 7d changes as badges */}
+          <div className="flex gap-2 mt-2">
+            <ChangeBadge value={data?.change1h} label="1시간" />
+            <ChangeBadge value={data?.change24h} label="24시간" />
+            <ChangeBadge value={data?.change7d} label="7일" />
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function BtcMayerCard({ data, isLoading }: { data?: BtcIndicatorsData; isLoading: boolean }) {
+  const mayer = data?.mayerMultiple;
+
+  const interpretationLabel = mayer?.interpretation === "oversold" ? "저평가" :
+    mayer?.interpretation === "overbought" ? "고평가" :
+    mayer?.interpretation === "fair" ? "적정" : null;
+
+  const badgeColor = mayer?.interpretation === "oversold" ? "bg-[#FEE2E2] text-[#DC2626]" :
+    mayer?.interpretation === "overbought" ? "bg-[#DCFCE7] text-[#16A34A]" :
+    "bg-[#FEF3C7] text-[#D97706]";
+
+  return (
+    <div className="flex-1 rounded-xl bg-white border border-[#E5E7EB] p-3">
+      <p className="font-semibold text-sm text-[#6B7280] mb-2">Mayer Multiple</p>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-[80px]">
+          <Spinner size="md" />
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center gap-2">
+            <p className="text-2xl font-bold tabular-nums text-[#171717]">
+              {mayer?.current?.toFixed(2) ?? "—"}
+            </p>
+            {interpretationLabel && (
+              <span className={`text-xs font-medium px-2 py-0.5 rounded ${badgeColor}`}>
+                {interpretationLabel}
+              </span>
+            )}
+          </div>
+          <div className="relative mt-3 px-3">
+            <div className="flex items-center">
+              <img src="/assets/pixels/bear.png" alt="Bear" className="w-8 h-8 object-contain relative z-10 -mr-3" />
+              <div className="flex-1 relative flex items-center">
+                {/* Pixel-style bar with border */}
+                <div className="w-full h-3 border-2 border-[#171717] flex overflow-hidden">
+                  <div className="flex-1 bg-[#DC2626]" />
+                  <div className="flex-1 bg-[#F59E0B]" />
+                  <div className="flex-1 bg-[#16A34A]" />
+                </div>
+                {/* Position indicator */}
+                {mayer?.current !== null && mayer?.current !== undefined && (
+                  <div
+                    className="absolute top-1/2 w-3 h-5 bg-white border-2 border-[#171717]"
+                    style={{
+                      left: `${Math.min(Math.max((mayer.current / 3) * 100, 0), 100)}%`,
+                      transform: "translate(-50%, -50%)",
+                    }}
+                  />
+                )}
+              </div>
+              <img src="/assets/pixels/bull.png" alt="Bull" className="w-8 h-8 object-contain relative z-10 -ml-3" />
+            </div>
+            {/* Scale labels - positioned below */}
+            <div className="relative h-4 text-[10px] text-[#9CA3AF] mt-1 ml-5 mr-5">
+              <span className="absolute left-0">0</span>
+              <span className="absolute left-[33.3%] -translate-x-1/2">1.0</span>
+              <span className="absolute left-[80%] -translate-x-1/2">2.4</span>
+              <span className="absolute right-0">3.0</span>
+            </div>
+          </div>
+          <div className="text-xs text-[#6B7280] mt-2">
+            200일 MA <span className="font-semibold tabular-nums text-[#171717]">
+              ${mayer?.ma200?.toLocaleString(undefined, { maximumFractionDigits: 0 }) ?? "—"}
+            </span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function BtcMiningCostCard({
+  data,
+  price,
+  isLoading,
+}: {
+  data?: BtcIndicatorsData;
+  price?: number | null;
+  isLoading: boolean;
+}) {
+  const cost = data?.miningCost.productionCost;
+
+  return (
+    <div className="rounded-xl bg-white border border-[#E5E7EB] p-3">
+      <p className="font-semibold text-sm text-[#6B7280] mb-1">채굴 원가</p>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-10">
+          <Spinner size="md" />
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <p className="text-xl font-bold tabular-nums text-[#171717]">
+            {cost ? `$${cost.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : "—"}
+          </p>
+          {price && cost && (
+            <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+              price > cost ? "bg-[#DCFCE7] text-[#16A34A]" : "bg-[#FEE2E2] text-[#DC2626]"
+            }`}>
+              {price > cost ? "수익 구간" : "손실 구간"}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BtcMempoolCard({ data, isLoading }: { data?: BtcNetworkData; isLoading: boolean }) {
+  const mempool = data?.mempool;
+
+  const congestionConfig = {
+    low: { label: "원활", bg: "bg-[#DCFCE7]", text: "text-[#16A34A]" },
+    moderate: { label: "보통", bg: "bg-[#FEF3C7]", text: "text-[#D97706]" },
+    high: { label: "혼잡", bg: "bg-[#FFEDD5]", text: "text-[#EA580C]" },
+    extreme: { label: "정체", bg: "bg-[#FEE2E2]", text: "text-[#DC2626]" },
+  };
+
+  const config = mempool?.congestionLevel ? congestionConfig[mempool.congestionLevel] : null;
+
+  return (
+    <div className="rounded-xl bg-white border border-[#E5E7EB] p-3">
+      <p className="font-semibold text-sm text-[#6B7280] mb-2">네트워크 상태</p>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-12">
+          <Spinner size="md" />
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center gap-2 mb-1">
+            <p className="text-sm text-[#6B7280]">
+              권장 수수료: <span className="font-bold tabular-nums text-[#171717]">{mempool?.fees.economy ?? "—"} sat/vB</span>
+            </p>
+            {config && (
+              <span className={`text-xs font-medium px-2 py-0.5 rounded ${config.bg} ${config.text}`}>
+                {config.label}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-[#6B7280] tabular-nums">
+            대기 용량: {mempool?.pendingVsize ? `${mempool.pendingVsize.toFixed(1)} vMB` : "—"}
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
+function BtcHashrateCard({ data, isLoading }: { data?: BtcNetworkData; isLoading: boolean }) {
+  const hashrate = data?.hashrate;
+  const sparklineData = hashrate?.sparkline ? toSparklineDataWithDates(hashrate.sparkline) : [];
+  const change = hashrate?.change30d;
+  const isPositive = (change ?? 0) >= 0;
+  const arrow = isPositive ? "▲" : "▼";
+  const badgeColor = isPositive ? "bg-[#DCFCE7] text-[#16A34A]" : "bg-[#FEE2E2] text-[#DC2626]";
+
+  const sparklineMin = sparklineData.length > 0 ? Math.min(...sparklineData.map(d => d.value)) : 0;
+  const sparklineMax = sparklineData.length > 0 ? Math.max(...sparklineData.map(d => d.value)) : 0;
+
+  return (
+    <div className="rounded-xl bg-white border border-[#E5E7EB] p-3">
+      <p className="font-semibold text-sm text-[#6B7280] mb-1">해시레이트</p>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-10">
+          <Spinner size="md" />
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center gap-2">
+            <p className="text-xl font-bold tabular-nums text-[#171717]">
+              {hashrate?.current ? hashrate.current.toFixed(0) : "—"}
+            </p>
+            <span className="text-sm text-[#6B7280]">EH/s</span>
+            {change !== null && change !== undefined && (
+              <>
+                <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded ${badgeColor}`}>
+                  <span className="text-[10px]">{arrow}</span>
+                  {Math.abs(change).toFixed(1)}%
+                </span>
+                <span className="text-[10px] text-[#9CA3AF]">30일</span>
+              </>
+            )}
+          </div>
+          {sparklineData.length > 0 && (
+            <div className="w-full h-14 mt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={sparklineData}>
+                  <YAxis domain={[sparklineMin * 0.99, sparklineMax * 1.01]} hide />
+                  <Tooltip
+                    cursor={{ stroke: "#F7931A", strokeWidth: 1, strokeDasharray: "4 4" }}
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.[0]) return null;
+                      const { date, value } = payload[0].payload;
+                      return (
+                        <div className="rounded-lg bg-white border border-[#E5E7EB] px-3 py-2 text-sm shadow-lg">
+                          <p className="text-[#6B7280] mb-1">{date}</p>
+                          <p className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-[#F7931A]" />
+                            <span className="text-[#171717] font-medium tabular-nums">
+                              {value.toFixed(0)} EH/s
+                            </span>
+                          </p>
+                        </div>
+                      );
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke="#F7931A"
+                    fill="#F7931A"
+                    fillOpacity={0.2}
+                    strokeWidth={1.5}
+                    dot={false}
+                    activeDot={{ r: 3, fill: "#F7931A" }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function BtcEtfFlowCard({ data, isLoading }: { data?: BtcHoldingsData; isLoading: boolean }) {
+  const etfFlows = data?.etfFlows;
+
+  return (
+    <EtfFlowCard
+      history={etfFlows?.history ?? []}
+      today={etfFlows?.today ?? null}
+      isLoading={isLoading}
+      color="#F7931A"
+    />
+  );
+}
+
+function BtcHoldingsCard({ data, isLoading }: { data?: BtcHoldingsData; isLoading: boolean }) {
+  const [activeTab, setActiveTab] = useState<"etf" | "company">("etf");
+
+  return (
+    <div className="flex-1 rounded-xl bg-white border border-[#E5E7EB] p-3">
+      <div className="flex items-center justify-between mb-3">
+        <p className="font-semibold text-sm text-[#6B7280]">기관 보유량</p>
+        <div className="flex gap-1">
+          <button
+            onClick={() => setActiveTab("etf")}
+            className={`px-2 py-0.5 text-xs font-medium rounded ${
+              activeTab === "etf"
+                ? "bg-[#F7931A] text-white"
+                : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"
+            }`}
+          >
+            ETF
+          </button>
+          <button
+            onClick={() => setActiveTab("company")}
+            className={`px-2 py-0.5 text-xs font-medium rounded ${
+              activeTab === "company"
+                ? "bg-[#F7931A] text-white"
+                : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"
+            }`}
+          >
+            기업
+          </button>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center h-30">
+          <Spinner size="md" />
+        </div>
+      ) : activeTab === "etf" ? (
+        <>
+          {/* Header row */}
+          <div className="grid grid-cols-[24px_1fr_80px_80px] gap-2 text-xs text-[#9CA3AF] border-b border-[#E5E7EB] pb-1 mb-1">
+            <span>#</span>
+            <span>이름</span>
+            <span className="text-right">보유량</span>
+            <span className="text-right">가치</span>
+          </div>
+          {/* Data rows */}
+          <div className="max-h-36 overflow-y-auto pr-2">
+            {data?.etfHoldings?.holdings?.map((h, i) => (
+              <div key={h.ticker} className={`grid grid-cols-[24px_1fr_80px_80px] gap-2 text-xs py-1 ${i % 2 === 1 ? "bg-[#F9FAFB]" : ""}`}>
+                <span className="text-[#9CA3AF]">{i + 1}.</span>
+                <span className="text-[#171717] truncate">{h.issuer || h.ticker}</span>
+                <span className="text-right tabular-nums text-[#171717]">
+                  {formatCompactNumber(h.btc, 1)}
+                </span>
+                <span className="text-right tabular-nums text-[#171717]">
+                  {formatUsd(h.usd, 1)}
+                </span>
+              </div>
+            ))}
+          </div>
+          {/* Footer total */}
+          <div className="border-t border-[#E5E7EB] pt-2 mt-2">
+            <div className="grid grid-cols-[24px_1fr_80px_80px] gap-2 text-xs items-baseline">
+              <span></span>
+              <span className="text-[#6B7280]">총 보유</span>
+              <span className="text-right font-bold tabular-nums text-[#171717]">
+                {data?.etfHoldings?.totalBtc
+                  ? `${formatCompactNumber(data.etfHoldings.totalBtc, 2)} BTC`
+                  : "—"}
+              </span>
+              <span className="text-right tabular-nums text-[#171717]">
+                {data?.etfHoldings?.totalUsd
+                  ? formatUsd(data.etfHoldings.totalUsd, 1)
+                  : "—"}
+              </span>
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Header row */}
+          <div className="grid grid-cols-[24px_1fr_80px_80px] gap-2 text-xs text-[#9CA3AF] border-b border-[#E5E7EB] pb-1 mb-1">
+            <span>#</span>
+            <span>이름</span>
+            <span className="text-right">보유량</span>
+            <span className="text-right">가치</span>
+          </div>
+          {/* Data rows */}
+          <div className="max-h-36 overflow-y-auto pr-2">
+            {data?.companyHoldings?.companies?.map((c, i) => (
+              <div key={c.symbol} className={`grid grid-cols-[24px_1fr_80px_80px] gap-2 text-xs py-1 ${i % 2 === 1 ? "bg-[#F9FAFB]" : ""}`}>
+                <span className="text-[#9CA3AF]">{i + 1}.</span>
+                <span className="text-[#171717] truncate">{c.name}</span>
+                <span className="text-right tabular-nums text-[#171717]">
+                  {formatCompactNumber(c.holdings, 1)}
+                </span>
+                <span className="text-right tabular-nums text-[#171717]">
+                  {formatUsd(c.value, 1)}
+                </span>
+              </div>
+            ))}
+          </div>
+          {/* Footer total */}
+          <div className="border-t border-[#E5E7EB] pt-2 mt-2">
+            <div className="grid grid-cols-[24px_1fr_80px_80px] gap-2 text-xs items-baseline">
+              <span></span>
+              <span className="text-[#6B7280]">총 보유</span>
+              <span className="text-right font-bold tabular-nums text-[#171717]">
+                {data?.companyHoldings?.totalBtc
+                  ? `${formatCompactNumber(data.companyHoldings.totalBtc, 2)} BTC`
+                  : "—"}
+              </span>
+              <span className="text-right tabular-nums text-[#171717]">
+                {data?.companyHoldings?.totalUsd
+                  ? formatUsd(data.companyHoldings.totalUsd, 1)
+                  : "—"}
+              </span>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

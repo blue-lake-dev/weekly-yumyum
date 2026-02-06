@@ -55,7 +55,7 @@ export interface MempoolStats {
     hour: number | null;
     economy: number | null;
   };
-  congestionLevel: "low" | "medium" | "high" | null;
+  congestionLevel: "low" | "moderate" | "high" | "extreme" | null;
   error?: string;
 }
 
@@ -64,16 +64,27 @@ export interface MempoolStats {
 // ============================================================================
 
 /**
- * Determine congestion level based on pending transaction count
- * Thresholds based on typical mempool behavior:
- * - Low: < 50,000 (blocks clearing quickly)
- * - Medium: 50,000 - 150,000 (moderate wait times)
- * - High: > 150,000 (congested, high fees)
+ * Calculate congestion score (0-100) based on mempool vSize and fastest fee
+ * Uses 50/50 weighting of two metrics to catch different congestion scenarios
  */
-function getCongestionLevel(txCount: number): "low" | "medium" | "high" {
-  if (txCount < 50000) return "low";
-  if (txCount < 150000) return "medium";
-  return "high";
+function getCongestionScore(mempoolVMB: number, fastestFee: number): number {
+  const vsizeScore = Math.min(mempoolVMB / 60, 1) * 50;   // 0-50 (60 vMB = max)
+  const feeScore = Math.min(fastestFee / 80, 1) * 50;     // 0-50 (80 sat/vB = max)
+  return Math.round(vsizeScore + feeScore);
+}
+
+/**
+ * Determine congestion level based on combined score
+ * - Low: < 15 (weekend calm, normal weekday)
+ * - Moderate: 15-39 (increased activity)
+ * - High: 40-64 (inscription waves, busy periods)
+ * - Extreme: 65+ (major events like Runes launch)
+ */
+function getCongestionLevel(score: number): "low" | "moderate" | "high" | "extreme" {
+  if (score < 15) return "low";
+  if (score < 40) return "moderate";
+  if (score < 65) return "high";
+  return "extreme";
 }
 
 // ============================================================================
@@ -94,7 +105,8 @@ export async function fetchMempoolStats(): Promise<MempoolStats> {
 
     const pendingTxCount = mempoolData.count;
     const pendingVsize = mempoolData.vsize / 1e6; // Convert to MB
-    const congestionLevel = getCongestionLevel(pendingTxCount);
+    const congestionScore = getCongestionScore(pendingVsize, feesData.fastestFee);
+    const congestionLevel = getCongestionLevel(congestionScore);
 
     console.log(`[mempool] Pending: ${pendingTxCount.toLocaleString()} txs (${congestionLevel})`);
     console.log(`[mempool] Fees: fastest=${feesData.fastestFee}, halfHour=${feesData.halfHourFee}, hour=${feesData.hourFee}`);

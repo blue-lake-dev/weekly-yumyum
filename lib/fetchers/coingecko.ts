@@ -648,3 +648,75 @@ export async function fetchBtcCompanyHoldings(): Promise<BtcCompanyHoldingsData>
     };
   }
 }
+
+// ============================================================================
+// BTC Price Stats (1h, 24h, 7d changes + volume)
+// ============================================================================
+
+interface CoinDetailWithPriceChanges {
+  market_data: {
+    current_price: { usd: number };
+    price_change_percentage_1h_in_currency: { usd: number };
+    price_change_percentage_24h: number;
+    price_change_percentage_7d: number;
+    total_volume: { usd: number };
+    high_24h: { usd: number };
+    low_24h: { usd: number };
+    sparkline_7d?: { price: number[] };
+  };
+}
+
+export interface BtcPriceStatsData {
+  price: number | null;
+  change1h: number | null;
+  change24h: number | null;
+  change7d: number | null;
+  volume24h: number | null;
+  high24h: number | null;
+  low24h: number | null;
+  sparkline7d: number[];
+  error?: string;
+}
+
+/**
+ * Fetch BTC price stats: 1h, 24h, 7d changes + volume + sparkline
+ * Single API call to /coins/bitcoin with sparkline
+ */
+export async function fetchBtcPriceStats(): Promise<BtcPriceStatsData> {
+  try {
+    const data = await fetchWithTimeout<CoinDetailWithPriceChanges>(
+      `${COINGECKO_API}/coins/bitcoin?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=true`,
+      5000,
+      30 // 30 second cache for price stats
+    );
+
+    const md = data.market_data;
+
+    console.log(`[coingecko] BTC Price Stats: $${md.current_price.usd?.toLocaleString()}`);
+    console.log(`[coingecko] Changes: 1h=${md.price_change_percentage_1h_in_currency?.usd?.toFixed(2)}%, 24h=${md.price_change_percentage_24h?.toFixed(2)}%, 7d=${md.price_change_percentage_7d?.toFixed(2)}%`);
+
+    return {
+      price: md.current_price?.usd ?? null,
+      change1h: md.price_change_percentage_1h_in_currency?.usd ?? null,
+      change24h: md.price_change_percentage_24h ?? null,
+      change7d: md.price_change_percentage_7d ?? null,
+      volume24h: md.total_volume?.usd ?? null,
+      high24h: md.high_24h?.usd ?? null,
+      low24h: md.low_24h?.usd ?? null,
+      sparkline7d: md.sparkline_7d?.price ?? [],
+    };
+  } catch (error) {
+    console.error("[coingecko] fetchBtcPriceStats error:", error);
+    return {
+      price: null,
+      change1h: null,
+      change24h: null,
+      change7d: null,
+      volume24h: null,
+      high24h: null,
+      low24h: null,
+      sparkline7d: [],
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}

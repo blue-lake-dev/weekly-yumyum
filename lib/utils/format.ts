@@ -75,8 +75,7 @@ export function formatEthAmount(
 /**
  * Format flow values (ETF inflows/outflows) with sign and USD
  * @param value - Flow amount in millions
- * @param decimals - Decimal places (default: 0 for M, 2 for B)
- * @returns Formatted string like "+$1.47B", "-$234M"
+ * @returns Formatted string like "+$1.47B", "-$234M" (skips decimals if zero)
  */
 export function formatFlow(value: number | null | undefined): string {
   if (value === null || value === undefined) return "—";
@@ -85,8 +84,14 @@ export function formatFlow(value: number | null | undefined): string {
   const sign = value >= 0 ? "+" : "-";
 
   // Value is in millions, convert to billions if >= 1000M
-  if (abs >= 1000) return `${sign}$${(abs / 1000).toFixed(2)}B`;
-  return `${sign}$${abs.toFixed(2)}M`;
+  if (abs >= 1000) {
+    const billions = abs / 1000;
+    const formatted = billions.toFixed(2).replace(/\.?0+$/, "");
+    return `${sign}$${formatted}B`;
+  }
+
+  const formatted = abs.toFixed(2).replace(/\.?0+$/, "");
+  return `${sign}$${formatted}M`;
 }
 
 /**

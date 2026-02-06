@@ -87,6 +87,23 @@ body {
   animation: opacity-fade 4.5s linear forwards;
 }
 
+/* Sparkline dot fade-in (appears after chart animation) */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Slow pulse for sparkline live dot */
+@keyframes slow-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(1.8); opacity: 0; }
+}
+.animate-slow-pulse {
+  animation: slow-pulse 2s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
 /* Hide scrollbar but keep functionality */
 .scrollbar-hide {
   -ms-overflow-style: none;  /* IE and Edge */

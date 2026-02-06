@@ -449,7 +449,7 @@ async function getEtfFlowHistory(key: string, days: number) {
 
   return (data || []).map((row: { date: string; value: number | null }) => ({
     date: row.date,
-    value: row.value !== null ? row.value * 1e6 : null, // Convert millions to raw USD
+    value: row.value, // Keep as millions (formatFlow expects millions)
   }));
 }
 
