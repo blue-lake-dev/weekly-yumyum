@@ -18,6 +18,7 @@ const CHAIN_COLORS: Record<string, string> = {
   "Plume Mainnet": "#6366F1",
   Base: "#0052FF",
   Optimism: "#FF0420",
+  "OP Mainnet": "#FF0420",
   Tron: "#FF0013",
   Others: "#9CA3AF",
 };

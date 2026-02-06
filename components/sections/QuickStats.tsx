@@ -34,7 +34,7 @@ export function QuickStats() {
           {[1, 2, 3, 4, 5].map((i) => (
             <Skeleton
               key={i}
-              className="h-32 flex-1 flex-shrink-0 rounded-xl"
+              className="h-32 min-w-[160px] flex-1 flex-shrink-0 rounded-xl"
             />
           ))}
         </div>

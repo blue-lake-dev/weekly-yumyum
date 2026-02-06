@@ -301,7 +301,7 @@ const ALL_ETH_L2_CHAINS = [
   "Ethereum",
   "Arbitrum",
   "Base",
-  "Optimism",
+  "OP Mainnet",
   "Polygon",
   "zkSync Era",
   "Linea",
@@ -548,7 +548,7 @@ export async function fetchL2StablecoinStacked(): Promise<StackedChainData> {
 const ETH_CHAINS = [
   "Ethereum",
   "Arbitrum",
-  "Optimism",
+  "OP Mainnet",
   "Base",
   "Polygon",
   "zkSync Era",
