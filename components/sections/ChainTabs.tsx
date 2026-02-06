@@ -1693,7 +1693,7 @@ function EthSupplyCard({ data, isLoading }: { data?: EthStatsData; isLoading: bo
       </div>
       <p className="text-xl sm:text-3xl font-bold tabular-nums text-[#171717]">
         {formatEthAmount(data?.supply.circulating ?? null)}
-        <span className="text-xs sm:text-lg font-medium text-[#6B7280] ml-1">ETH</span>
+        <span className="hidden sm:inline text-lg font-medium text-[#6B7280] ml-1">ETH</span>
       </p>
     </div>
   );
@@ -1882,7 +1882,7 @@ function SolSupplyCard({ data, isLoading }: { data?: SolStatsData; isLoading: bo
       </div>
       <p className="text-xl sm:text-3xl font-bold tabular-nums text-[#171717]">
         {formatMillions(data.supply.circulating)}
-        <span className="text-xs sm:text-lg font-medium text-[#6B7280] ml-1">SOL</span>
+        <span className="hidden sm:inline text-lg font-medium text-[#6B7280] ml-1">SOL</span>
       </p>
     </div>
   );

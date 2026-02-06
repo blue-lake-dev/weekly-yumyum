@@ -36,7 +36,7 @@ export function Header() {
                 priority
               />
             </Link>
-            <div className="hidden sm:flex items-center gap-1">
+            <div className="hidden md:flex items-center gap-1">
               <Image src="/assets/pixels/doge.png" alt="Doge" width={48} height={48} />
               <Image src="/assets/pixels/pepe.png" alt="Pepe" width={48} height={48} />
               <Image src="/assets/pixels/robot.png" alt="Robot" width={48} height={48} />
@@ -44,7 +44,7 @@ export function Header() {
           </div>
 
           {/* Center: Navigation (hidden on mobile) */}
-          <nav className="hidden sm:flex items-center gap-6 h-full">
+          <nav className="hidden md:flex items-center gap-6 h-full">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               return (
@@ -73,7 +73,7 @@ export function Header() {
 
           {/* Right: Social Links (hidden on mobile) + Hamburger (mobile only) */}
           <div className="flex flex-1 items-center justify-end gap-2">
-            <div className="hidden sm:flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2">
               <a
                 href="https://www.youtube.com/@yumyum-coin"
                 target="_blank"
@@ -100,7 +100,7 @@ export function Header() {
 
             {/* Hamburger button (mobile only) */}
             <button
-              className="sm:hidden flex h-10 w-10 items-center justify-center"
+              className="md:hidden flex h-10 w-10 items-center justify-center"
               onClick={() => setMenuOpen((prev) => !prev)}
               aria-label="메뉴"
             >
@@ -121,11 +121,11 @@ export function Header() {
         <>
           {/* Backdrop */}
           <div
-            className="sm:hidden fixed inset-0 z-40 bg-black/40"
+            className="md:hidden fixed inset-0 z-40 bg-black/40"
             onClick={() => setMenuOpen(false)}
           />
           {/* Drawer (slides from right) */}
-          <div className="sm:hidden fixed top-0 right-0 z-50 h-full w-64 bg-white shadow-xl animate-slide-in-right">
+          <div className="md:hidden fixed top-0 right-0 z-50 h-full w-64 bg-white shadow-xl animate-slide-in-right">
             {/* Close button */}
             <div className="flex items-center justify-between h-14 px-4 border-b border-[#E5E7EB]">
               <span className="text-sm font-semibold text-[#171717]">메뉴</span>

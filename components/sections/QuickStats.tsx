@@ -314,7 +314,7 @@ export function QuickStats() {
 
         {/* Right fade indicator to hint more content (only when scrollable) */}
         {hasOverflow && (
-          <div className="hidden sm:block absolute right-0 top-0 bottom-2 w-12 bg-gradient-to-l from-[#F6F7F9] to-transparent pointer-events-none" />
+          <div className="hidden md:block absolute right-0 top-0 bottom-2 w-12 bg-gradient-to-l from-[#F6F7F9] to-transparent pointer-events-none" />
         )}
       </div>
     </section>
