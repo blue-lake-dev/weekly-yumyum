@@ -20,6 +20,12 @@ export function Header() {
     setMenuOpen(false);
   }, [pathname]);
 
+  // Prevent background scroll when drawer is open
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [menuOpen]);
+
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b border-[#E5E7EB] bg-white">

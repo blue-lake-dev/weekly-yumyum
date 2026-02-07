@@ -10,6 +10,10 @@ import {
   fetchGainersLosers,
   fetchSummary,
   fetchDerivatives,
+  fetchBtcPrice,
+  fetchBtcNetwork,
+  fetchBtcIndicators,
+  fetchBtcHoldings,
   fetchEthPrice,
   fetchEthStats,
   fetchEthCharts,
@@ -47,14 +51,54 @@ export default async function Home() {
     queryKey: queryKeys.summary,
     queryFn: fetchSummary,
   });
-  queryClient.prefetchQuery({ queryKey: queryKeys.ethPrice, queryFn: fetchEthPrice });
-  queryClient.prefetchQuery({ queryKey: queryKeys.ethStats, queryFn: fetchEthStats });
-  queryClient.prefetchQuery({ queryKey: queryKeys.ethCharts, queryFn: fetchEthCharts });
-  queryClient.prefetchQuery({ queryKey: queryKeys.ethHoldings, queryFn: fetchEthHoldings });
-  queryClient.prefetchQuery({ queryKey: queryKeys.solPrice, queryFn: fetchSolPrice });
-  queryClient.prefetchQuery({ queryKey: queryKeys.solStats, queryFn: fetchSolStats });
-  queryClient.prefetchQuery({ queryKey: queryKeys.solCharts, queryFn: fetchSolCharts });
-  queryClient.prefetchQuery({ queryKey: queryKeys.solHoldings, queryFn: fetchSolHoldings });
+  queryClient.prefetchQuery({
+    queryKey: queryKeys.btcPrice,
+    queryFn: fetchBtcPrice,
+  });
+  queryClient.prefetchQuery({
+    queryKey: queryKeys.btcNetwork,
+    queryFn: fetchBtcNetwork,
+  });
+  queryClient.prefetchQuery({
+    queryKey: queryKeys.btcIndicators,
+    queryFn: fetchBtcIndicators,
+  });
+  queryClient.prefetchQuery({
+    queryKey: queryKeys.btcHoldings,
+    queryFn: fetchBtcHoldings,
+  });
+  queryClient.prefetchQuery({
+    queryKey: queryKeys.ethPrice,
+    queryFn: fetchEthPrice,
+  });
+  queryClient.prefetchQuery({
+    queryKey: queryKeys.ethStats,
+    queryFn: fetchEthStats,
+  });
+  queryClient.prefetchQuery({
+    queryKey: queryKeys.ethCharts,
+    queryFn: fetchEthCharts,
+  });
+  queryClient.prefetchQuery({
+    queryKey: queryKeys.ethHoldings,
+    queryFn: fetchEthHoldings,
+  });
+  queryClient.prefetchQuery({
+    queryKey: queryKeys.solPrice,
+    queryFn: fetchSolPrice,
+  });
+  queryClient.prefetchQuery({
+    queryKey: queryKeys.solStats,
+    queryFn: fetchSolStats,
+  });
+  queryClient.prefetchQuery({
+    queryKey: queryKeys.solCharts,
+    queryFn: fetchSolCharts,
+  });
+  queryClient.prefetchQuery({
+    queryKey: queryKeys.solHoldings,
+    queryFn: fetchSolHoldings,
+  });
   queryClient.prefetchQuery({
     queryKey: queryKeys.derivatives,
     queryFn: fetchDerivatives,

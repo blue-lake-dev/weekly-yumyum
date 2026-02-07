@@ -17,7 +17,6 @@ import { YumyumComment } from "@/components/sections/YumyumComment";
 import { ChainTabs } from "@/components/sections/ChainTabs";
 import { MoreTabs } from "@/components/sections/MoreTabs";
 
-
 export function Dashboard() {
   // Mount sections when they enter the viewport
   const [todaysCoinRef, showTodaysCoin] = useInViewMount();
@@ -30,7 +29,7 @@ export function Dashboard() {
       <Header />
 
       {/* ❶ Ticker - Full width, attached to header */}
-<Ticker />
+      <Ticker />
 
       <main className="mx-auto max-w-5xl px-4 pt-3 pb-6">
         {/* ❷ Quick Stats - Blocking (instant) */}
@@ -94,7 +93,9 @@ export function Dashboard() {
 
 function SectionSkeleton({ height }: { height: string }) {
   return (
-    <div className={`mb-6 rounded-xl bg-white border border-[#E5E7EB] p-4 shadow-sm ${height}`}>
+    <div
+      className={`mb-6 rounded-xl bg-white border border-[#E5E7EB] p-4 shadow-sm ${height}`}
+    >
       <Skeleton className="h-5 w-32 mb-3" />
       <Skeleton className="h-full w-full" />
     </div>
