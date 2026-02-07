@@ -53,6 +53,7 @@ export interface QuickStatsData {
 }
 
 export interface CoinChange {
+  id: string;
   symbol: string;
   name: string;
   image: string;

@@ -41,9 +41,14 @@ function CoinRow({
   const changeColor = type === "gainer" ? "text-[#16A34A]" : "text-[#DC2626]";
 
   return (
-    <div className="flex items-center gap-1.5 sm:gap-2 py-1.5 sm:py-2 px-1.5 sm:px-3 mx-1 sm:mx-2 hover:bg-[#F6F7F9] rounded-lg transition-colors">
+    <a
+      href={`https://www.coingecko.com/en/coins/${coin.id}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-1.5 sm:gap-2 py-1.5 sm:py-2 px-1.5 sm:px-3 mx-1 sm:mx-2 hover:bg-[#F6F7F9] rounded-lg transition-colors"
+    >
       {/* Rank */}
-      <span className="w-4 sm:w-5 text-xs sm:text-sm font-medium text-[#9CA3AF] tabular-nums">
+      <span className="w-3 sm:w-5 text-xs sm:text-sm font-medium text-[#9CA3AF] tabular-nums">
         {rank}
       </span>
 
@@ -59,7 +64,7 @@ function CoinRow({
       />
 
       {/* Symbol */}
-      <span className="text-xs sm:text-sm font-semibold text-[#171717]">
+      <span className="max-w-18 truncate text-xs sm:text-sm font-semibold text-[#171717]">
         {coin.symbol}
       </span>
 
@@ -70,10 +75,10 @@ function CoinRow({
       <span className="hidden sm:inline text-sm font-semibold text-[#171717] tabular-nums">
         {formatPrice(coin.price)}
       </span>
-      <span className={`text-xs sm:text-sm font-medium tabular-nums text-right ${changeColor}`}>
-        {formatPercent(coin.change, true)}
+      <span className={`shrink-0 whitespace-nowrap text-xs sm:text-sm font-medium tabular-nums text-right ${changeColor}`}>
+        {type === "gainer" ? "▲" : "▼"} {formatPercent(Math.abs(coin.change), false)}
       </span>
-    </div>
+    </a>
   );
 }
 

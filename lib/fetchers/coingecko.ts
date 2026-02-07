@@ -307,8 +307,8 @@ export async function fetchSolPrice(): Promise<MetricValue> {
 
 // Gainers/Losers types and fetcher
 export interface GainersLosersData {
-  gainers: Array<{ symbol: string; name: string; image: string; price: number; change: number }>;
-  losers: Array<{ symbol: string; name: string; image: string; price: number; change: number }>;
+  gainers: Array<{ id: string; symbol: string; name: string; image: string; price: number; change: number }>;
+  losers: Array<{ id: string; symbol: string; name: string; image: string; price: number; change: number }>;
   error?: string;
 }
 
@@ -354,6 +354,7 @@ export async function fetchGainersLosers(limit: number = 10): Promise<GainersLos
       .filter((coin) => (coin.price_change_percentage_24h ?? 0) > 0)
       .slice(0, limit)
       .map((coin) => ({
+        id: coin.id,
         symbol: coin.symbol.toUpperCase(),
         name: coin.name,
         image: coin.image,
@@ -367,6 +368,7 @@ export async function fetchGainersLosers(limit: number = 10): Promise<GainersLos
       .slice(-limit)
       .reverse()
       .map((coin) => ({
+        id: coin.id,
         symbol: coin.symbol.toUpperCase(),
         name: coin.name,
         image: coin.image,
